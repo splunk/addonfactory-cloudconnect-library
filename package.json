@@ -1,0 +1,16 @@
+{
+  "devDependencies": {
+    "ext-grunt-basebuild": "0.1.1",
+    "ext-grunt-horde": "0.1.2",
+    "grunt": "^0.4.5",
+    "grunt-contrib-clean": "^0.6.0",
+    "grunt-contrib-compress": "^0.13.0",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-copy": "^0.8.1",
+    "grunt-pattern-replace": "^1.0.1",
+    "grunt-shell": "^1.1.2",
+    "load-grunt-tasks": "^3.3.0",
+    "lodash": "^3.10.1",
+    "time-grunt": "^1.2.1"
+  }
+}

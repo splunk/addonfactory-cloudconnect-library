@@ -1,0 +1,11 @@
+{
+  "name": "<TA-NAME>",
+  "version": "<VERSION>",
+  "friendly": {
+      "name": "Splunk Add-on for <NAME>"
+  },
+  "ponydocs": {
+      "shortname": "<PonyDocs Shortname>"
+  },
+  "extension": "spl"
+}

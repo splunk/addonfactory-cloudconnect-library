@@ -15,7 +15,7 @@ def _load_json(json_file):
 
 def _load_schema_from_file():
     schema_file = op.join(op.dirname(op.dirname(op.dirname(op.abspath(__file__)))),
-                          'package', 'bin', 'schema', 'schema.json')
+                          'package', 'bin', 'schema', 'hcm_schema.json')
     with open(schema_file, 'r') as f:
         return json.loads(f.read())
 

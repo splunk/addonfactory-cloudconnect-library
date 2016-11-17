@@ -133,6 +133,9 @@
               "type": "object"
             }
           },
+          "required": [
+            "type"
+          ],
           "additionalProperties": true
         },
         "headers": {

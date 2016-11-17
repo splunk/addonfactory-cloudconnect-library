@@ -79,7 +79,8 @@ class _Request(jsl.Document):
 
     auth = jsl.DictField(required=False,
                          properties={
-                             'type': jsl.StringField(enum=_AUTH_TYPES),
+                             'type': jsl.StringField(enum=_AUTH_TYPES,
+                                                     required=True),
                              'options': jsl.DictField(),
                          },
                          additional_properties=True)

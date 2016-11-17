@@ -22,6 +22,7 @@ class _Output(jsl.Document):
                          properties={
                              'format': jsl.StringField(enum=_DATA_FORMAT,
                                                        required=True),
+                             'source_key': jsl.StringField(required=True),
                          },
                          additional_properties=True)
 
@@ -58,9 +59,7 @@ class _Checkpoint(jsl.Document):
     class Options(object):
         additional_properties = True
 
-    save = jsl.OneOfField(fields=[jsl.StringField(), jsl.BooleanField()],
-                          required=False,
-                          default=True)
+    save = jsl.BooleanField(required=False, default=True)
 
     namespace = jsl.ArrayField(items=[jsl.StringField()],
                                required=False)
@@ -97,7 +96,7 @@ class _Request(jsl.Document):
                               jsl.DocumentField(_FileOutput, as_ref=True)]),
         min_items=1
     )
-    params = jsl.ArrayField(items=[jsl.DictField()], required=False)
+    params = jsl.DictField(required=True)
     checkpoint = jsl.DocumentField(_Checkpoint, as_ref=True)
 
 

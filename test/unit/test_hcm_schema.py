@@ -21,7 +21,7 @@ def _load_schema_from_file():
 
 
 def test_validate_generated_schema():
-    conf = _load_json('data.json')
+    conf = _load_json('hcm_1.json')
     assert conf['__version__'] == '1.0.0'
     validate(conf, _load_schema_from_file())
 
@@ -51,10 +51,12 @@ def test_validate_schema_expect_raise():
             'output': [{
                 'type': 'file',
                 'data': {
-                    'format': 'raw'
+                    'format': 'raw',
+                    'source_key': '',
                 },
                 'options': {}
-            }]
+            }],
+            'params': {}
         }
     ]
     validate(conf, schema)

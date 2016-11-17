@@ -1,19 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "definitions": {
-    "schema._Checkpoint": {
+    "hcm_json_schema_builder._Checkpoint": {
       "type": "object",
       "properties": {
         "save": {
-          "default": true,
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "boolean"
-            }
-          ]
+          "type": "boolean",
+          "default": true
         },
         "namespace": {
           "type": "array",
@@ -32,12 +25,15 @@
       ],
       "additionalProperties": true
     },
-    "schema._FileOutput": {
+    "hcm_json_schema_builder._FileOutput": {
       "type": "object",
       "properties": {
         "data": {
           "type": "object",
           "properties": {
+            "source_key": {
+              "type": "string"
+            },
             "format": {
               "type": "string",
               "enum": [
@@ -47,6 +43,7 @@
             }
           },
           "required": [
+            "source_key",
             "format"
           ],
           "additionalProperties": true
@@ -67,7 +64,7 @@
       ],
       "additionalProperties": true
     },
-    "schema._Proxy": {
+    "hcm_json_schema_builder._Proxy": {
       "type": "object",
       "properties": {
         "enabled": {
@@ -113,7 +110,7 @@
       ],
       "additionalProperties": true
     },
-    "schema._Request": {
+    "hcm_json_schema_builder._Request": {
       "type": "object",
       "properties": {
         "context": {
@@ -168,25 +165,20 @@
           "items": {
             "oneOf": [
               {
-                "$ref": "#/definitions/schema._StdoutOutput"
+                "$ref": "#/definitions/hcm_json_schema_builder._StdoutOutput"
               },
               {
-                "$ref": "#/definitions/schema._FileOutput"
+                "$ref": "#/definitions/hcm_json_schema_builder._FileOutput"
               }
             ]
           },
           "minItems": 1
         },
         "params": {
-          "type": "array",
-          "items": [
-            {
-              "type": "object"
-            }
-          ]
+          "type": "object"
         },
         "checkpoint": {
-          "$ref": "#/definitions/schema._Checkpoint"
+          "$ref": "#/definitions/hcm_json_schema_builder._Checkpoint"
         }
       },
       "required": [
@@ -194,16 +186,20 @@
         "headers",
         "url",
         "method",
-        "stop_condition"
+        "stop_condition",
+        "params"
       ],
       "additionalProperties": true
     },
-    "schema._StdoutOutput": {
+    "hcm_json_schema_builder._StdoutOutput": {
       "type": "object",
       "properties": {
         "data": {
           "type": "object",
           "properties": {
+            "source_key": {
+              "type": "string"
+            },
             "format": {
               "type": "string",
               "enum": [
@@ -213,6 +209,7 @@
             }
           },
           "required": [
+            "source_key",
             "format"
           ],
           "additionalProperties": true
@@ -270,7 +267,7 @@
       ]
     },
     "proxy": {
-      "$ref": "#/definitions/schema._Proxy"
+      "$ref": "#/definitions/hcm_json_schema_builder._Proxy"
     },
     "hec": {
       "type": "object"
@@ -282,7 +279,7 @@
       "type": "array",
       "items": [
         {
-          "$ref": "#/definitions/schema._Request"
+          "$ref": "#/definitions/hcm_json_schema_builder._Request"
         }
       ],
       "minItems": 1

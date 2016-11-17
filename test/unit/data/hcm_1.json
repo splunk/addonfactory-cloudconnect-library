@@ -73,14 +73,12 @@
           }
         }
       ],
-      "params": [
-        {
-          "sysparm_limit": "$sysparm_limit$",
-          "sysparm_query": "sys_updated_on>=$since_when$^ORDERBYsys_updated_on"
-        }
-      ],
+      "params": {
+        "sysparm_limit": "$sysparm_limit$",
+        "sysparm_query": "sys_updated_on>=$since_when$^ORDERBYsys_updated_on"
+      },
       "checkpoint": {
-        "save": "true",
+        "save": true,
         "namespace": [
           "$name$",
           "$table_name$"

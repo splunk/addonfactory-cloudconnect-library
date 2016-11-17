@@ -1,0 +1,296 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "schema._Checkpoint": {
+      "type": "object",
+      "properties": {
+        "save": {
+          "default": true,
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "namespace": {
+          "type": "array",
+          "items": [
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "content": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "additionalProperties": true
+    },
+    "schema._FileOutput": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": [
+                "splunk_xml",
+                "raw"
+              ]
+            }
+          },
+          "required": [
+            "format"
+          ],
+          "additionalProperties": true
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "file"
+          ]
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "data",
+        "options"
+      ],
+      "additionalProperties": true
+    },
+    "schema._Proxy": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "rdns": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "enabled",
+        "host",
+        "port"
+      ],
+      "additionalProperties": true
+    },
+    "schema._Request": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "object"
+        },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "digest",
+                "basic64"
+              ]
+            },
+            "options": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": true
+        },
+        "headers": {
+          "type": "object"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH"
+          ]
+        },
+        "stop_condition": {
+          "type": "string",
+          "enum": [
+            "empty",
+            "once"
+          ],
+          "default": "empty"
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/schema._StdoutOutput"
+              },
+              {
+                "$ref": "#/definitions/schema._FileOutput"
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "params": {
+          "type": "array",
+          "items": [
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "checkpoint": {
+          "$ref": "#/definitions/schema._Checkpoint"
+        }
+      },
+      "required": [
+        "context",
+        "headers",
+        "url",
+        "method",
+        "stop_condition"
+      ],
+      "additionalProperties": true
+    },
+    "schema._StdoutOutput": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": [
+                "splunk_xml",
+                "raw"
+              ]
+            }
+          },
+          "required": [
+            "format"
+          ],
+          "additionalProperties": true
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "stdout"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "index": {
+              "type": "string"
+            },
+            "host": {
+              "type": "string"
+            },
+            "sourcetype": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "index",
+            "host",
+            "sourcetype",
+            "source"
+          ]
+        }
+      },
+      "required": [
+        "data",
+        "type",
+        "options"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "type": "object",
+  "properties": {
+    "__version__": {
+      "type": "string",
+      "pattern": "[\\d\\.]+"
+    },
+    "parameters": {
+      "type": "array",
+      "items": [
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "proxy": {
+      "$ref": "#/definitions/schema._Proxy"
+    },
+    "hec": {
+      "type": "object"
+    },
+    "logging": {
+      "type": "object"
+    },
+    "requests": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/schema._Request"
+        }
+      ],
+      "minItems": 1
+    }
+  },
+  "required": [
+    "__version__",
+    "parameters",
+    "hec",
+    "logging",
+    "requests"
+  ],
+  "additionalProperties": false
+}

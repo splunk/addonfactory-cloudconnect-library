@@ -1,0 +1,94 @@
+{
+  "__version__": "1.0.0",
+  "parameters": [
+    "name",
+    "url",
+    "sysparm_limit",
+    "table_name",
+    "api_key",
+    "since_when",
+    "host",
+    "index",
+    "sourcetype",
+    "source",
+    "checkpoint_dir",
+    "collection_interval",
+    "proxy_enable",
+    "proxy_host",
+    "proxy_type",
+    "proxy_username",
+    "hec_host",
+    "hec_port",
+    "logging_level"
+  ],
+  "proxy": {
+    "enabled": "$proxy_enable$",
+    "host": "$proxy_host$",
+    "port": "$proxy_port$",
+    "username": "$proxy_username$",
+    "passowrd": "$proxy_password$",
+    "rdns": "$proxy_rdns$",
+    "type": "$proxy_type$"
+  },
+  "hec": {
+    "host": "$hec_host$",
+    "port": "$hec_port$"
+  },
+  "logging": {
+    "level": "$logging_level$"
+  },
+  "requests": [
+    {
+      "context": {
+        "since_when": {
+          "source_key": "$__response__$.body",
+          "jsonpath": "$.result[(@.length-1)].sys_updated_on"
+        }
+      },
+      "auth": {
+        "type": "basic64",
+        "options": {
+        }
+      },
+      "url": "https://$url$/api/now/table/$table_name$",
+      "headers": {
+        "accept": "application/json",
+        "auth": "$api_key$"
+      },
+      "method": "GET",
+      "stop_condition": "empty",
+      "output": [
+        {
+          "data": {
+            "source_key": "$__response__$.body",
+            "jsonpath": "$.result.*",
+            "format": "splunk_xml"
+          },
+          "type": "stdout",
+          "options": {
+            "index": "$index$",
+            "host": "$host$",
+            "sourcetype": "$sourcetype$",
+            "source": "$source$"
+          }
+        }
+      ],
+      "params": [
+        {
+          "sysparm_limit": "$sysparm_limit$",
+          "sysparm_query": "sys_updated_on>=$since_when$^ORDERBYsys_updated_on"
+        }
+      ],
+      "checkpoint": {
+        "save": "true",
+        "namespace": [
+          "$name$",
+          "$table_name$"
+        ],
+        "content": {
+          "since_when": "$since_when$"
+        }
+      }
+    }
+  ]
+}

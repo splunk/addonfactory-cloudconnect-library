@@ -171,7 +171,7 @@
             },
             {
               "type": "integer",
-              "minimum": 0,
+              "minimum": 1,
               "exclusiveMinimum": true,
               "maximum": 65535,
               "exclusiveMaximum": true

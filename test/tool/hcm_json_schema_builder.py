@@ -89,7 +89,7 @@ class Proxy(Document):
                          required=True)
 
     host = StringField(required=True)
-    port = OneOfField(fields=[StringField(), IntField(minimum=0,
+    port = OneOfField(fields=[StringField(), IntField(minimum=1,
                                                       maximum=65535,
                                                       exclusive_minimum=True,
                                                       exclusive_maximum=True)],

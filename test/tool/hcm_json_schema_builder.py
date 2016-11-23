@@ -1,136 +1,148 @@
-import jsl
+import json
+from collections import OrderedDict
+
+from jsl import (
+    ArrayField,
+    DictField,
+    Document,
+    DocumentField,
+    StringField,
+)
 
 _HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-
-_DATA_FORMAT = ['splunk_xml', 'raw']
-
-_STOP_CONDITIONS = ['empty', 'once']
-_DEFAULT_STOP_CONDITION = 'empty'
-
-_AUTH_TYPES = ['digest', 'basic64']
+_AUTH_TYPES = ['digest', 'basic_auth']
 
 
-class _Output(jsl.Document):
-    """
-    Represents the common schema definition for outputting configuration.
-    """
-
-    class Options(object):
-        additional_properties = True
-
-    data = jsl.DictField(required=True,
-                         properties={
-                             'format': jsl.StringField(enum=_DATA_FORMAT,
-                                                       required=True),
-                             'source_key': jsl.StringField(required=True),
-                         },
-                         additional_properties=True)
-
-
-class _FileOutput(_Output):
-    """
-    Represents scheme for file outputting configuration which type must
-     be `file` and user can specify file destination, etc in options.
-    """
-    type = jsl.StringField(enum=['file'])
-    options = jsl.DictField(required=True)
-
-
-class _StdoutOutput(_Output):
-    """
-    Represents scheme for stdout outputting configuration.
-    """
-    type = jsl.StringField(enum=['stdout'], required=True)
-    options = jsl.DictField(required=True,
-                            properties={
-                                'host': jsl.StringField(required=True),
-                                'index': jsl.StringField(required=True),
-                                'source': jsl.StringField(required=True),
-                                'sourcetype': jsl.StringField(required=True),
-                            },
-                            additionalProperties=True)
-
-
-class _Checkpoint(jsl.Document):
+class Checkpoint(Document):
     """
     Represents configuration scheme for saving checkpoint.
     """
-
-    class Options(object):
-        additional_properties = True
-
-    save = jsl.BooleanField(required=False, default=True)
-
-    namespace = jsl.ArrayField(items=[jsl.StringField()],
-                               required=False)
-    content = jsl.DictField(required=True)
+    namespace = ArrayField(items=[StringField()])
+    content = DictField(required=True)
 
 
-class _Request(jsl.Document):
+class Authentication(Document):
+    type = StringField(enum=_AUTH_TYPES, required=True)
+    options = DictField()
+
+
+class RequestOptions(Document):
+    # required
+    url = StringField(required=True)
+    method = StringField(enum=_HTTP_METHODS, required=True)
+    headers = DictField(required=True)
+
+    # optional
+    auth = DocumentField(Authentication, as_ref=True)
+    body = DictField()
+
+
+class Function(Document):
+    input = ArrayField(items=[StringField()], required=True)
+    method = StringField(required=True)
+
+
+class SkipPostRequest(Document):
+    condition = ArrayField(items=[DocumentField(Function, as_ref=True)],
+                           min_items=1,
+                           required=True)
+
+
+class PostRequest(Function):
+    output = StringField(required=False)
+
+
+class LoopMode(Document):
+    type = StringField(enum=['loop'], required=True)
+    stop_conditions = ArrayField(items=[DocumentField(Function, as_ref=True)],
+                                 min_items=1,
+                                 required=True)
+
+
+class Request(Document):
     """
     Represents config scheme for single request.
     """
-
-    class Options(object):
-        additional_properties = True
-
-    context = jsl.DictField(required=True)
-
-    auth = jsl.DictField(required=False,
-                         properties={
-                             'type': jsl.StringField(enum=_AUTH_TYPES,
-                                                     required=True),
-                             'options': jsl.DictField(),
-                         },
-                         additional_properties=True)
-
-    headers = jsl.DictField(required=True)
-    url = jsl.UriField(required=True)
-    method = jsl.StringField(enum=_HTTP_METHODS, required=True)
-
-    stop_condition = jsl.StringField(enum=_STOP_CONDITIONS,
-                                     required=True,
-                                     default=_DEFAULT_STOP_CONDITION)
-    output = jsl.ArrayField(
-        items=jsl.OneOfField([jsl.DocumentField(_StdoutOutput, as_ref=True),
-                              jsl.DocumentField(_FileOutput, as_ref=True)]),
-        min_items=1
-    )
-    params = jsl.DictField(required=True)
-    checkpoint = jsl.DocumentField(_Checkpoint, as_ref=True)
+    options = DocumentField(RequestOptions, as_ref=True, required=True)
+    before_request = ArrayField(items=[DocumentField(Function,
+                                                     as_ref=True)],
+                                required=True)
+    skip_post_request = DocumentField(SkipPostRequest,
+                                      as_ref=True,
+                                      required=True)
+    post_request = ArrayField(items=[DocumentField(PostRequest,
+                                                   as_ref=True)],
+                              required=True)
+    loop_mode = DocumentField(LoopMode, as_ref=True, required=True)
+    checkpoint = DocumentField(Checkpoint, as_ref=True, required=True)
 
 
-class _Proxy(jsl.Document):
+class Proxy(Document):
     """
     Represents proxy configuration scheme. enabled, host and port are required.
     """
+    enabled = StringField(required=True)
+    host = StringField(required=True)
+    port = StringField(required=True)
+    username = StringField()
+    password = StringField()
+    rdns = StringField()
+    type = StringField()
+
+
+class Meta(Document):
+    """
+    Represents scheme of metadata which contains version, etc.
+    """
 
     class Options(object):
         additional_properties = True
 
-    enabled = jsl.OneOfField([jsl.BooleanField(), jsl.StringField()],
-                             required=True)
-
-    host = jsl.StringField(required=True)
-    port = jsl.OneOfField([jsl.IntField(), jsl.StringField()],
-                          required=True)
-    username = jsl.StringField(required=False)
-    password = jsl.StringField(required=False)
-    rdns = jsl.StringField(required=False)
-    type = jsl.StringField(required=False)
+    version = StringField(required=True, pattern='(?:\d{1,3}\.){2}\d{1,3}')
 
 
-class Schema(jsl.Document):
+class GlobalSettings(Document):
+    """
+    Represents scheme of global settings which contains logging, proxy etc.
+    """
+
+    class Options(object):
+        additional_properties = True
+
+    proxy = DocumentField(Proxy, as_ref=True)
+    logging = DictField(required=True,
+                        properties={
+                            'level': StringField(),
+                        },
+                        additional_properties=True)
+
+
+class Schema(Document):
     """
     Represents scheme for validating user configuration as JSON format.
     """
-    __version__ = jsl.StringField(required=True, pattern='[\d\.]+')
-    parameters = jsl.ArrayField(required=True, items=[jsl.StringField()])
 
-    proxy = jsl.DocumentField(_Proxy, required=False, as_ref=True)
+    meta = DocumentField(Meta, as_ref=True, required=True)
+    parameters = ArrayField(items=[StringField()], required=True)
+    global_settings = DocumentField(GlobalSettings, as_ref=True,
+                                    required=True)
 
-    hec = jsl.DictField(required=True)
-    logging = jsl.DictField(required=True)
-    requests = jsl.ArrayField(items=[jsl.DocumentField(_Request, as_ref=True)],
-                              min_items=1,
-                              required=True)
+    requests = ArrayField(items=[DocumentField(Request, as_ref=True)],
+                          min_items=1,
+                          required=True)
+
+
+def build_schema(ordered=True):
+    """
+    Builds a schema object for validating JSON based interface.
+
+    :param ordered:
+        Whether order the elements in schema.
+    :type ordered: `bool`
+    :return:
+        A schema object as dict.
+    :rtype: `OrderedDict`
+    """
+    schema = json.dumps(Schema.get_schema(ordered=ordered))
+    prefix_erased = schema.replace(__name__ + '.', '')
+    return json.loads(prefix_erased, object_pairs_hook=OrderedDict)

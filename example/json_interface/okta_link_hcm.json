@@ -25,7 +25,7 @@
 			"host": "{{proxy_host}}",
 			"port": "{{proxy_port}}",
 			"username": "{{proxy_username}}",
-			"passowrd": "{{proxy_password}}",
+			"password": "{{proxy_password}}",
 			"rdns": "{{proxy_rdns}}",
 			"type": "{{proxy_type}}"
 		},

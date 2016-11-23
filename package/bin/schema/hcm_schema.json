@@ -1,13 +1,28 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "definitions": {
-    "hcm_json_schema_builder._Checkpoint": {
+    "Authentication": {
       "type": "object",
       "properties": {
-        "save": {
-          "type": "boolean",
-          "default": true
+        "type": {
+          "type": "string",
+          "enum": [
+            "digest",
+            "basic_auth"
+          ]
         },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "Checkpoint": {
+      "type": "object",
+      "properties": {
         "namespace": {
           "type": "array",
           "items": [
@@ -23,72 +38,123 @@
       "required": [
         "content"
       ],
-      "additionalProperties": true
+      "additionalProperties": false
     },
-    "hcm_json_schema_builder._FileOutput": {
+    "Function": {
       "type": "object",
       "properties": {
-        "data": {
-          "type": "object",
-          "properties": {
-            "source_key": {
+        "input": {
+          "type": "array",
+          "items": [
+            {
               "type": "string"
-            },
-            "format": {
-              "type": "string",
-              "enum": [
-                "splunk_xml",
-                "raw"
-              ]
             }
-          },
-          "required": [
-            "source_key",
-            "format"
-          ],
-          "additionalProperties": true
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "file"
           ]
         },
-        "options": {
-          "type": "object"
+        "method": {
+          "type": "string"
         }
       },
       "required": [
-        "data",
-        "options"
+        "input",
+        "method"
+      ],
+      "additionalProperties": false
+    },
+    "GlobalSettings": {
+      "type": "object",
+      "properties": {
+        "proxy": {
+          "$ref": "#/definitions/Proxy"
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "logging"
       ],
       "additionalProperties": true
     },
-    "hcm_json_schema_builder._Proxy": {
+    "LoopMode": {
       "type": "object",
       "properties": {
-        "enabled": {
-          "oneOf": [
+        "type": {
+          "type": "string",
+          "enum": [
+            "loop"
+          ]
+        },
+        "stop_conditions": {
+          "type": "array",
+          "items": [
             {
-              "type": "boolean"
-            },
+              "$ref": "#/definitions/Function"
+            }
+          ],
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "stop_conditions"
+      ],
+      "additionalProperties": false
+    },
+    "Meta": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "(?:\\d{1,3}\\.){2}\\d{1,3}"
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "additionalProperties": true
+    },
+    "PostRequest": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "array",
+          "items": [
             {
               "type": "string"
             }
           ]
+        },
+        "method": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "input",
+        "method"
+      ],
+      "additionalProperties": false
+    },
+    "Proxy": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "string"
         },
         "host": {
           "type": "string"
         },
         "port": {
-          "oneOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "type": "string"
         },
         "username": {
           "type": "string"
@@ -108,39 +174,55 @@
         "host",
         "port"
       ],
-      "additionalProperties": true
+      "additionalProperties": false
     },
-    "hcm_json_schema_builder._Request": {
+    "Request": {
       "type": "object",
       "properties": {
-        "context": {
-          "type": "object"
+        "options": {
+          "$ref": "#/definitions/RequestOptions"
         },
-        "auth": {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": [
-                "digest",
-                "basic64"
-              ]
-            },
-            "options": {
-              "type": "object"
+        "before_request": {
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/Function"
             }
-          },
-          "required": [
-            "type"
-          ],
-          "additionalProperties": true
+          ]
         },
-        "headers": {
-          "type": "object"
+        "skip_post_request": {
+          "$ref": "#/definitions/SkipPostRequest"
         },
+        "post_request": {
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/PostRequest"
+            }
+          ]
+        },
+        "loop_mode": {
+          "$ref": "#/definitions/LoopMode"
+        },
+        "checkpoint": {
+          "$ref": "#/definitions/Checkpoint"
+        }
+      },
+      "required": [
+        "options",
+        "before_request",
+        "skip_post_request",
+        "post_request",
+        "loop_mode",
+        "checkpoint"
+      ],
+      "additionalProperties": false
+    },
+    "RequestOptions": {
+      "type": "object",
+      "properties": {
         "url": {
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "method": {
           "type": "string",
@@ -152,111 +234,46 @@
             "PATCH"
           ]
         },
-        "stop_condition": {
-          "type": "string",
-          "enum": [
-            "empty",
-            "once"
-          ],
-          "default": "empty"
-        },
-        "output": {
-          "type": "array",
-          "items": {
-            "oneOf": [
-              {
-                "$ref": "#/definitions/hcm_json_schema_builder._StdoutOutput"
-              },
-              {
-                "$ref": "#/definitions/hcm_json_schema_builder._FileOutput"
-              }
-            ]
-          },
-          "minItems": 1
-        },
-        "params": {
+        "headers": {
           "type": "object"
         },
-        "checkpoint": {
-          "$ref": "#/definitions/hcm_json_schema_builder._Checkpoint"
+        "auth": {
+          "$ref": "#/definitions/Authentication"
+        },
+        "body": {
+          "type": "object"
         }
       },
       "required": [
-        "context",
-        "headers",
         "url",
         "method",
-        "stop_condition",
-        "params"
+        "headers"
       ],
-      "additionalProperties": true
+      "additionalProperties": false
     },
-    "hcm_json_schema_builder._StdoutOutput": {
+    "SkipPostRequest": {
       "type": "object",
       "properties": {
-        "data": {
-          "type": "object",
-          "properties": {
-            "source_key": {
-              "type": "string"
-            },
-            "format": {
-              "type": "string",
-              "enum": [
-                "splunk_xml",
-                "raw"
-              ]
+        "condition": {
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/Function"
             }
-          },
-          "required": [
-            "source_key",
-            "format"
           ],
-          "additionalProperties": true
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "stdout"
-          ]
-        },
-        "options": {
-          "type": "object",
-          "properties": {
-            "index": {
-              "type": "string"
-            },
-            "host": {
-              "type": "string"
-            },
-            "sourcetype": {
-              "type": "string"
-            },
-            "source": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "index",
-            "host",
-            "sourcetype",
-            "source"
-          ]
+          "minItems": 1
         }
       },
       "required": [
-        "data",
-        "type",
-        "options"
+        "condition"
       ],
-      "additionalProperties": true
+      "additionalProperties": false
     }
   },
   "type": "object",
   "properties": {
-    "__version__": {
-      "type": "string",
-      "pattern": "[\\d\\.]+"
+    "meta": {
+      "$ref": "#/definitions/Meta"
     },
     "parameters": {
       "type": "array",
@@ -266,30 +283,23 @@
         }
       ]
     },
-    "proxy": {
-      "$ref": "#/definitions/hcm_json_schema_builder._Proxy"
-    },
-    "hec": {
-      "type": "object"
-    },
-    "logging": {
-      "type": "object"
+    "global_settings": {
+      "$ref": "#/definitions/GlobalSettings"
     },
     "requests": {
       "type": "array",
       "items": [
         {
-          "$ref": "#/definitions/hcm_json_schema_builder._Request"
+          "$ref": "#/definitions/Request"
         }
       ],
       "minItems": 1
     }
   },
   "required": [
-    "__version__",
+    "meta",
     "parameters",
-    "hec",
-    "logging",
+    "global_settings",
     "requests"
   ],
   "additionalProperties": false

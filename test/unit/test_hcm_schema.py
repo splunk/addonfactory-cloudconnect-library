@@ -22,7 +22,7 @@ def _load_schema_from_file():
 
 def test_validate_generated_schema():
     conf = _load_json('hcm_1.json')
-    assert conf['__version__'] == '1.0.0'
+    assert conf['meta']['version'] == '1.0.0'
     validate(conf, _load_schema_from_file())
 
 
@@ -33,30 +33,13 @@ def test_validate_schema_expect_raise():
     with pytest.raises(ValidationError):
         validate(conf, schema)
 
-    conf['parameters'] = []
-    conf['__version__'] = '1.0.0'
-    conf['hec'] = {}
-    conf['logging'] = {}
-    conf['requests'] = [
-        {
-            'context': {},
-            'url': 'http://test.com',
-            'checkpoint': {
-                'save': True,
-                'content': {},
-            },
-            'headers': {},
-            'method': 'GET',
-            'stop_condition': 'empty',
-            'output': [{
-                'type': 'file',
-                'data': {
-                    'format': 'raw',
-                    'source_key': '',
-                },
-                'options': {}
-            }],
-            'params': {}
-        }
-    ]
-    validate(conf, schema)
+    # validate all required elements in top level
+    required = ['meta', 'parameters', 'global_settings', 'requests']
+    validated = _load_json('hcm_1.json')
+
+    for r in required:
+        backup = validated[r]
+        del validated[r]
+        with pytest.raises(ValidationError):
+            validate(validated, schema)
+        validated[r] = backup

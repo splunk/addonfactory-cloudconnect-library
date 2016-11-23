@@ -63,7 +63,7 @@
 					}
 				]
 			},
-			"post_requests": [
+			"post_request": [
 				{
 					"input": [
 						"$[(@.length-1)].eventId",

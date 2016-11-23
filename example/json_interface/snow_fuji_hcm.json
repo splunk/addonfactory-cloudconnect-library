@@ -65,7 +65,7 @@
 					}
 				]
 			},
-			"post_requests": [
+			"post_request": [
 				{
 					"input": [
 						"$.result[(@.length-1)].sys_updated_on",

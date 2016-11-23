@@ -4,10 +4,10 @@
 	},
 	"parameters": [
 		"name",
-		"instance",
-		"sysparm_limit",
-		"table_name",
-		"since_when",
+		"okta_url",
+		"limit",
+		"api_key",
+		"start_time",
 		"host",
 		"index",
 		"sourcetype",
@@ -17,11 +17,7 @@
 		"proxy_host",
 		"proxy_type",
 		"proxy_username",
-		"proxy_rdns",
-		"proxy_type",
-		"logging_level",
-		"username",
-		"password"
+		"logging_level"
 	],
 	"global_settings": {
 		"proxy": {
@@ -40,61 +36,63 @@
 	"requests": [
 		{
 			"options": {
-				"url": "https://{{host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
+				"url": "http://{{okta_url}}?limit={{limit}}&filter=published gt \"{{start_time}}\"",
 				"method": "GET",
-				"auth": {
-					"type": "basic",
-					"options": {
-						"username": "{{username}}",
-						"passowrd": "{{password}}"
-					}
-				},
 				"headers": {
-					"accept": "application/json"
+					"accept": "application/json",
+					"auth": "SSWS {{api_key}}"
 				}
 			},
-			"before_request": [],
+            "before_request": [
+				{
+					"input": [
+						"{{__request__.options.url}}",
+						"{{next_link}}"
+					],
+					"method": "write_meta"
+				}
+			],
 			"skip_post_request": {
 				"condition": [
 					{
 						"input": [
-							"404",
-							"{{__response__.status_code}}"
+							"<([^<>]+)>;\\srel=\"next\"",
+							"{{__response__.headers.link}}"
 						],
-						"method": "regex_match"
+						"method": "regex_not_match"
 					}
 				]
 			},
 			"post_requests": [
 				{
 					"input": [
-						"$.result[(@.length-1)].sys_updated_on",
-						"{{__response__.body}}"
+						"<([^<>]+)>;\\srel=\"next\"",
+						"{{__response__.headers.link}}"
 					],
-					"method": "jsonpath",
-					"output": "since_when"
+					"method": "regex_extract",
+					"output": "next_link"
 				},
 				{
 					"input": [
-						"$.result.*",
+						"$.*",
 						"{{__response__.body}}"
 					],
 					"method": "jsonpath",
-					"output": "__stdout__"
+					"output": "__events__"
 				},
 				{
 					"input": [
-						"{{__stdout__}}",
+						"{{__events__}}",
 						"{{index}}",
 						"{{host}}",
 						"{{source}}",
 						"{{sourcetype}}"
 					],
 					"method": "splunk_xml",
-					"output": "__stdout__"
+					"output": "__events__"
 				},
 				{
-					"input": "{{__stdout__}}",
+					"input": "{{__events__}}",
 					"method": "std_output"
 				}
 			],
@@ -103,19 +101,19 @@
 				"stop_conditions": [
 					{
 						"input": [
-							"404",
-							"{{__response__.status_code}}"
+							"<([^<>]+)>;\\srel=\"next\"",
+							"{{__response__.headers.link}}"
 						],
-						"method": "regex_match"
+						"method": "regex_not_match"
 					}
 				]
 			},
 			"checkpoint": {
 				"namespace": [
-					"{{table_name}}"
+					"{{name}}"
 				],
 				"content": {
-					"since_when": "{{since_when}}"
+					"next_link": "{{next_link}}"
 				}
 			}
 		}

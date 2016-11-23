@@ -53,7 +53,7 @@
 				}
 			],
 			"skip_post_request": {
-				"condition": [
+				"conditions": [
 					{
 						"input": [
 							"$.*",

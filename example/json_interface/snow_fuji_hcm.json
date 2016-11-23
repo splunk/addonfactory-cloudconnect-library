@@ -55,7 +55,7 @@
 			},
 			"before_request": [],
 			"skip_post_request": {
-				"condition": [
+				"conditions": [
 					{
 						"input": [
 							"404",

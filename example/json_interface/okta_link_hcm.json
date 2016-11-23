@@ -46,10 +46,10 @@
             "before_request": [
 				{
 					"input": [
-						"{{__request__.options.url}}",
 						"{{next_link}}"
 					],
-					"method": "write_meta"
+					"method": "write_meta",
+					"output": "__request__.options.url"
 				}
 			],
 			"skip_post_request": {

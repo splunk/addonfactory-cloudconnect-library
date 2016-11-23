@@ -3,9 +3,12 @@ from collections import OrderedDict
 
 from jsl import (
     ArrayField,
+    BooleanField,
     DictField,
     Document,
     DocumentField,
+    IntField,
+    OneOfField,
     StringField,
 )
 
@@ -53,7 +56,7 @@ class PostRequest(Function):
 
 
 class LoopMode(Document):
-    type = StringField(enum=['loop'], required=True)
+    type = StringField(enum=['loop', 'once'], required=True)
     stop_conditions = ArrayField(items=[DocumentField(Function, as_ref=True)],
                                  min_items=1,
                                  required=True)
@@ -81,9 +84,17 @@ class Proxy(Document):
     """
     Represents proxy configuration scheme. enabled, host and port are required.
     """
-    enabled = StringField(required=True)
+    # 'enabled' can be string or int or boolean
+    enabled = OneOfField(fields=[StringField(), BooleanField(), IntField()],
+                         required=True)
+
     host = StringField(required=True)
-    port = StringField(required=True)
+    port = OneOfField(fields=[StringField(), IntField(minimum=0,
+                                                      maximum=65535,
+                                                      exclusive_minimum=True,
+                                                      exclusive_maximum=True)],
+                      required=True)
+
     username = StringField()
     password = StringField()
     rdns = StringField()

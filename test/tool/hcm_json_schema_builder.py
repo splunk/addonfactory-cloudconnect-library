@@ -43,16 +43,13 @@ class RequestOptions(Document):
 class Function(Document):
     input = ArrayField(items=[StringField()], required=True)
     method = StringField(required=True)
+    output = StringField()
 
 
 class SkipPostRequest(Document):
-    condition = ArrayField(items=[DocumentField(Function, as_ref=True)],
-                           min_items=1,
-                           required=True)
-
-
-class PostRequest(Function):
-    output = StringField(required=False)
+    conditions = ArrayField(items=[DocumentField(Function, as_ref=True)],
+                            min_items=1,
+                            required=True)
 
 
 class LoopMode(Document):
@@ -73,7 +70,7 @@ class Request(Document):
     skip_post_request = DocumentField(SkipPostRequest,
                                       as_ref=True,
                                       required=True)
-    post_request = ArrayField(items=[DocumentField(PostRequest,
+    post_request = ArrayField(items=[DocumentField(Function,
                                                    as_ref=True)],
                               required=True)
     loop_mode = DocumentField(LoopMode, as_ref=True, required=True)

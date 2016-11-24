@@ -53,6 +53,9 @@
         },
         "method": {
           "type": "string"
+        },
+        "output": {
+          "type": "string"
         }
       },
       "required": [
@@ -120,30 +123,6 @@
         "version"
       ],
       "additionalProperties": true
-    },
-    "PostRequest": {
-      "type": "object",
-      "properties": {
-        "input": {
-          "type": "array",
-          "items": [
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "method": {
-          "type": "string"
-        },
-        "output": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "input",
-        "method"
-      ],
-      "additionalProperties": false
     },
     "Proxy": {
       "type": "object",
@@ -219,7 +198,7 @@
           "type": "array",
           "items": [
             {
-              "$ref": "#/definitions/PostRequest"
+              "$ref": "#/definitions/Function"
             }
           ]
         },
@@ -276,7 +255,7 @@
     "SkipPostRequest": {
       "type": "object",
       "properties": {
-        "condition": {
+        "conditions": {
           "type": "array",
           "items": [
             {
@@ -287,7 +266,7 @@
         }
       },
       "required": [
-        "condition"
+        "conditions"
       ],
       "additionalProperties": false
     }

@@ -52,7 +52,7 @@
 					"output": "__request__.options.url"
 				}
 			],
-			"skip_post_request": {
+			"skip_after_request": {
 				"conditions": [
 					{
 						"input": [
@@ -63,7 +63,7 @@
 					}
 				]
 			},
-			"post_request": [
+			"after_request": [
 				{
 					"input": [
 						"<([^<>]+)>;\\srel=\"next\"",

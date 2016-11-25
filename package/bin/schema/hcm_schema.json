@@ -191,10 +191,10 @@
             }
           ]
         },
-        "skip_post_request": {
-          "$ref": "#/definitions/SkipPostRequest"
+        "skip_after_request": {
+          "$ref": "#/definitions/SkipAfterRequest"
         },
-        "post_request": {
+        "after_request": {
           "type": "array",
           "items": [
             {
@@ -212,8 +212,8 @@
       "required": [
         "options",
         "before_request",
-        "skip_post_request",
-        "post_request",
+        "skip_after_request",
+        "after_request",
         "loop_mode",
         "checkpoint"
       ],
@@ -252,7 +252,7 @@
       ],
       "additionalProperties": false
     },
-    "SkipPostRequest": {
+    "SkipAfterRequest": {
       "type": "object",
       "properties": {
         "conditions": {

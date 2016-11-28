@@ -34,7 +34,7 @@ def test_validate_schema_expect_raise():
         validate(conf, schema)
 
     # validate all required elements in top level
-    required = ['meta', 'parameters', 'global_settings', 'requests']
+    required = ['meta', 'parameters', 'requests']
     validated = _load_json('hcm_1.json')
 
     for r in required:

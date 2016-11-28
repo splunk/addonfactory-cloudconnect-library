@@ -55,8 +55,7 @@ class SkipAfterRequest(Document):
 class LoopMode(Document):
     type = StringField(enum=['loop', 'once'], required=True)
     stop_conditions = ArrayField(items=[DocumentField(Function, as_ref=True)],
-                                 min_items=1,
-                                 required=True)
+                                 min_items=1)
 
 
 class Request(Document):
@@ -102,10 +101,6 @@ class Meta(Document):
     """
     Represents scheme of metadata which contains version, etc.
     """
-
-    class Options(object):
-        additional_properties = True
-
     version = StringField(required=True, pattern='(?:\d{1,3}\.){2}\d{1,3}')
 
 
@@ -118,8 +113,7 @@ class GlobalSettings(Document):
         additional_properties = True
 
     proxy = DocumentField(Proxy, as_ref=True)
-    logging = DictField(required=True,
-                        properties={
+    logging = DictField(properties={
                             'level': StringField(),
                         },
                         additional_properties=True)
@@ -132,8 +126,7 @@ class Schema(Document):
 
     meta = DocumentField(Meta, as_ref=True, required=True)
     parameters = ArrayField(items=[StringField()], required=True)
-    global_settings = DocumentField(GlobalSettings, as_ref=True,
-                                    required=True)
+    global_settings = DocumentField(GlobalSettings, as_ref=True)
 
     requests = ArrayField(items=[DocumentField(Request, as_ref=True)],
                           min_items=1,

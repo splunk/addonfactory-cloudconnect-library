@@ -54,7 +54,7 @@
         }
       },
       "before_request": [],
-      "skip_post_request": {
+      "skip_after_request": {
         "conditions": [
           {
             "input": [
@@ -65,7 +65,7 @@
           }
         ]
       },
-      "post_request": [
+      "after_request": [
         {
           "input": [
             "$.result[(@.length-1)].sys_updated_on",

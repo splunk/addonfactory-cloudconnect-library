@@ -101,7 +101,7 @@ class Meta(Document):
     """
     Represents scheme of metadata which contains version, etc.
     """
-    version = StringField(required=True, pattern='(?:\d{1,3}\.){2}\d{1,3}')
+    version = StringField(required=True, pattern='[\w\-]{1,15}')
 
 
 class GlobalSettings(Document):

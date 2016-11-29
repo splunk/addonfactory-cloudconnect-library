@@ -1,3 +1,15 @@
 *.pyc
 .cache/
 .idea/
+
+/package/decorator.py
+/package/functools32/
+/package/httplib2/
+/package/jinja2/
+/package/jsonpath_rw/
+/package/jsonschema/
+/package/markupsafe/
+/package/sortedcontainers/
+/package/splunklib/
+/package/ply/
+/package/six.py

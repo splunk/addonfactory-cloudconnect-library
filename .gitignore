@@ -1,3 +1,13 @@
 *.pyc
 .cache/
 .idea/
+
+/package/bin/app_cloud_connect/decorator.py
+/package/bin/app_cloud_connect/functools32/
+/package/bin/app_cloud_connect/httplib2/
+/package/bin/app_cloud_connect/jinja2/
+/package/bin/app_cloud_connect/jsonpath_rw/
+/package/bin/app_cloud_connect/jsonschema/
+/package/bin/app_cloud_connect/markupsafe/
+/package/bin/app_cloud_connect/ply/
+/package/bin/app_cloud_connect/six.py

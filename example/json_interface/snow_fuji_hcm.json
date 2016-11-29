@@ -1,0 +1,123 @@
+{
+	"meta": {
+		"version": "1.0.0"
+	},
+	"parameters": [
+		"name",
+		"instance",
+		"sysparm_limit",
+		"table_name",
+		"since_when",
+		"host",
+		"index",
+		"sourcetype",
+		"source",
+		"checkpoint_dir",
+		"proxy_enable",
+		"proxy_host",
+		"proxy_type",
+		"proxy_username",
+		"proxy_rdns",
+		"proxy_type",
+		"logging_level",
+		"username",
+		"password"
+	],
+	"global_settings": {
+		"proxy": {
+			"enabled": "{{proxy_enable}}",
+			"host": "{{proxy_host}}",
+			"port": "{{proxy_port}}",
+			"username": "{{proxy_username}}",
+			"password": "{{proxy_password}}",
+			"rdns": "{{proxy_rdns}}",
+			"type": "{{proxy_type}}"
+		},
+		"logging": {
+			"level": "{{logging_level}}"
+		}
+	},
+	"requests": [
+		{
+			"options": {
+				"url": "https://{{host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
+				"method": "GET",
+				"auth": {
+					"type": "basic_auth",
+					"options": {
+						"username": "{{username}}",
+						"password": "{{password}}"
+					}
+				},
+				"headers": {
+					"accept": "application/json"
+				}
+			},
+			"before_request": [],
+			"skip_after_request": {
+				"conditions": [
+					{
+						"input": [
+							"404",
+							"{{__response__.status_code}}"
+						],
+						"method": "regex_match"
+					}
+				]
+			},
+			"after_request": [
+				{
+					"input": [
+						"$.result[(@.length-1)].sys_updated_on",
+						"{{__response__.body}}"
+					],
+					"method": "jsonpath",
+					"output": "since_when"
+				},
+				{
+					"input": [
+						"$.result.*",
+						"{{__response__.body}}"
+					],
+					"method": "jsonpath",
+					"output": "__stdout__"
+				},
+				{
+					"input": [
+						"{{__stdout__}}",
+						"{{index}}",
+						"{{host}}",
+						"{{source}}",
+						"{{sourcetype}}"
+					],
+					"method": "splunk_xml",
+					"output": "__stdout__"
+				},
+				{
+					"input": "{{__stdout__}}",
+					"method": "std_output"
+				}
+			],
+			"loop_mode": {
+				"type": "loop",
+				"stop_conditions": [
+					{
+						"input": [
+							"404",
+							"{{__response__.status_code}}"
+						],
+						"method": "regex_match"
+					}
+				]
+			},
+			"checkpoint": {
+				"namespace": [
+					"{{table_name}}"
+				],
+				"content": {
+					"since_when": "{{since_when}}"
+				}
+			}
+		}
+	]
+}

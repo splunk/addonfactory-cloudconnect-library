@@ -11,8 +11,33 @@ class TokenizedObject(object):
 
 
 class Request(object):
-    def __init__(self):
-        pass
+    def __init__(self, options, before_request, skip_after_request,
+                 after_request, checkpoint):
+        self._options = options
+        self._before_request = before_request
+        self._skip_after_request = skip_after_request
+        self._after_request = after_request
+        self._checkpoint = checkpoint
+
+    @property
+    def options(self):
+        return self._options
+
+    @property
+    def before_request(self):
+        return self._before_request
+
+    @property
+    def skip_after_request(self):
+        return self._skip_after_request
+
+    @property
+    def after_request(self):
+        return self._after_request
+
+    @property
+    def checkpoint(self):
+        return self._checkpoint
 
 
 class Header(object):
@@ -155,6 +180,6 @@ class Checkpoint(object):
     def namespace(self):
         return self._namespace
 
-    @ @property
+    @property
     def content(self):
         return self._content

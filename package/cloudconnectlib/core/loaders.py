@@ -60,7 +60,7 @@ def _ensure_dict(obj, msg):
 def _check_required_fields(fields, config):
     for f in fields:
         if f not in config:
-            raise ValueError('field {} is required'.format(f))
+            raise ValueError('Field {} is required'.format(f))
 
 
 class MetaLoader(_BaseLoader):
@@ -125,7 +125,8 @@ class OptionsLoader(_BaseLoader):
         header = HeaderLoader.load(config['header'])
         method = config['method']
         url = config['url']
-        return Options(headers=header, method=method, url=url)
+        return Options(header=header, method=method, url=url,
+                       auth=config.get('auth'))
 
 
 class CheckpointLoader(_BaseLoader):
@@ -191,7 +192,7 @@ class SkipAfterRequestLoader(_BaseLoader):
 
         sar = SkipAfterRequest()
         for item in config['conditions']:
-            sar.addcondition(ConditionLoader.load(item))
+            sar.add_condition(ConditionLoader.load(item))
         return sar
 
 

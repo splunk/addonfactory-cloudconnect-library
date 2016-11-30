@@ -94,7 +94,9 @@
 					"output": "__stdout__"
 				},
 				{
-					"input": "{{__stdout__}}",
+					"input": [
+						"{{__stdout__}}"
+					],
 					"method": "std_output"
 				}
 			],

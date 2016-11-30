@@ -15,13 +15,13 @@ def _load_json(json_file):
 
 def _load_schema_from_file():
     schema_file = op.join(op.dirname(op.dirname(op.dirname(op.abspath(__file__)))),
-                          'package', 'bin', 'schema', 'hcm_schema.json')
+                          'package', 'lib-cloud-connect', 'configuration', 'schema.json')
     with open(schema_file, 'r') as f:
         return json.loads(f.read())
 
 
 def test_validate_generated_schema():
-    conf = _load_json('hcm_1.json')
+    conf = _load_json('test_1.json')
     assert conf['meta']['version'] == '1.0.0'
     validate(conf, _load_schema_from_file())
 
@@ -35,7 +35,7 @@ def test_validate_schema_expect_raise():
 
     # validate all required elements in top level
     required = ['meta', 'parameters', 'requests']
-    validated = _load_json('hcm_1.json')
+    validated = _load_json('test_1.json')
 
     for r in required:
         backup = validated[r]

@@ -25,11 +25,9 @@
       "properties": {
         "namespace": {
           "type": "array",
-          "items": [
-            {
-              "type": "string"
-            }
-          ]
+          "items": {
+            "type": "string"
+          }
         },
         "content": {
           "type": "object"
@@ -45,11 +43,9 @@
       "properties": {
         "input": {
           "type": "array",
-          "items": [
-            {
-              "type": "string"
-            }
-          ]
+          "items": {
+            "type": "string"
+          }
         },
         "method": {
           "type": "string"
@@ -76,11 +72,10 @@
             "level": {
               "type": "string"
             }
-          },
-          "additionalProperties": true
+          }
         }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "LoopMode": {
       "type": "object",
@@ -94,11 +89,9 @@
         },
         "stop_conditions": {
           "type": "array",
-          "items": [
-            {
-              "$ref": "#/definitions/Function"
-            }
-          ],
+          "items": {
+            "$ref": "#/definitions/Function"
+          },
           "minItems": 1
         }
       },
@@ -181,22 +174,18 @@
         },
         "before_request": {
           "type": "array",
-          "items": [
-            {
-              "$ref": "#/definitions/Function"
-            }
-          ]
+          "items": {
+            "$ref": "#/definitions/Function"
+          }
         },
         "skip_after_request": {
           "$ref": "#/definitions/SkipAfterRequest"
         },
         "after_request": {
           "type": "array",
-          "items": [
-            {
-              "$ref": "#/definitions/Function"
-            }
-          ]
+          "items": {
+            "$ref": "#/definitions/Function"
+          }
         },
         "loop_mode": {
           "$ref": "#/definitions/LoopMode"
@@ -225,10 +214,7 @@
           "type": "string",
           "enum": [
             "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "PATCH"
+            "POST"
           ]
         },
         "headers": {
@@ -253,11 +239,9 @@
       "properties": {
         "conditions": {
           "type": "array",
-          "items": [
-            {
-              "$ref": "#/definitions/Function"
-            }
-          ],
+          "items": {
+            "$ref": "#/definitions/Function"
+          },
           "minItems": 1
         }
       },
@@ -274,11 +258,9 @@
     },
     "parameters": {
       "type": "array",
-      "items": [
-        {
-          "type": "string"
-        }
-      ]
+      "items": {
+        "type": "string"
+      }
     },
     "global_settings": {
       "$ref": "#/definitions/GlobalSettings"

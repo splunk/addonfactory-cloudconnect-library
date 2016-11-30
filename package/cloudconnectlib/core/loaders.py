@@ -2,6 +2,7 @@ import json
 import os.path as op
 
 from jsonschema import validate
+from . import util
 from .config import CloudConnectConfig
 from .model import (
     Meta, Proxy, Logging, GlobalSetting, Request, Header, Condition,
@@ -11,6 +12,8 @@ from .model import (
 # JSON schema file path.
 _SCHEMA_LOCATION = op.join(op.dirname(op.dirname(__file__)), 'configuration',
                            'hcm_schema.json')
+
+_PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 
 
 def _json_file(file_path):
@@ -82,9 +85,20 @@ class ProxyLoader(_BaseLoader):
         _ensure_dict(config, 'Proxy expect to be a dict')
         _check_required_fields(cls._required_fields, config)
 
-        return Proxy(host=config['host'], port=config['port'],
-                     enabled=config['enabled'], type=config.get('type'),
-                     rdns=config.get('rdns'))
+        enabled = config['enabled']
+        if not util.is_bool(enabled):
+            raise ValueError('Proxy "enabled" expect to be a bool')
+        port = config['port']
+        if not util.is_port(port):
+            raise ValueError('Invalid proxy port: {}'.format(port))
+
+        # proxy type default to `http`
+        proxy_type = config.get('type')
+        if proxy_type and proxy_type not in _PROXY_TYPES:
+            raise ValueError('Invalid proxy type: {}'.format(proxy_type))
+
+        return Proxy(enabled=enabled, host=config['host'], port=port,
+                     type=proxy_type, rdns=config.get('rdns'))
 
 
 class LoggingLoader(_BaseLoader):

@@ -1,56 +1,160 @@
+from jinja2 import Template
+
+
 class TokenizedObject(object):
     def __init__(self, template):
         self._template = template
+        self._jtemplate = Template(template)
 
-    def value(self):
-        return self._template
+    def value(self, context):
+        return self._jtemplate.render(context)
 
 
 class Request(object):
     def __init__(self):
         pass
 
+
 class Header(object):
     def __init__(self):
         self._items = dict()
 
     def add(self, key, value):
-        self._items.update({key:TokenizedObject(value)})
+        self._items[key] = TokenizedObject(value)
+
+    def get(self, key):
+        return self._items.get(key)
+
+    @property
+    def items(self):
+        return self._items
+
+
+class BasicAuthorization(object):
+    def __init__(self, options):
+        if not options:
+            raise ValueError("the options field of auth is empty")
+        self._username = options.get("username")
+        self._password = options.get("password")
+        if not self._username:
+            raise ValueError("username of auth is empty")
+        if not self._password:
+            raise ValueError("password of auth is empty")
+        self._username = TokenizedObject(self._username)
+        self._password = TokenizedObject(self._password)
+
+    @property
+    def username(self):
+        return self._username
+
+    @property
+    def password(self):
+        return self.password
+
 
 class Options(object):
-    def __init__(self, headers, url ,method):
-        self._headers = headers
+    def __init__(self, url, header=None, method="GET", auth=None):
+        self._header = header
         self._url = TokenizedObject(url)
-        self._method = method
+        self._method = method.upper()
+        self._auth = auth
+
+    @property
+    def header(self):
+        return self._header
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def method(self):
+        return self._method
+
 
 class ProcessHandler(object):
-    def __init__(self, inputs, func, output):
-        pass
+    def __init__(self, inputs, func, output=None):
+        self._inputs = []
+        for input in inputs:
+            self._inputs.append(TokenizedObject(input))
+        self._func = func
+        self._output = output
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @property
+    def func(self):
+        return self._func
+
+    @property
+    def output(self):
+        return self._output
+
+    def invoke(self):
+        self._output = self._func(*self.inputs)
+
 
 class BeforeRequest(ProcessHandler):
     pass
 
+
 class AfterRequest(ProcessHandler):
     pass
 
+
 class Condition(ProcessHandler):
     pass
+
 
 class SkipAfterRequest(object):
     def __init__(self):
         self._conditions = []
 
-    def addcondition(self, condition):
+    def add_condition(self, condition):
         self._conditions.append(condition)
+
+    @property
+    def conditions(self):
+        return self._conditions
 
 
 class LoopMode(object):
-    def __init__(self, type):
-        self._type = type
-        self._conditions = []
+    loop_types = ["loop", "once"]
+
+    def __init__(self, type="once", conditions=None):
+        if type.lower() in LoopMode.loop_types:
+            self._type = type
+        else:
+            self._type = "once"
+        self._conditions = conditions
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def conditions(self):
+        return self._conditions
+
 
 class Checkpoint(object):
-    def __init__(self):
-        self._namespace= []
+    def __init__(self, contents, keys=None):
+        self._namespace = []
+        if keys:
+            for key in keys:
+                self._namespace.append(TokenizedObject(key))
+        if not contents:
+            raise ValueError("the content field of checkpoint is empty")
         self._content = dict()
+        for key, value in contents.iteritems():
+            self._content[key] = TokenizedObject(value)
 
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @ @property
+    def content(self):
+        return self._content

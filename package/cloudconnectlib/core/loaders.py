@@ -4,12 +4,13 @@ import os.path as op
 from jsonschema import validate
 from .config import CloudConnectConfig
 from .model import (
-    Meta, Proxy, Logging, GlobalSetting, Request, Header,
+    Meta, Proxy, Logging, GlobalSetting, Request, Header, Condition,
     Options, Checkpoint, BeforeRequest, AfterRequest, SkipAfterRequest
 )
 
 # JSON schema file path.
-_SCHEMA_LOCATION = op.join(op.dirname(op.dirname(__file__)), 'configuration', 'hcm_schema.json')
+_SCHEMA_LOCATION = op.join(op.dirname(op.dirname(__file__)), 'configuration',
+                           'hcm_schema.json')
 
 
 def _json_file(file_path):
@@ -154,7 +155,8 @@ class BeforeRequestLoader(_BaseLoader):
             _ensure_dict(item, 'BeforeRequest in  expect to be a list')
             _check_required_fields(cls._required_fields, item)
             _ensure_list(item['input'], 'Input expect to be a list')
-            elements.append(BeforeRequest(item['input'], item['method'], item.get('output')))
+            elements.append(BeforeRequest(item['input'], item['method'],
+                                          item.get('output')))
         return elements
 
 
@@ -166,10 +168,11 @@ class AfterRequestLoader(_BaseLoader):
         _ensure_list(config, 'AfterRequests expect to be a list')
         elements = []
         for item in config:
-            _ensure_dict(item, 'AfterRequest in  expect to be a list')
+            _ensure_dict(item, 'AfterRequest expect to be a list')
             _check_required_fields(cls._required_fields, item)
             _ensure_list(item['input'], 'Input expect to be a list')
-            elements.append(AfterRequest(item['input'], item['method'], item.get('output')))
+            elements.append(AfterRequest(item['input'], item['method'],
+                                         item.get('output')))
         return elements
 
 
@@ -179,6 +182,11 @@ class ConditionLoader(_BaseLoader):
     @classmethod
     def load(cls, config):
         _ensure_dict(config, 'Condition expect to be a dict')
+        _check_required_fields(cls._required_fields, config)
+        inputs = config['input']
+        _ensure_list(inputs, 'Namespace of checkpoint expect to be a list')
+        return Condition(inputs=inputs, func=config['method'],
+                         output=config.get('output'))
 
 
 class SkipAfterRequestLoader(_BaseLoader):
@@ -234,7 +242,8 @@ class CloudConnectConfigLoader(_BaseLoader):
         _ensure_list(requests_as_list, 'Requests expect to be a list')
         requests = [RequestLoader.load(item) for item in requests_as_list]
 
-        return CloudConnectConfig(meta=meta, global_settings=global_settings, requests=requests)
+        return CloudConnectConfig(meta=meta, global_settings=global_settings,
+                                  requests=requests)
 
 
 def load_cloud_connect_config(json_file_path):

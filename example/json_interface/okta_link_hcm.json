@@ -92,7 +92,9 @@
 					"output": "__events__"
 				},
 				{
-					"input": "{{__events__}}",
+					"input": [
+                        "{{__events__}}"
+                    ],
 					"method": "std_output"
 				}
 			],

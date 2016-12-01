@@ -1,21 +1,19 @@
-from .. import util
-from httplib2 import socks
 import logging
+
+from .. import util
 
 
 class Logging(object):
-    def __init__(self, level="INFO"):
-        level = level.upper()
-        if level == "DEBUG":
-            self._level = logging.DEBUG
-        elif level == "INFO":
-            self._level = logging.INFO
-        elif level == "WARN":
-            self._level = logging.WARN
-        elif level == "ERROR":
-            self._level = logging.ERROR
-        else:
-            self._level = logging.INFO
+    _logging_level = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARN': logging.WARN,
+        'ERROR': logging.ERROR,
+        'FATAL': logging.FATAL,
+    }
+
+    def __init__(self, level='INFO'):
+        self._level = self._logging_level.get(level, logging.INFO)
 
     @property
     def level(self):
@@ -26,13 +24,7 @@ class Proxy(object):
     """
     A entity class to hold proxy related setting.
     """
-
-    proxy_type_to_code = {
-        "http": socks.PROXY_TYPE_HTTP,
-        "http_no_tunnel": socks.PROXY_TYPE_HTTP_NO_TUNNEL,
-        "socks4": socks.PROXY_TYPE_SOCKS4,
-        "socks5": socks.PROXY_TYPE_SOCKS5,
-    }
+    _allowed_proxy_types = ['http', 'http_no_tunnel', 'socks4', 'socks5']
 
     def __init__(self, enabled=False, host=None, port=None, username=None,
                  password=None, type=None, rdns=None):
@@ -41,10 +33,7 @@ class Proxy(object):
         self._port = int(port)
         self._username = username
         self._password = password
-        if type in Proxy.proxy_type_to_code:
-            self._type = type
-        else:
-            self._type = socks.PROXY_TYPE_HTTP
+        self._type = type if type in self._allowed_proxy_types else 'http'
         self._rdns = util.is_true(rdns)
 
     @property

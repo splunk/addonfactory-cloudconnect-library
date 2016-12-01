@@ -1,5 +1,6 @@
-from ..template import CloudConnectTemplate as Template
 from ..exception import InvalidConfigException
+from ..template import CloudConnectTemplate as Template
+
 
 class TokenizedObject(object):
     def __init__(self, template):
@@ -60,6 +61,12 @@ class Header(object):
     def items(self):
         return self._items
 
+    def build(self, context):
+        header = {}
+        for k in self._items:
+            header[k] = self.get(k).render_value(context)
+        return header
+
 
 class BasicAuthorization(object):
     def __init__(self, options):
@@ -77,6 +84,12 @@ class BasicAuthorization(object):
     @property
     def username(self):
         return self._username
+
+    def get_username(self, ctx):
+        return self._username.render_value(ctx)
+
+    def get_password(self, ctx):
+        return self._password.render_value(ctx)
 
     @property
     def password(self):

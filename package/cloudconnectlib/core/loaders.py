@@ -2,8 +2,9 @@ import json
 import os.path as op
 
 from jsonschema import validate
+
+from package.cloudconnectlib.core.model.config import CloudConnectConfig
 from . import util
-from .config import CloudConnectConfig
 from .model import (
     Meta, Proxy, Logging, GlobalSetting, Request, Header, Condition,
     Options, Checkpoint, BeforeRequest, AfterRequest, SkipAfterRequest

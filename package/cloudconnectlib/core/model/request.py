@@ -7,7 +7,13 @@ class TokenizedObject(object):
         self._jtemplate = Template(template)
 
     def value(self, context):
-        return self._jtemplate.render(context)
+        return self._value
+
+    def render_value(self, context):
+        self.set_value(self._jtemplate.render(context))
+
+    def set_value(self, current_value):
+        self._value = current_value
 
 
 class Request(object):

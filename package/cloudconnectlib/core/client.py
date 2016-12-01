@@ -1,10 +1,10 @@
+import base64
+
+from httplib2 import (ProxyInfo, Http)
+from .model.request import BasicAuthorization
 from ..configuration.loaders import load_cloud_connect_config
 from ..splunktalib.common import log
-from ..splunktalib.rest import build_http_connection
 from ..splunktaucclib.common import log as stulog
-from .model.request import BasicAuthorization
-import base64
-from httplib2 import (ProxyInfo, Http)
 
 _LOGGER = log.Logs().get_logger('cloud_connect')
 
@@ -79,44 +79,31 @@ class CloudConnectRequest(object):
         self._proxy = proxy
         self._url = None
         self._method = "GET"
-        self._headers = dict()
+        self._headers = {}
 
     def _do_stuff_before_request(self):
         pass
 
-    def _prepare_proxy_setting(self):
-        if self._proxy is None:
-            return {}
-        return {
-            'proxy_url': self._proxy.host,
-            'proxy_port': self._proxy.port,
-            'proxy_username': self._proxy.username,
-            'proxy_password': self._proxy.password,
-            'proxy_type': self._proxy.type,
-            'proxy_rdns': self._proxy.rdns,
-        }
-
     def _invoke_request(self):
         """
-        Invoke a request with httplib2 and return it's request.
+        Invoke a request with httplib2 and return it's response.
         :return: A response of request.
         """
         http = self._build_http_connection()
         resp, content = http.request(self._url, method=self._method,
-                                      headers=self._headers)
+                                     headers=self._headers)
 
         response = CloudConnectResponse(resp, content)
         return response
 
-
-    def _is_skip_after_request(self):
+    def _skip_after_request(self):
         """
         Determine if we need to skip the step of after request based on the
         response content.
-        :param response: http response of current request
         :return: `True` if don't need process after request else `False`.
         """
-        pass
+        conditions = self._request.skip_after_request.conditions
+        return all(item.calculate() for item in conditions)
 
     def _do_stuff_after_request(self):
         # FIXME
@@ -136,7 +123,7 @@ class CloudConnectRequest(object):
             self._init_request()
             self._do_stuff_before_request()
             self._context['__reponse__'] = self._invoke_request()
-            if not self._is_skip_after_request():
+            if not self._skip_after_request():
                 self._do_stuff_after_request()
             if self._is_meet_stop_condition():
                 break

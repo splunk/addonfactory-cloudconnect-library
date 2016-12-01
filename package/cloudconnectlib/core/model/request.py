@@ -1,4 +1,5 @@
 from ..exception import InvalidConfigException
+from ..ext import lookup
 from ..template import CloudConnectTemplate as Template
 
 
@@ -118,39 +119,53 @@ class Options(object):
 
 
 class ProcessHandler(object):
-    def __init__(self, inputs, func, output=None):
+    def __init__(self, inputs, method):
         self._inputs = []
-        for input in inputs:
-            self._inputs.append(TokenizedObject(input))
-        self._func = func
-        self._output = output
+        for item in inputs:
+            self._inputs.append(TokenizedObject(item))
+        self._method = method
 
     @property
     def inputs(self):
         return self._inputs
 
+    def inputs_values(self, context):
+        """
+        Get rendered input values.
+        """
+        for it in self._inputs:
+            yield it.render_value(context)
+
     @property
-    def func(self):
-        return self._func
+    def method(self):
+        return self._method
+
+
+class BeforeRequest(ProcessHandler):
+    def __init__(self, inputs, method, output=None):
+        super(BeforeRequest, self).__init__(inputs, method)
+        self._output = output
 
     @property
     def output(self):
         return self._output
 
-    def invoke(self):
-        self._output = self._func(*self.inputs)
 
-
-class BeforeRequest(ProcessHandler):
-    pass
-
-
-class AfterRequest(ProcessHandler):
+class AfterRequest(BeforeRequest):
     pass
 
 
 class Condition(ProcessHandler):
-    pass
+    def calculate(self, context):
+        """
+        Calculates condition result with input and method.
+        :return: `True` if condition meets.
+        """
+        method = lookup(self.method)
+        if method is None:
+            raise ValueError('method {} is not exist'.format(self.method))
+        args = [it for it in self.inputs_values(context)]
+        return method(*args)
 
 
 class SkipAfterRequest(object):

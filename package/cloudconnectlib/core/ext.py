@@ -9,7 +9,7 @@ def regex_match(pattern, candidate):
     :param candidate: candidate to match regex
     :return: `True` if candidate match pattern else `False`
     """
-    return re.match(pattern, candidate)
+    return re.match(pattern, candidate) is not None
 
 
 def regex_not_match(pattern, candidate):
@@ -20,7 +20,7 @@ def regex_not_match(pattern, candidate):
     :param candidate: candidate to match regex
     :return: `True` if candidate not match pattern else `False`
     """
-    return not re.match(pattern, candidate)
+    return not regex_match(pattern, candidate)
 
 
 def jsonpath(expr, candidate):
@@ -56,3 +56,21 @@ def std_output(string):
     import sys
     sys.stdout.write(string)
     sys.stdout.flush()
+
+
+_functions = {
+    'regex_match': regex_match,
+    'regex_not_match': regex_not_match,
+    'splunk_xml': splunk_xml,
+    'std_output': std_output,
+    'jsonpath': jsonpath,
+}
+
+
+def lookup(name):
+    """
+    Find a predefined function with given function name.
+    :param name: function name.
+    :return: A function with given name.
+    """
+    return _functions.get(name)

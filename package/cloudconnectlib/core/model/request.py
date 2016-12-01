@@ -21,11 +21,12 @@ class TokenizedObject(object):
 
 class Request(object):
     def __init__(self, options, before_request, skip_after_request,
-                 after_request, checkpoint):
+                 after_request, loop_mode, checkpoint):
         self._options = options
         self._before_request = before_request
         self._skip_after_request = skip_after_request
         self._after_request = after_request
+        self._loop_mode = loop_mode
         self._checkpoint = checkpoint
 
     @property
@@ -43,6 +44,10 @@ class Request(object):
     @property
     def after_request(self):
         return self._after_request
+
+    @property
+    def loop_mode(self):
+        return self._loop_mode
 
     @property
     def checkpoint(self):
@@ -184,10 +189,8 @@ class LoopMode(object):
     loop_types = ["loop", "once"]
 
     def __init__(self, type="once", conditions=None):
-        if type.lower() in LoopMode.loop_types:
-            self._type = type
-        else:
-            self._type = "once"
+        type = type.lower()
+        self._type = type if type in self.loop_types else 'once'
         self._conditions = conditions
 
     @property
@@ -197,6 +200,9 @@ class LoopMode(object):
     @property
     def conditions(self):
         return self._conditions
+
+    def is_once(self):
+        return self._type == 'once'
 
 
 class Checkpoint(object):

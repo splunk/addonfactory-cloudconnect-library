@@ -1,6 +1,7 @@
 import base64
 
 from httplib2 import (ProxyInfo, Http)
+from .ext import lookup
 from .model.request import BasicAuthorization
 from ..configuration.loaders import load_cloud_connect_config
 from ..splunktalib.common import log
@@ -78,8 +79,11 @@ class CloudConnectRequest(object):
         self._context = context
         self._proxy = proxy
         self._url = None
-        self._method = "GET"
+        self._method = 'GET'
         self._headers = {}
+
+    def _update_context(self, key, value):
+        self._context[key] = value
 
     def _do_stuff_before_request(self):
         pass
@@ -106,28 +110,48 @@ class CloudConnectRequest(object):
         return all(item.calculate() for item in conditions)
 
     def _do_stuff_after_request(self):
-        # FIXME
-        pass
+        tasks = self._request.after_request
+        for task in tasks:
+            args = [arg for arg in task.inputs_values(self._context)]
+            func = lookup(task.method)
+            if func is None:
+                raise ValueError('method {} is not exist'.format(task.method))
+            output_attr = task.output
+            if output_attr is None:
+                func(*args)
+            else:
+                self._update_context(output_attr, func(*args))
 
     def _update_checkpoint(self):
         pass
 
-    def _is_meet_stop_condition(self):
-        pass
+    def _check_stop_condition(self):
+        loop_mode = self._request.loop_mode
+        if loop_mode.is_once():
+            return True
+        return all(condition.calculate(self._context)
+                   for condition in loop_mode.conditions)
 
     def start(self):
         """
         Start request instance and exit util meet stop condition.
         """
+        _LOGGER.info('Start to process request')
+
         while 1:
             self._init_request()
             self._do_stuff_before_request()
-            self._context['__reponse__'] = self._invoke_request()
+
+            self._update_context('__response__', self._invoke_request())
+
             if not self._skip_after_request():
                 self._do_stuff_after_request()
-            if self._is_meet_stop_condition():
+            if self._check_stop_condition():
+                _LOGGER.info('Stop condition reached, exit loop now')
                 break
             self._update_checkpoint()
+
+        _LOGGER.info('Process request finished')
 
     def _build_http_connection(self, timeout=120,
                                disable_ssl_cert_validation=True):

@@ -1,4 +1,4 @@
-from jinja2 import Template
+from ..template import CloudConnectTemplate as Template
 
 
 class TokenizedObject(object):

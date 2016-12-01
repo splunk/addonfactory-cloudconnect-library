@@ -10,8 +10,7 @@ from ..core.model import (
 )
 
 # JSON schema file path.
-_SCHEMA_LOCATION = op.join(op.dirname(op.dirname(__file__)), 'configuration',
-                           'hcm_schema.json')
+_SCHEMA_LOCATION = op.join(op.dirname(__file__), 'hcm_schema.json')
 
 _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _HTTP_METHODS = ['HTTP', 'POST']

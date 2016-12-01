@@ -11,10 +11,11 @@ class TokenizedObject(object):
         return self._value
 
     def render_value(self, context):
-        self.set_value(self._jtemplate.render(context))
+        return self.set_value(self._jtemplate.render(context))
 
     def set_value(self, current_value):
         self._value = current_value
+        return self._value
 
 
 class Request(object):

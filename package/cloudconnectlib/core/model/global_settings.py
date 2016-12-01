@@ -31,8 +31,12 @@ class Proxy(object):
         self._enabled = util.is_true(enabled)
         self._host = host
         self._port = int(port)
-        self._username = username
-        self._password = password
+        self._username = None
+        self._password = None
+        if username:
+            self._username = username
+        if password:
+            self._password = password
         self._type = type if type in self._allowed_proxy_types else 'http'
         self._rdns = util.is_true(rdns)
 

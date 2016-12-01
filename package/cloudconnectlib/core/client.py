@@ -2,8 +2,30 @@ from ..configuration.loaders import load_cloud_connect_config
 from ..splunktalib.common import log
 from ..splunktalib.rest import build_http_connection
 from ..splunktaucclib.common import log as stulog
+from .model.request import BasicAuthorization
+import base64
+from httplib2 import (ProxyInfo, Http)
 
 _LOGGER = log.Logs().get_logger('cloud_connect')
+
+
+class CloudConnectResponse(object):
+    def __init__(self, res_headers, res_body):
+        self._status_code = res_headers.status
+        self._headers = res_headers
+        self._body = res_body
+
+    @property
+    def headers(self):
+        return self._headers
+
+    @property
+    def body(self):
+        return self._body
+
+    @property
+    def status_code(self):
+        return self._status_code
 
 
 class CloudConnectClient(object):
@@ -55,6 +77,9 @@ class CloudConnectRequest(object):
         self._request = request
         self._context = context
         self._proxy = proxy
+        self._url = None
+        self._method = "GET"
+        self._headers = dict()
 
     def _do_stuff_before_request(self):
         pass
@@ -76,18 +101,15 @@ class CloudConnectRequest(object):
         Invoke a request with httplib2 and return it's request.
         :return: A response of request.
         """
-        options = self._request.options
-        http_conf = self._prepare_proxy_setting()
-        if options.auth:
-            # FIXME a temp solution
-            http_conf['username'] = options.auth.get_username(self._context)
-            http_conf['password'] = options.auth.get_password(self._context)
-        connection = build_http_connection(http_conf)
-        return connection.request(uri=options.url,
-                                  method=options.method,
-                                  headers=options.header.build(self._context))
+        http = self._build_http_connection()
+        resp, content = http.request(self._url, method=self._method,
+                                      headers=self._headers)
 
-    def _is_skip_after_request(self, response):
+        response = CloudConnectResponse(resp, content)
+        return response
+
+
+    def _is_skip_after_request(self):
         """
         Determine if we need to skip the step of after request based on the
         response content.
@@ -96,33 +118,64 @@ class CloudConnectRequest(object):
         """
         pass
 
-    def _do_stuff_after_request(self, response):
+    def _do_stuff_after_request(self):
         # FIXME
         pass
 
-    def _update_checkpoint(self, response):
+    def _update_checkpoint(self):
         pass
 
-    def _is_meet_stop_condition(self, response):
+    def _is_meet_stop_condition(self):
         pass
 
     def start(self):
         """
         Start request instance and exit util meet stop condition.
         """
-        self._init_request()
-
         while 1:
+            self._init_request()
             self._do_stuff_before_request()
-            response = self._invoke_request()
-            if self._is_skip_after_request(response):
+            self._context['__reponse__'] = self._invoke_request()
+            if not self._is_skip_after_request():
+                self._do_stuff_after_request()
+            if self._is_meet_stop_condition():
                 break
-            self._do_stuff_after_request(response)
-            if self._is_meet_stop_condition(response):
-                break
-            self._update_checkpoint(response)
+            self._update_checkpoint()
+
+    def _build_http_connection(self, timeout=120,
+                               disable_ssl_cert_validation=True):
+        if self._proxy and self._proxy.enabled:
+            proxy_info = ProxyInfo(proxy_type=self._proxy.type,
+                                   proxy_host=self._proxy.host,
+                                   proxy_port=self._proxy.port,
+                                   proxy_user=self._proxy.username,
+                                   proxy_pass=self._proxy.password,
+                                   proxy_rdns=self._proxy.rdns)
+            http = Http(proxy_info=proxy_info, timeout=timeout,
+                        disable_ssl_certificate_validation=disable_ssl_cert_validation)
+        else:
+            http = Http(timeout=timeout,
+                        disable_ssl_certificate_validation=disable_ssl_cert_validation)
+        return http
 
     def _init_request(self):
         request_options = self._request.options
         self._url = request_options.url.render(self._context)
         self._method = request_options.method
+        self._do_auth()
+        self._handle_headers()
+
+    def _handle_headers(self):
+        options = self._request.options
+        header_item = options.header.items
+        for key, value in header_item.iteritems():
+            self._headers[key] = value.render_value(self._context)
+
+    def _do_auth(self):
+        options = self._request.options
+        auth = options.auth
+        if isinstance(auth, BasicAuthorization):
+            username = auth.username.render_value(self._context)
+            password = auth.password.render_value(self._context)
+            encode_str = base64.encodestring(username + ':' + password)
+            self._headers['Authorization'] = 'Basic ' + encode_str

@@ -1,8 +1,9 @@
 import json
 import os.path as op
 
-from jsonschema import validate
+from jsonschema import validate, ValidationError
 from ..core import util
+from ..core.exception import InvalidConfigException
 from ..core.model import (
     Meta, Proxy, Logging, GlobalSetting, Request, Header, Condition,
     Options, Checkpoint, BeforeRequest, AfterRequest, SkipAfterRequest,
@@ -18,13 +19,15 @@ _HTTP_METHODS = ['HTTP', 'POST']
 
 def _check_type(candidate, expect_type, item_type):
     if not isinstance(candidate, expect_type):
-        raise TypeError('{} is not a {}'.format(item_type, expect_type))
+        raise InvalidConfigException(
+            '{} is not a {}'.format(item_type, expect_type))
 
 
 def _check_required_fields(fields, candidate, item):
     for f in fields:
         if f not in candidate:
-            raise ValueError('{} of {} is required'.format(f, item))
+            raise InvalidConfigException(
+                '{} of {} is required'.format(f, item))
 
 
 def _json_file(file_path):
@@ -41,7 +44,8 @@ def _load_schema_from_file(file_path):
     try:
         return _json_file(file_path)
     except:
-        raise ValueError('Cannot load schema from {}'.format(file_path))
+        raise InvalidConfigException(
+            'Cannot load schema from {}'.format(file_path))
 
 
 def _load_definition(file_path):
@@ -51,16 +55,22 @@ def _load_definition(file_path):
     :return: A `dict` contains user defined JSON interface.
     """
     if not op.isfile(file_path):
-        raise ValueError('Invalid interface file {}'.format(file_path))
+        raise InvalidConfigException(
+            'Invalid interface file {}'.format(file_path))
     try:
         return _json_file(file_path)
     except:
-        raise ValueError('Cannot load JSON interface from file {}'.format(file_path))
+        raise InvalidConfigException(
+            'Cannot load JSON interface from file {}'.format(file_path))
 
 
 class _BaseLoader(object):
+    """
+    A base class for implementing a loader to load object from `dict`.
+    """
+
     @classmethod
-    def load(cls, config):
+    def load(cls, candidate):
         pass
 
 
@@ -88,16 +98,16 @@ class ProxyLoader(_BaseLoader):
 
         enabled = candidate['enabled']
         if not util.is_bool(enabled):
-            raise ValueError('`enabled` of proxy is not bool')
+            raise InvalidConfigException('`enabled` of proxy is not bool')
 
         port = candidate['port']
         if not util.is_port(port):
-            raise ValueError('proxy port is invalid: {}'.format(port))
+            raise InvalidConfigException('proxy port is invalid: {}'.format(port))
 
         # proxy type default to `http`
         proxy_type = candidate.get('type')
         if proxy_type and proxy_type not in _PROXY_TYPES:
-            raise ValueError('proxy type is invalid: {}'.format(proxy_type))
+            raise InvalidConfigException('proxy type is invalid: {}'.format(proxy_type))
 
         return Proxy(enabled=enabled, host=candidate['host'], port=port,
                      type=proxy_type, rdns=candidate.get('rdns'))
@@ -287,6 +297,10 @@ class CloudConnectConfigLoader(_BaseLoader):
         parameters = config['parameters']
         _check_type(parameters, list, 'parameters')
 
+        for param in parameters:
+            if not isinstance(param, basestring):
+                raise InvalidConfigException('parameter is not string: {}'.format(param))
+
         global_settings = GlobalSettingLoader.load(config.get('global_settings'))
 
         requests = config['requests']
@@ -304,5 +318,9 @@ def load_cloud_connect_config(json_file_path):
     :return: A `CloudConnectConfig` object.
     """
     definition = _load_definition(json_file_path)
-    validate(definition, _load_schema_from_file(_SCHEMA_LOCATION))
+    try:
+        validate(definition, _load_schema_from_file(_SCHEMA_LOCATION))
+    except ValidationError:
+        raise InvalidConfigException('Failed to validate interface with schema')
+
     return CloudConnectConfigLoader.load(definition)

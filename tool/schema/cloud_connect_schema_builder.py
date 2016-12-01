@@ -1,4 +1,5 @@
 import json
+import os.path as op
 from collections import OrderedDict
 
 from jsl import (
@@ -12,7 +13,7 @@ from jsl import (
     StringField,
 )
 
-_HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+_HTTP_METHODS = ['GET', 'POST']
 _AUTH_TYPES = ['digest', 'basic_auth']
 
 
@@ -20,7 +21,7 @@ class Checkpoint(Document):
     """
     Represents configuration scheme for saving checkpoint.
     """
-    namespace = ArrayField(items=[StringField()])
+    namespace = ArrayField(items=StringField())
     content = DictField(required=True)
 
 
@@ -41,20 +42,20 @@ class RequestOptions(Document):
 
 
 class Function(Document):
-    input = ArrayField(items=[StringField()], required=True)
+    input = ArrayField(items=StringField(), required=True)
     method = StringField(required=True)
     output = StringField()
 
 
 class SkipAfterRequest(Document):
-    conditions = ArrayField(items=[DocumentField(Function, as_ref=True)],
+    conditions = ArrayField(items=DocumentField(Function, as_ref=True),
                             min_items=1,
                             required=True)
 
 
 class LoopMode(Document):
     type = StringField(enum=['loop', 'once'], required=True)
-    stop_conditions = ArrayField(items=[DocumentField(Function, as_ref=True)],
+    stop_conditions = ArrayField(DocumentField(Function, as_ref=True),
                                  min_items=1)
 
 
@@ -63,14 +64,14 @@ class Request(Document):
     Represents config scheme for single request.
     """
     options = DocumentField(RequestOptions, as_ref=True, required=True)
-    before_request = ArrayField(items=[DocumentField(Function,
-                                                     as_ref=True)],
+    before_request = ArrayField(items=DocumentField(Function,
+                                                    as_ref=True),
                                 required=True)
     skip_after_request = DocumentField(SkipAfterRequest,
                                        as_ref=True,
                                        required=True)
-    after_request = ArrayField(items=[DocumentField(Function,
-                                                    as_ref=True)],
+    after_request = ArrayField(items=DocumentField(Function,
+                                                   as_ref=True),
                                required=True)
     loop_mode = DocumentField(LoopMode, as_ref=True, required=True)
     checkpoint = DocumentField(Checkpoint, as_ref=True, required=True)
@@ -109,14 +110,10 @@ class GlobalSettings(Document):
     Represents scheme of global settings which contains logging, proxy etc.
     """
 
-    class Options(object):
-        additional_properties = True
-
     proxy = DocumentField(Proxy, as_ref=True)
     logging = DictField(properties={
-                            'level': StringField(),
-                        },
-                        additional_properties=True)
+        'level': StringField(),
+    })
 
 
 class Schema(Document):
@@ -125,7 +122,7 @@ class Schema(Document):
     """
 
     meta = DocumentField(Meta, as_ref=True, required=True)
-    parameters = ArrayField(items=[StringField()], required=True)
+    parameters = ArrayField(items=StringField(), required=True)
     global_settings = DocumentField(GlobalSettings, as_ref=True)
 
     requests = ArrayField(items=[DocumentField(Request, as_ref=True)],
@@ -147,3 +144,11 @@ def build_schema(ordered=True):
     schema = json.dumps(Schema.get_schema(ordered=ordered))
     prefix_erased = schema.replace(__name__ + '.', '')
     return json.loads(prefix_erased, object_pairs_hook=OrderedDict)
+
+
+if __name__ == '__main__':
+    schema_file = op.join(op.dirname(op.dirname(op.dirname(op.abspath(__file__)))),
+                          'package', 'lib-cloud-connect', 'configuration', 'schema.json')
+    schema_as_json = build_schema(True)
+    with open(schema_file, 'w') as f:
+        f.write(json.dumps(schema_as_json, indent=2))

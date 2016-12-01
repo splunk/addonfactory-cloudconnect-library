@@ -1,5 +1,5 @@
 from ..template import CloudConnectTemplate as Template
-
+from ..exception import InvalidConfigException
 
 class TokenizedObject(object):
     def __init__(self, template):
@@ -64,13 +64,13 @@ class Header(object):
 class BasicAuthorization(object):
     def __init__(self, options):
         if not options:
-            raise ValueError("the options field of auth is empty")
+            raise InvalidConfigException("the options field of auth is empty")
         self._username = options.get("username")
         self._password = options.get("password")
         if not self._username:
-            raise ValueError("username of auth is empty")
+            raise InvalidConfigException("username of auth is empty")
         if not self._password:
-            raise ValueError("password of auth is empty")
+            raise InvalidConfigException("password of auth is empty")
         self._username = TokenizedObject(self._username)
         self._password = TokenizedObject(self._password)
 
@@ -177,7 +177,7 @@ class Checkpoint(object):
             for key in keys:
                 self._namespace.append(TokenizedObject(key))
         if not contents:
-            raise ValueError("the content field of checkpoint is empty")
+            raise InvalidConfigException("the content field of checkpoint is empty")
         self._content = dict()
         for key, value in contents.iteritems():
             self._content[key] = TokenizedObject(value)

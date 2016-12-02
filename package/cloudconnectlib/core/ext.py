@@ -30,9 +30,14 @@ def jsonpath(expr, candidate):
     :param candidate: string to extract value
     :return: A `list` contains all values extracted
     """
+    import json
+    candidate = json.loads(candidate)
     from jsonpath_rw import parse
     jsonpath_expr = parse(expr)
-    return [match.value for match in jsonpath_expr.find(candidate)]
+    results = [match.value for match in jsonpath_expr.find(candidate)]
+    if results and len(results) == 1:
+        return results[0]
+    return results
 
 
 def splunk_xml(candidate, time='', index='', host='', source='', sourcetype=''):
@@ -58,12 +63,20 @@ def std_output(string):
     sys.stdout.flush()
 
 
+def json_empty(json_path, candidate):
+    items = jsonpath(json_path, candidate)
+    if not items:
+        return True
+    return False
+
+
 _functions = {
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
     'splunk_xml': splunk_xml,
     'std_output': std_output,
     'jsonpath': jsonpath,
+    'json_empty': json_empty,
 }
 
 

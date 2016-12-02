@@ -100,7 +100,7 @@ class BasicAuthorization(object):
 
     @property
     def password(self):
-        return self.password
+        return self._password
 
 
 class Options(object):
@@ -121,6 +121,10 @@ class Options(object):
     @property
     def method(self):
         return self._method
+
+    @property
+    def auth(self):
+        return self._auth
 
 
 class ProcessHandler(object):

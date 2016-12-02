@@ -7,7 +7,9 @@ from ..configuration.loaders import load_cloud_connect_config
 from ..splunktalib.common import log
 from ..splunktaucclib.common import log as stulog
 
-_LOGGER = log.Logs().get_logger('cloud_connect')
+import logging
+
+_LOGGER = logging
 
 
 class CloudConnectResponse(object):
@@ -34,29 +36,28 @@ class CloudConnectClient(object):
     The client of cloud connect used to start a cloud connect engine instance.
     """
 
-    def __init__(self, context, config_file):
+    def __init__(self, context, config):
         self._context = context
-        self._config_file = config_file
+        self._config = config
 
     @staticmethod
     def _set_logging(logging):
-        _LOGGER.set_level(logging.level)
         stulog.set_log_level(logging.level)
 
     def run(self):
         """
         Start current client instance to execute each request parsed from config.
         """
-        config = load_cloud_connect_config(self._config_file)
-        global_setting = config.global_settings
+        #config = load_cloud_connect_config(self._config_file)
+        global_setting = self._config.global_settings
         self._set_logging(global_setting.logging)
 
         _LOGGER.info('Start to execute requests')
 
-        for item in config.requests:
+        for item in self._config.requests:
             request = CloudConnectRequest(request=item,
                                           context=self._context,
-                                          proxy=config.global_settings.proxy)
+                                          proxy=self._config.global_settings.proxy)
             request.start()
 
         _LOGGER.info('All requests finished')
@@ -107,7 +108,7 @@ class CloudConnectRequest(object):
         :return: `True` if don't need process after request else `False`.
         """
         conditions = self._request.skip_after_request.conditions
-        return all(item.calculate() for item in conditions)
+        return all(item.calculate(self._context) for item in conditions)
 
     def _do_stuff_after_request(self):
         tasks = self._request.after_request
@@ -171,7 +172,7 @@ class CloudConnectRequest(object):
 
     def _init_request(self):
         request_options = self._request.options
-        self._url = request_options.url.render(self._context)
+        self._url = request_options.url.render_value(self._context)
         self._method = request_options.method
         self._do_auth()
         self._handle_headers()

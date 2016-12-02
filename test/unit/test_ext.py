@@ -5,8 +5,8 @@ sys.path.insert(0, op.join(op.dirname(op.dirname(op.dirname(__file__))),
                            'package', 'cloudconnectlib'))
 
 from core.ext import (
-    lookup, jsonpath, regex_match, regex_not_match, std_output,
-    splunk_xml
+    lookup, regex_match, regex_not_match, std_output,
+    splunk_xml, json_path
 )
 
 
@@ -35,10 +35,10 @@ def test_splunk_xml():
 
 
 def test_jsonpath():
-    r = jsonpath('foo[*].baz', {'foo': [{'baz': 1}, {'baz': 2}]})
+    r = json_path('foo[*].baz', {'foo': [{'baz': 1}, {'baz': 2}]})
     assert r[0] == 1
     assert r[1] == 2
-    rr = jsonpath('a.*.b.`parent`.c', {'a': {'x': {'b': 1, 'c': 'number one'}, 'y': {'b': 2, 'c': 'number two'}}})
+    rr = json_path('a.*.b.`parent`.c', {'a': {'x': {'b': 1, 'c': 'number one'}, 'y': {'b': 2, 'c': 'number two'}}})
     assert rr[0] == 'number two'
     assert rr[1] == 'number one'
 
@@ -77,7 +77,7 @@ def test_std_output():
 
 
 def test_lookup():
-    f = lookup('jsonpath')
+    f = lookup('json_path')
     r = f('foo[*].baz', {'foo': [{'baz': 1}, {'baz': 2}]})
     assert r[0] == 1
     assert r[1] == 2

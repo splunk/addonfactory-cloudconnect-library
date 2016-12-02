@@ -1,3 +1,4 @@
+import json
 import re
 
 
@@ -23,15 +24,18 @@ def regex_not_match(pattern, candidate):
     return not regex_match(pattern, candidate)
 
 
-def jsonpath(expr, candidate):
+def json_path(expr, candidate):
     """
     Extract value from string and jsonpath expression with jsonpath.
     :param expr: jsonpath expression
     :param candidate: string to extract value
     :return: A `list` contains all values extracted
     """
-    import json
-    candidate = json.loads(candidate)
+    if not isinstance(candidate, dict):
+        if not isinstance(candidate, basestring):
+            raise TypeError('candidate expected to be dict or JSON string')
+        candidate = json.loads(candidate)
+
     from jsonpath_rw import parse
     jsonpath_expr = parse(expr)
     results = [match.value for match in jsonpath_expr.find(candidate)]
@@ -45,12 +49,15 @@ def splunk_xml(candidate, time='', index='', host='', source='', sourcetype=''):
     Wrap a event with splunk xml format.
     :return: A wrapped event with splunk xml format.
     """
-    return ("<stream><event><host>{0}</host><source>{1}</source>"
-            "<sourcetype>{2}</sourcetype>"
-            "<time>{3}</time>"
-            "<index>{4}</index><data>"
-            "<![CDATA[{5}]]></data></event></stream>") \
-        .format(host, source, sourcetype, time, index, candidate)
+    return ("<stream><event><host>{host}</host>"
+            "<source>{source}</source>"
+            "<sourcetype>{sourcetype}</sourcetype>"
+            "<time>{time}</time>"
+            "<index>{index}</index><data>"
+            "<![CDATA[{data}]]></data></event></stream>") \
+        .format(host=host or '', source=source or '',
+                sourcetype=sourcetype or '',
+                time=time or '', index=index or '', data=candidate or '')
 
 
 def std_output(string):
@@ -63,19 +70,22 @@ def std_output(string):
     sys.stdout.flush()
 
 
-def json_empty(json_path, candidate):
-    items = jsonpath(json_path, candidate)
-    if not items:
-        return True
-    return False
+def json_empty(jsonpath_expr, candidate):
+    """
+    Check if a JSON extracted with jsonpath is empty.
+    :param jsonpath_expr: jsonpath expression for extract JSON
+    :param candidate: target to extract
+    :return: `True` if the result JSON is `{}` or `[]` or `None`
+    """
+    return not json_path(jsonpath_expr, candidate)
 
 
-_functions = {
+_EXT_FUNCTIONS = {
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
     'splunk_xml': splunk_xml,
     'std_output': std_output,
-    'jsonpath': jsonpath,
+    'json_path': json_path,
     'json_empty': json_empty,
 }
 
@@ -86,4 +96,4 @@ def lookup(name):
     :param name: function name.
     :return: A function with given name.
     """
-    return _functions.get(name)
+    return _EXT_FUNCTIONS.get(name)

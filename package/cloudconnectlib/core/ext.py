@@ -1,5 +1,6 @@
 import json
 import re
+import sys
 
 
 def regex_match(pattern, candidate):
@@ -60,24 +61,31 @@ def splunk_xml(candidate, time='', index='', host='', source='', sourcetype=''):
                 time=time or '', index=index or '', data=candidate or '')
 
 
-def std_output(string):
+def std_output(candidate):
     """
     Output a string to stdout.
-    :param string: string to output to stdout.
+    :param candidate: string to output to stdout.
     """
-    import sys
-    sys.stdout.write(string)
+    sys.stdout.write(candidate)
     sys.stdout.flush()
 
 
-def json_empty(jsonpath_expr, candidate):
+def json_empty(candidate, json_path_expr=None):
     """
-    Check if a JSON extracted with jsonpath is empty.
-    :param jsonpath_expr: jsonpath expression for extract JSON
+    Check whether a JSON is empty.
+    :param json_path_expr: A optional jsonpath expression
     :param candidate: target to extract
     :return: `True` if the result JSON is `{}` or `[]` or `None`
     """
-    return not json_path(jsonpath_expr, candidate)
+    if json_path_expr:
+        candidate = json_path(json_path_expr, candidate)
+    if not candidate:
+        return True
+    if isinstance(candidate, (dict, list, tuple)):
+        return len(candidate) == 0
+    if not isinstance(candidate, basestring):
+        raise TypeError('unexpected candidate %s' % str(candidate))
+    return len(json.loads(candidate)) == 0
 
 
 _EXT_FUNCTIONS = {

@@ -1,5 +1,6 @@
 import base64
 import logging
+from urllib import quote_plus
 
 from httplib2 import (ProxyInfo, Http)
 from .ext import lookup
@@ -89,14 +90,18 @@ class CloudConnectRequest(object):
 
     @staticmethod
     def _encode_url(url):
-        return url.replace(' ', '+')
+        parts = url.split('?', 1)
+        if len(parts) == 1:
+            return url
+        return '?'.join([parts[0], quote_plus(parts[1])])
 
     def _invoke_request(self):
         """
         Invoke a request with httplib2 and return it's response.
         :return: A response of request.
         """
-        resp, content = self._http_connection.request(uri=self._encode_url(self._url),
+        url = self._encode_url(self._url)
+        resp, content = self._http_connection.request(uri=url,
                                                       method=self._method,
                                                       headers=self._headers)
         response = CloudConnectResponse(resp, content)

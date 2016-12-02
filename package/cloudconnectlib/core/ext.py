@@ -40,9 +40,7 @@ def json_path(expr, candidate):
     from jsonpath_rw import parse
     jsonpath_expr = parse(expr)
     results = [match.value for match in jsonpath_expr.find(candidate)]
-    if results and len(results) == 1:
-        return results[0]
-    return results
+    return results[0] if len(results) == 1 else results
 
 
 def splunk_xml(candidate, time='', index='', host='', source='', sourcetype=''):

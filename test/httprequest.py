@@ -53,10 +53,11 @@ request = Request(options, [], skip_after_request,
                   [after_request1, after_request2, after_request3, after_request4], loop_mode, checkpoint)
 config.add_request(request)
 
-context = {}
+
+context={}
 context["host"] = "ven01034.service-now.com"
 context["table_name"] = "incident"
-context["sysparm_limit"] = "10"
+context["sysparm_limit"] = "100"
 context["since_when"] = "2016-11-01 12:42:23"
 context["username"] = "splunk"
 context["password"] = "Splunk123$"

@@ -1,11 +1,13 @@
 import base64
-import logging
-from urllib import quote_plus
 
 from httplib2 import (ProxyInfo, Http)
 from .ext import lookup
 from .model.request import BasicAuthorization
+from ..configuration.loaders import load_cloud_connect_config
+from ..splunktalib.common import log
 from ..splunktaucclib.common import log as stulog
+
+import logging
 
 _LOGGER = logging
 
@@ -46,7 +48,7 @@ class CloudConnectClient(object):
         """
         Start current client instance to execute each request parsed from config.
         """
-        # config = load_cloud_connect_config(self._config_file)
+        #config = load_cloud_connect_config(self._config_file)
         global_setting = self._config.global_settings
         self._set_logging(global_setting.logging)
 
@@ -80,7 +82,6 @@ class CloudConnectRequest(object):
         self._url = None
         self._method = 'GET'
         self._headers = {}
-        self._http_connection = self._build_http_connection()
 
     def _update_context(self, key, value):
         self._context[key] = value
@@ -88,22 +89,18 @@ class CloudConnectRequest(object):
     def _do_stuff_before_request(self):
         pass
 
-    @staticmethod
-    def _encode_url(url):
-        parts = url.split('?', 1)
-        if len(parts) == 1:
-            return url
-        return '?'.join([parts[0], quote_plus(parts[1])])
-
     def _invoke_request(self):
         """
         Invoke a request with httplib2 and return it's response.
         :return: A response of request.
         """
-        url = self._encode_url(self._url)
-        resp, content = self._http_connection.request(uri=url,
-                                                      method=self._method,
-                                                      headers=self._headers)
+        http = self._build_http_connection()
+        uri = self._url
+        body = None
+        if "?" in self._url:
+            uri, body = self._url.split("?")
+        resp, content = http.request(uri, body=body, method=self._method,
+                                     headers=self._headers)
         response = CloudConnectResponse(resp, content)
         return response
 
@@ -149,8 +146,7 @@ class CloudConnectRequest(object):
             self._init_request()
             self._do_stuff_before_request()
 
-            response = self._invoke_request()
-            self._update_context('__response__', response)
+            self._update_context('__response__', self._invoke_request())
 
             if not self._skip_after_request():
                 self._do_stuff_after_request()

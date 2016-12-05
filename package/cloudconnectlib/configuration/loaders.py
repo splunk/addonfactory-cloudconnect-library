@@ -1,6 +1,7 @@
 import os.path as op
 import traceback
 
+from jinja2 import Template
 from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core import util
@@ -54,31 +55,46 @@ class CloudConnectConfigLoaderV1(object):
                 'Cannot load JSON interface from file {}'.format(file_path))
 
     @staticmethod
-    def _load_proxy(candidate):
+    def _render_template(tpl, variables):
+        return Template(tpl).render(variables)
+
+    def _load_proxy(self, candidate, variables):
         if candidate is None:
             return None
-        enabled = candidate['enabled']
-        if not util.is_bool(enabled):
-            raise ConfigException('proxy enabled expect to be bool type: {}'.format(enabled))
+        proxy = {k: self._render_template(v, variables)
+                 for k, v in candidate.iteritems()}
 
-        port = candidate['port']
+        enabled = proxy['enabled']
+        if not util.is_bool(enabled):
+            raise ConfigException('proxy enabled expect to be bool type: {}'.
+                                  format(enabled))
+
+        port = proxy['port']
         if not util.is_port(port):
-            raise ConfigException('proxy port expected to be in range [1,65535]: {}'.format(port))
+            raise ConfigException('proxy port expected to be in range [1,65535]: {}'.
+                                  format(port))
 
         # proxy type default to 'http'
-        proxy_type = candidate.get('type')
+        proxy_type = proxy.get('type')
         if proxy_type and proxy_type.lower() not in _PROXY_TYPES:
             raise ConfigException('proxy type expect to be one of [{}]: {}'
                                   .format(','.join(_PROXY_TYPES), proxy_type))
 
-        return munchify(candidate)
+        return proxy
 
-    def _load_global_setting(self, candidate):
+    def _load_logging(self, logging, variables):
+        if logging is None:
+            return None
+        log = {k: self._render_template(v, variables)
+               for k, v in logging.iteritems()}
+        return munchify(log)
+
+    def _load_global_setting(self, candidate, variables):
         if candidate is None:
             return None
-        proxy = self._load_proxy(candidate.get('proxy'))
-        logging = munchify(candidate.get('logging'))
-        return GlobalSetting(proxy=proxy, logging=logging)
+        proxy_setting = self._load_proxy(candidate.get('proxy'), variables)
+        log_setting = self._load_logging(candidate.get('logging'), variables)
+        return GlobalSetting(proxy=proxy_setting, logging=log_setting)
 
     @staticmethod
     def _load_authorization(candidate):
@@ -122,9 +138,16 @@ class CloudConnectConfigLoaderV1(object):
                        checkpoint=munchify(request['checkpoint']),
                        loop_mode=munchify(request['loop_mode']))
 
-    def load_config(self, json_file_path):
+    def _check_version(self, version):
+        if version != self._version:
+            raise ConfigException(
+                'unsupported schema version {}, current supported versions '
+                '{}'.format(version, self._version))
+
+    def load_config(self, json_file_path, context):
         """
         Load JSON based interface from a file path and validate it with schema.
+        :param context: variables to render template in global setting.
         :param json_file_path: file path of json based interface.
         :return: A `CloudConnectConfigV1` object.
         """
@@ -136,14 +159,12 @@ class CloudConnectConfigLoaderV1(object):
                                   '{}'.format(traceback.format_exc()))
 
         meta = munchify(definition['meta'])
-        if meta.version != self._version:
-            raise ConfigException(
-                'unsupported schema version {}, current supported versions '
-                '{}'.format(meta.version, self._version))
+        self._check_version(meta.version)
 
         parameters = definition['parameters']
 
-        global_settings = self._load_global_setting(definition.get('global_settings'))
+        global_settings = self._load_global_setting(
+            definition.get('global_settings'), context)
         requests = [self._load_request(item) for item in definition['requests']]
 
         return CloudConnectConfigV1(meta=meta,

@@ -1,13 +1,10 @@
 import base64
+import logging
 
 from httplib2 import (ProxyInfo, Http)
 from .ext import lookup
 from .model.request import BasicAuthorization
-from ..configuration.loaders import load_cloud_connect_config
-from ..splunktalib.common import log
 from ..splunktaucclib.common import log as stulog
-
-import logging
 
 _LOGGER = logging
 
@@ -48,7 +45,7 @@ class CloudConnectClient(object):
         """
         Start current client instance to execute each request parsed from config.
         """
-        #config = load_cloud_connect_config(self._config_file)
+        # config = load_cloud_connect_config(self._config_file)
         global_setting = self._config.global_settings
         self._set_logging(global_setting.logging)
 
@@ -86,8 +83,30 @@ class CloudConnectRequest(object):
     def _update_context(self, key, value):
         self._context[key] = value
 
+    def _execute_tasks(self, tasks):
+        for task in tasks:
+            func = lookup(task.method)
+            if func is None:
+                raise ValueError("method {} doesn't exist".format(task.method))
+            output_attr = task.output
+            args = [arg for arg in task.inputs_values(self._context)]
+
+            if output_attr is None:
+                func(*args)
+            else:
+                self._update_context(output_attr, func(*args))
+
     def _do_stuff_before_request(self):
-        pass
+        """
+        Execute tasks in before request one by one.
+        """
+        before_request_tasks = self._request.before_request
+        if before_request_tasks:
+            _LOGGER.info('Got {} tasks in before request'
+                         .format(len(before_request_tasks)))
+            self._execute_tasks(before_request_tasks)
+            return
+        _LOGGER.info("No before request task need to execute")
 
     def _invoke_request(self):
         """
@@ -115,16 +134,11 @@ class CloudConnectRequest(object):
 
     def _do_stuff_after_request(self):
         tasks = self._request.after_request
-        for task in tasks:
-            args = [arg for arg in task.inputs_values(self._context)]
-            func = lookup(task.method)
-            if func is None:
-                raise ValueError('method {} is not exist'.format(task.method))
-            output_attr = task.output
-            if output_attr is None:
-                func(*args)
-            else:
-                self._update_context(output_attr, func(*args))
+        if tasks:
+            _LOGGER.info('Got {} tasks in after request'.format(len(tasks)))
+            self._execute_tasks(tasks)
+            return
+        _LOGGER.info("No after request task need to execute")
 
     def _update_checkpoint(self):
         pass

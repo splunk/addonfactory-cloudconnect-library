@@ -1,2 +1,2 @@
-class InvalidConfigException(Exception):
+class ConfigException(Exception):
     pass

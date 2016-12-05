@@ -1,5 +1,6 @@
+from ..exception import ConfigException
 from ..template import CloudConnectTemplate as Template
-from ..exception import InvalidConfigException
+
 
 class TokenizedObject(object):
     def __init__(self, template):
@@ -18,12 +19,13 @@ class TokenizedObject(object):
 
 class Request(object):
     def __init__(self, options, before_request, skip_after_request,
-                 after_request, checkpoint):
+                 after_request, checkpoint, loop_mode):
         self._options = options
         self._before_request = before_request
         self._skip_after_request = skip_after_request
         self._after_request = after_request
         self._checkpoint = checkpoint
+        self._loop_mode = loop_mode
 
     @property
     def options(self):
@@ -64,13 +66,13 @@ class Header(object):
 class BasicAuthorization(object):
     def __init__(self, options):
         if not options:
-            raise InvalidConfigException("the options field of auth is empty")
+            raise ConfigException("the options field of auth is empty")
         self._username = options.get("username")
         self._password = options.get("password")
         if not self._username:
-            raise InvalidConfigException("username of auth is empty")
+            raise ConfigException("username of auth is empty")
         if not self._password:
-            raise InvalidConfigException("password of auth is empty")
+            raise ConfigException("password of auth is empty")
         self._username = TokenizedObject(self._username)
         self._password = TokenizedObject(self._password)
 
@@ -177,7 +179,7 @@ class Checkpoint(object):
             for key in keys:
                 self._namespace.append(TokenizedObject(key))
         if not contents:
-            raise InvalidConfigException("the content field of checkpoint is empty")
+            raise ConfigException("the content field of checkpoint is empty")
         self._content = dict()
         for key, value in contents.iteritems():
             self._content[key] = TokenizedObject(value)

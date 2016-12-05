@@ -1,4 +1,4 @@
-from .config import CloudConnectConfig
+from .config import CloudConnectConfigV1
 from .global_settings import Proxy, Logging, GlobalSetting
 from .meta import Meta
 from .request import (

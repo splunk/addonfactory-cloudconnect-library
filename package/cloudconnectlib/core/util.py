@@ -1,3 +1,6 @@
+import json
+
+
 def is_true(val):
     value = str(val).strip().upper()
     if value in ("1", "TRUE", "T", "Y", "YES"):
@@ -31,3 +34,13 @@ def is_port(port):
         return 1 <= int(port) <= 65535
     except ValueError:
         return False
+
+
+def load_json_file(file_path):
+    """
+    Load a dict from a JSON file.
+    :param file_path: JSON file path.
+    :return: A `dict` object.
+    """
+    with open(file_path, 'r') as r:
+        return json.load(r)

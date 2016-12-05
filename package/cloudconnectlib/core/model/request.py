@@ -1,20 +1,5 @@
 from ..exception import ConfigException
-from ..template import CloudConnectTemplate as Template
-
-
-class TokenizedObject(object):
-    def __init__(self, template):
-        self._template = template
-        self._jtemplate = Template(template)
-
-    def value(self, context):
-        return self._value
-
-    def render_value(self, context):
-        self.set_value(self._jtemplate.render(context))
-
-    def set_value(self, current_value):
-        self._value = current_value
+from ..template import compile_template
 
 
 class Request(object):
@@ -53,7 +38,7 @@ class Header(object):
         self._items = dict()
 
     def add(self, key, value):
-        self._items[key] = TokenizedObject(value)
+        self._items[key] = compile_template(value)
 
     def get(self, key):
         return self._items.get(key)
@@ -73,8 +58,8 @@ class BasicAuthorization(object):
             raise ConfigException("username of auth is empty")
         if not self._password:
             raise ConfigException("password of auth is empty")
-        self._username = TokenizedObject(self._username)
-        self._password = TokenizedObject(self._password)
+        self._username = compile_template(self._username)
+        self._password = compile_template(self._password)
 
     @property
     def username(self):
@@ -88,7 +73,7 @@ class BasicAuthorization(object):
 class Options(object):
     def __init__(self, url, header=None, method="GET", auth=None):
         self._header = header
-        self._url = TokenizedObject(url)
+        self._url = compile_template(url)
         self._method = method.upper()
         self._auth = auth
 
@@ -109,7 +94,7 @@ class ProcessHandler(object):
     def __init__(self, inputs, func, output=None):
         self._inputs = []
         for input in inputs:
-            self._inputs.append(TokenizedObject(input))
+            self._inputs.append(compile_template(input))
         self._func = func
         self._output = output
 
@@ -177,12 +162,12 @@ class Checkpoint(object):
         self._namespace = []
         if keys:
             for key in keys:
-                self._namespace.append(TokenizedObject(key))
+                self._namespace.append(compile_template(key))
         if not contents:
             raise ConfigException("the content field of checkpoint is empty")
         self._content = dict()
         for key, value in contents.iteritems():
-            self._content[key] = TokenizedObject(value)
+            self._content[key] = compile_template(value)
 
     @property
     def namespace(self):

@@ -1,3 +1,4 @@
+import logging
 import os.path as op
 import traceback
 
@@ -7,7 +8,7 @@ from munch import munchify
 from ..core import util
 from ..core.exception import ConfigException
 from ..core.model import (
-    GlobalSetting, Request, CloudConnectConfigV1, BasicAuthorization, Options
+    Request, CloudConnectConfigV1, BasicAuthorization, Options
 )
 
 # JSON schema file path.
@@ -20,6 +21,14 @@ _AUTH_TYPES = {
 
 # Supported extended functions
 _EXTEND_FUNCTIONS = ['json_path', 'json_empty', 'regex_not_match', 'regex_match', 'std_output']
+
+_LOGGING_LEVELS = {
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO,
+    'WARN': logging.WARN,
+    'ERROR': logging.ERROR,
+    'FATAL': logging.FATAL,
+}
 
 
 class CloudConnectConfigLoaderV1(object):
@@ -82,19 +91,28 @@ class CloudConnectConfigLoaderV1(object):
 
         return proxy
 
-    def _load_logging(self, logging, variables):
-        if logging is None:
-            return None
+    def _load_logging(self, log_setting, variables):
+        log_setting = log_setting or {}
         log = {k: self._render_template(v, variables)
-               for k, v in logging.iteritems()}
-        return munchify(log)
+               for k, v in log_setting.iteritems()}
+        level = log.get('level', '').upper()
+        log['level'] = _LOGGING_LEVELS.get(level, logging.INFO)
+        return log
 
     def _load_global_setting(self, candidate, variables):
-        if candidate is None:
-            return None
+        """
+        Load and render global setting with variables.
+        :param candidate: Global setting as a `dict`
+        :param variables: variables from context to render setting
+        :return: A `Munch` object
+        """
+        candidate = candidate or {}
         proxy_setting = self._load_proxy(candidate.get('proxy'), variables)
         log_setting = self._load_logging(candidate.get('logging'), variables)
-        return GlobalSetting(proxy=proxy_setting, logging=log_setting)
+
+        candidate.update({'proxy': proxy_setting,
+                          'logging': log_setting})
+        return munchify(candidate)
 
     @staticmethod
     def _load_authorization(candidate):

@@ -32,20 +32,9 @@ class Request(object):
     def checkpoint(self):
         return self._checkpoint
 
-
-class Header(object):
-    def __init__(self):
-        self._items = dict()
-
-    def add(self, key, value):
-        self._items[key] = compile_template(value)
-
-    def get(self, key):
-        return self._items.get(key)
-
     @property
-    def items(self):
-        return self._items
+    def loop_mode(self):
+        return self._loop_mode
 
 
 class BasicAuthorization(object):
@@ -88,91 +77,3 @@ class Options(object):
     @property
     def method(self):
         return self._method
-
-
-class ProcessHandler(object):
-    def __init__(self, inputs, func, output=None):
-        self._inputs = []
-        for input in inputs:
-            self._inputs.append(compile_template(input))
-        self._func = func
-        self._output = output
-
-    @property
-    def inputs(self):
-        return self._inputs
-
-    @property
-    def func(self):
-        return self._func
-
-    @property
-    def output(self):
-        return self._output
-
-    def invoke(self):
-        self._output = self._func(*self.inputs)
-
-
-class BeforeRequest(ProcessHandler):
-    pass
-
-
-class AfterRequest(ProcessHandler):
-    pass
-
-
-class Condition(ProcessHandler):
-    pass
-
-
-class SkipAfterRequest(object):
-    def __init__(self):
-        self._conditions = []
-
-    def add_condition(self, condition):
-        self._conditions.append(condition)
-
-    @property
-    def conditions(self):
-        return self._conditions
-
-
-class LoopMode(object):
-    loop_types = ["loop", "once"]
-
-    def __init__(self, type="once", conditions=None):
-        if type.lower() in LoopMode.loop_types:
-            self._type = type
-        else:
-            self._type = "once"
-        self._conditions = conditions
-
-    @property
-    def type(self):
-        return self._type
-
-    @property
-    def conditions(self):
-        return self._conditions
-
-
-class Checkpoint(object):
-    def __init__(self, contents, keys=None):
-        self._namespace = []
-        if keys:
-            for key in keys:
-                self._namespace.append(compile_template(key))
-        if not contents:
-            raise ConfigException("the content field of checkpoint is empty")
-        self._content = dict()
-        for key, value in contents.iteritems():
-            self._content[key] = compile_template(value)
-
-    @property
-    def namespace(self):
-        return self._namespace
-
-    @property
-    def content(self):
-        return self._content

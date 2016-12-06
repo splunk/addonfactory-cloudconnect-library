@@ -20,7 +20,7 @@ _AUTH_TYPES = {
 }
 
 # Supported extended functions
-_EXTEND_FUNCTIONS = ['json_path', 'json_empty', 'regex_not_match', 'regex_match', 'std_output']
+_EXTEND_FUNCTIONS = ['json_path', 'json_empty', 'regex_not_match', 'regex_match', 'std_output', 'splunk_xml']
 
 _LOGGING_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -73,10 +73,12 @@ class CloudConnectConfigLoaderV1(object):
         proxy = {k: self._render_template(v, variables)
                  for k, v in candidate.iteritems()}
 
-        enabled = proxy['enabled']
+        enabled = proxy.get('enabled', '0')
         if not util.is_bool(enabled):
             raise ConfigException('proxy enabled expect to be bool type: {}'.
                                   format(enabled))
+        else:
+            proxy['enabled'] = True if util.is_true(enabled) else False
 
         port = proxy['port']
         if not util.is_port(port):
@@ -84,11 +86,19 @@ class CloudConnectConfigLoaderV1(object):
                                   format(port))
 
         # proxy type default to 'http'
-        proxy_type = proxy.get('type')
-        if proxy_type and proxy_type.lower() not in _PROXY_TYPES:
+        proxy_type = proxy.get('type', 'http').lower()
+        if proxy_type not in _PROXY_TYPES:
             raise ConfigException('proxy type expect to be one of [{}]: {}'
                                   .format(','.join(_PROXY_TYPES), proxy_type))
+        else:
+            proxy['type'] = proxy_type
 
+        proxy_rdns = proxy.get('rdns', '0')
+        if not util.is_bool(proxy_rdns):
+            raise ConfigException('proxy rdns expect to be bool type: {}'.
+                                  format(proxy_rdns))
+        else:
+            proxy['rdns'] = True if util.is_true(proxy_rdns) else False
         return proxy
 
     def _load_logging(self, log_setting, variables):
@@ -109,10 +119,8 @@ class CloudConnectConfigLoaderV1(object):
         candidate = candidate or {}
         proxy_setting = self._load_proxy(candidate.get('proxy'), variables)
         log_setting = self._load_logging(candidate.get('logging'), variables)
-
-        candidate.update({'proxy': proxy_setting,
-                          'logging': log_setting})
-        return munchify(candidate)
+        return munchify({'proxy': proxy_setting,
+                         'logging': log_setting})
 
     @staticmethod
     def _load_authorization(candidate):

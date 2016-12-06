@@ -7,9 +7,11 @@ from munch import munchify
 from ..core import util
 from ..core.exception import ConfigException
 from ..core.model import (
-    Request, CloudConnectConfigV1, BasicAuthorization, Options
+    CloudConnectConfigV1, BasicAuthorization, Request, Options, BeforeRequest,
+    AfterRequest, SkipAfterRequest, Condition, Task, Checkpoint, LoopMode
 )
 from ..core.template import compile_template
+from ..splunktalib.common import log
 
 # JSON schema file path.
 _SCHEMA_LOCATION = op.join(op.dirname(__file__), 'hcm_schema.json')
@@ -18,6 +20,9 @@ _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _AUTH_TYPES = {
     'basic_auth': BasicAuthorization
 }
+
+# Supported loop mode
+_LOOP_MODE_TYPES = ['loop', 'once']
 
 # Supported extended functions
 _EXTEND_FUNCTIONS = ['json_path', 'json_empty', 'regex_not_match', 'regex_match', 'std_output', 'splunk_xml']
@@ -29,6 +34,8 @@ _LOGGING_LEVELS = {
     'ERROR': logging.ERROR,
     'FATAL': logging.FATAL,
 }
+
+_LOGGER = log.Logs().get_logger('cloud_connect')
 
 
 class CloudConnectConfigLoaderV1(object):
@@ -69,6 +76,12 @@ class CloudConnectConfigLoaderV1(object):
         return compile_template(template)(variables)
 
     def _load_proxy(self, candidate, variables):
+        """
+        Render and validate proxy setting with given variables.
+        :param candidate: raw proxy setting as `dict`
+        :param variables: variables to render template in proxy setting.
+        :return: A `dict` contains rendered proxy setting.
+        """
         if candidate is None:
             return None
         proxy = {k: self._render_template(v, variables)
@@ -105,11 +118,17 @@ class CloudConnectConfigLoaderV1(object):
 
     def _load_logging(self, log_setting, variables):
         log_setting = log_setting or {}
-        log = {k: self._render_template(v, variables)
-               for k, v in log_setting.iteritems()}
-        level = log.get('level', '').upper()
-        log['level'] = _LOGGING_LEVELS.get(level, logging.INFO)
-        return log
+        logger = {k: self._render_template(v, variables)
+                  for k, v in log_setting.iteritems()}
+
+        level = logger.get('level', '').upper()
+
+        if level not in _LOGGING_LEVELS:
+            _LOGGER.warn('Log level not specified, set log level to INFO')
+            logger['level'] = logging.INFO
+        else:
+            logger['level'] = _LOGGING_LEVELS[level]
+        return logger
 
     def _load_global_setting(self, candidate, variables):
         """
@@ -121,14 +140,15 @@ class CloudConnectConfigLoaderV1(object):
         candidate = candidate or {}
         proxy_setting = self._load_proxy(candidate.get('proxy'), variables)
         log_setting = self._load_logging(candidate.get('logging'), variables)
-        return munchify({'proxy': proxy_setting,
-                         'logging': log_setting})
+
+        return munchify({'proxy': proxy_setting, 'logging': log_setting})
 
     @staticmethod
     def _load_authorization(candidate):
         if candidate is None:
             return None
         auth_type = candidate['type'].lower()
+
         if auth_type not in _AUTH_TYPES:
             raise ConfigException('auth type expect to be one of [{}]: {}'
                                   .format(','.join(_AUTH_TYPES), auth_type))
@@ -142,29 +162,54 @@ class CloudConnectConfigLoaderV1(object):
                        header=munchify(options.get('headers')))
 
     @staticmethod
-    def _validate_ext_method(tasks):
-        for task in tasks:
-            if task.method not in _EXTEND_FUNCTIONS:
-                raise ConfigException(
-                    'method expect to be one of [{}]: {}'.format(
-                        ','.join(_EXTEND_FUNCTIONS), task.method))
+    def _validate_ext_method(method):
+        # FIXME this will be replace with dynamic lookups
+        if method not in _EXTEND_FUNCTIONS:
+            raise ConfigException('method expect to be one of [{}]: {}'
+                                  .format(','.join(_EXTEND_FUNCTIONS), method))
+
+    def _parse_tasks(self, raw_tasks):
+        tasks = []
+        for item in raw_tasks:
+            self._validate_ext_method(item['method'])
+            tasks.append(Task(item['input'], item['method'], item.get('output')))
+        return tasks
+
+    def _parse_conditions(self, raw_conditions):
+        conditions = []
+        for item in raw_conditions:
+            self._validate_ext_method(item['method'])
+            conditions.append(Condition(item['input'], item['method']))
+        return conditions
+
+    @staticmethod
+    def _load_checkpoint(checkpoint):
+        return Checkpoint(checkpoint['namespace'], checkpoint['content'])
+
+    def _load_loop_mode(self, loop_mode):
+        loop_type = loop_mode.get('type')
+        if not loop_type or loop_type.lower() not in _LOOP_MODE_TYPES:
+            _LOGGER.warn('loop mode type expect to be one of [{}]: found {},'
+                         ' setting to default type'
+                         .format(','.join(_LOOP_MODE_TYPES), loop_type))
+            loop_type = 'once'
+
+        stop_conditions = self._parse_conditions(loop_mode['stop_conditions'])
+        return LoopMode(loop_type, stop_conditions)
 
     def _load_request(self, request):
-        before_request = munchify(request['before_request'])
-        self._validate_ext_method(before_request)
+        before_request = BeforeRequest(self._parse_tasks(request['before_request']))
+        after_request = AfterRequest(self._parse_tasks(request['after_request']))
 
-        skip_after_request = munchify(request['skip_after_request'])
-        self._validate_ext_method(skip_after_request.conditions)
-
-        after_request = munchify(request['after_request'])
-        self._validate_ext_method(after_request)
+        skip_conditions = request['skip_after_request']['conditions']
+        skip_after_request = SkipAfterRequest(self._parse_conditions(skip_conditions))
 
         return Request(options=self._load_options(request['options']),
                        before_request=before_request,
                        skip_after_request=skip_after_request,
                        after_request=after_request,
-                       checkpoint=munchify(request['checkpoint']),
-                       loop_mode=munchify(request['loop_mode']))
+                       checkpoint=self._load_checkpoint(request['checkpoint']),
+                       loop_mode=self._load_loop_mode(request['loop_mode']))
 
     def _check_version(self, version):
         if version != self._version:

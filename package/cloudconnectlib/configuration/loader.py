@@ -2,7 +2,6 @@ import logging
 import os.path as op
 import traceback
 
-from jinja2 import Template
 from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core import util
@@ -10,6 +9,7 @@ from ..core.exception import ConfigException
 from ..core.model import (
     Request, CloudConnectConfigV1, BasicAuthorization, Options
 )
+from ..core.template import compile_template
 
 # JSON schema file path.
 _SCHEMA_LOCATION = op.join(op.dirname(__file__), 'hcm_schema.json')
@@ -44,8 +44,8 @@ class CloudConnectConfigLoaderV1(object):
         try:
             return util.load_json_file(file_path)
         except:
-            raise ConfigException('Cannot load schema from %s : %s'
-                                  % (file_path, traceback.format_exc()))
+            raise ConfigException('Cannot load schema from {}: {}'
+                                  .format(file_path, traceback.format_exc()))
 
     @staticmethod
     def _load_definition(file_path):
@@ -61,11 +61,12 @@ class CloudConnectConfigLoaderV1(object):
             return util.load_json_file(file_path)
         except:
             raise ConfigException(
-                'Cannot load JSON interface from file {}'.format(file_path))
+                'Cannot load JSON interface from file {}: {}'.format(
+                    file_path, traceback.format_exc()))
 
     @staticmethod
-    def _render_template(tpl, variables):
-        return Template(tpl).render(variables)
+    def _render_template(template, variables):
+        return compile_template(template)(variables)
 
     def _load_proxy(self, candidate, variables):
         if candidate is None:
@@ -78,7 +79,7 @@ class CloudConnectConfigLoaderV1(object):
             raise ConfigException('proxy enabled expect to be bool type: {}'.
                                   format(enabled))
         else:
-            proxy['enabled'] = True if util.is_true(enabled) else False
+            proxy['enabled'] = util.is_true(enabled)
 
         port = proxy['port']
         if not util.is_port(port):
@@ -93,12 +94,13 @@ class CloudConnectConfigLoaderV1(object):
         else:
             proxy['type'] = proxy_type
 
+        # proxy rdns default to '0'
         proxy_rdns = proxy.get('rdns', '0')
         if not util.is_bool(proxy_rdns):
             raise ConfigException('proxy rdns expect to be bool type: {}'.
                                   format(proxy_rdns))
         else:
-            proxy['rdns'] = True if util.is_true(proxy_rdns) else False
+            proxy['rdns'] = util.is_true(proxy_rdns)
         return proxy
 
     def _load_logging(self, log_setting, variables):

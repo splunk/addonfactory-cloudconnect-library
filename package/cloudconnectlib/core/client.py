@@ -2,8 +2,8 @@ import base64
 import logging
 
 from httplib2 import (ProxyInfo, Http)
-from .ext import lookup
 from .model.request import BasicAuthorization
+from ..configuration import CloudConnectConfigLoaderV1
 from ..splunktaucclib.common import log as stulog
 
 _LOGGER = logging
@@ -33,28 +33,30 @@ class CloudConnectClient(object):
     The client of cloud connect used to start a cloud connect engine instance.
     """
 
-    def __init__(self, context, config):
+    def __init__(self, context, config_file):
         self._context = context
-        self._config = config
+        self._config_file = config_file
 
     @staticmethod
-    def _set_logging(logging):
-        stulog.set_log_level(logging.level)
+    def _set_logging(log_setting):
+        stulog.set_log_level(log_setting.level)
 
     def run(self):
         """
         Start current client instance to execute each request parsed from config.
         """
-        # config = load_cloud_connect_config(self._config_file)
-        global_setting = self._config.global_settings
+        config_loader_v1 = CloudConnectConfigLoaderV1()
+        config = config_loader_v1.load_config(self._config_file, self._context)
+
+        global_setting = config.global_settings
         self._set_logging(global_setting.logging)
 
         _LOGGER.info('Start to execute requests')
 
-        for item in self._config.requests:
+        for item in config.requests:
             request = CloudConnectRequest(request=item,
                                           context=self._context,
-                                          proxy=self._config.global_settings.proxy)
+                                          proxy=config.global_settings.proxy)
             request.start()
 
         _LOGGER.info('All requests finished')
@@ -85,22 +87,14 @@ class CloudConnectRequest(object):
 
     def _execute_tasks(self, tasks):
         for task in tasks:
-            func = lookup(task.method)
-            if func is None:
-                raise ValueError("method {} doesn't exist".format(task.method))
-            output_attr = task.output
-            args = [arg for arg in task.inputs_values(self._context)]
-
-            if output_attr is None:
-                func(*args)
-            else:
-                self._update_context(output_attr, func(*args))
+            self._context.update(task.execute(self._context))
 
     def _do_stuff_before_request(self):
         """
         Execute tasks in before request one by one.
         """
-        before_request_tasks = self._request.before_request
+        before_request_tasks = self._request.before_request.tasks
+
         if before_request_tasks:
             _LOGGER.info('Got {} tasks in before request'
                          .format(len(before_request_tasks)))
@@ -123,17 +117,8 @@ class CloudConnectRequest(object):
         response = CloudConnectResponse(resp, content)
         return response
 
-    def _skip_after_request(self):
-        """
-        Determine if we need to skip the step of after request based on the
-        response content.
-        :return: `True` if don't need process after request else `False`.
-        """
-        conditions = self._request.skip_after_request.conditions
-        return all(item.calculate(self._context) for item in conditions)
-
     def _do_stuff_after_request(self):
-        tasks = self._request.after_request
+        tasks = self._request.after_request.tasks
         if tasks:
             _LOGGER.info('Got {} tasks in after request'.format(len(tasks)))
             self._execute_tasks(tasks)
@@ -147,8 +132,7 @@ class CloudConnectRequest(object):
         loop_mode = self._request.loop_mode
         if loop_mode.is_once():
             return True
-        return all(condition.calculate(self._context)
-                   for condition in loop_mode.conditions)
+        return loop_mode.passed(self._context)
 
     def start(self):
         """
@@ -162,7 +146,7 @@ class CloudConnectRequest(object):
 
             self._update_context('__response__', self._invoke_request())
 
-            if not self._skip_after_request():
+            if not self._request.skip_after_request.passed(self._context):
                 self._do_stuff_after_request()
             if self._check_stop_condition():
                 _LOGGER.info('Stop condition reached, exit loop now')
@@ -189,22 +173,21 @@ class CloudConnectRequest(object):
 
     def _init_request(self):
         request_options = self._request.options
-        self._url = request_options.url.render_value(self._context)
+        self._url = request_options.url.value(self._context)
         self._method = request_options.method
         self._do_auth()
         self._handle_headers()
 
     def _handle_headers(self):
         options = self._request.options
-        header_item = options.header.items
-        for key, value in header_item.iteritems():
-            self._headers[key] = value.render_value(self._context)
+        for key, value in options.header.iteritems():
+            self._headers[key] = value.value(self._context)
 
     def _do_auth(self):
         options = self._request.options
         auth = options.auth
         if isinstance(auth, BasicAuthorization):
-            username = auth.username.render_value(self._context)
-            password = auth.password.render_value(self._context)
+            username = auth.username.value(self._context)
+            password = auth.password.value(self._context)
             encode_str = base64.encodestring(username + ':' + password)
             self._headers['Authorization'] = 'Basic ' + encode_str

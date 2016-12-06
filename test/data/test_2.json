@@ -9,30 +9,11 @@
     "table_name",
     "since_when",
     "host",
-    "index",
-    "sourcetype",
-    "source",
-    "checkpoint_dir",
-    "proxy_enable",
-    "proxy_host",
-    "proxy_type",
-    "proxy_username",
-    "proxy_rdns",
-    "proxy_type",
-    "logging_level",
     "username",
-    "password"
+    "password",
+    "logging_level"
   ],
   "global_settings": {
-    "proxy": {
-      "enabled": "{{proxy_enable}}",
-      "host": "{{proxy_host}}",
-      "port": "{{proxy_port}}",
-      "username": "{{proxy_username}}",
-      "password": "{{proxy_password}}",
-      "rdns": "{{proxy_rdns}}",
-      "type": "{{proxy_type}}"
-    },
     "logging": {
       "level": "{{logging_level}}"
     }
@@ -58,44 +39,40 @@
         "conditions": [
           {
             "input": [
-              "404",
-              "{{__response__.status_code}}"
+              "{{__response__.body}}",
+              "$.result[*]"
             ],
-            "method": "regex_match"
+            "method": "json_empty"
           }
         ]
       },
       "after_request": [
         {
           "input": [
-            "$.result[(@.length-1)].sys_updated_on",
+            "$.result[-1].sys_updated_on",
             "{{__response__.body}}"
           ],
-          "method": "jsonpath",
+          "method": "json_path",
           "output": "since_when"
         },
         {
           "input": [
-            "$.result.*",
+            "$.result[*]",
             "{{__response__.body}}"
           ],
-          "method": "jsonpath",
-          "output": "__stdout__"
+          "method": "json_path",
+          "output": "result"
         },
         {
           "input": [
-            "{{__stdout__}}",
-            "{{index}}",
-            "{{host}}",
-            "{{source}}",
-            "{{sourcetype}}"
+            "{{result}}"
           ],
           "method": "splunk_xml",
-          "output": "__stdout__"
+          "output": "events"
         },
         {
           "input": [
-            "{{__stdout__}}"
+            "{{events}}"
           ],
           "method": "std_output"
         }
@@ -105,10 +82,10 @@
         "stop_conditions": [
           {
             "input": [
-              "404",
-              "{{__response__.status_code}}"
+              "{{__response__.body}}",
+              "$.result[*]"
             ],
-            "method": "regex_match"
+            "method": "json_empty"
           }
         ]
       },

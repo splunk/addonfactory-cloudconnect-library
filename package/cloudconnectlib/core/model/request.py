@@ -1,33 +1,29 @@
-from ..exception import InvalidConfigException
+from ..exception import ConfigException
 from ..ext import lookup
-from ..template import CloudConnectTemplate as Template
+from ..template import compile_template
 
 
-class TokenizedObject(object):
-    def __init__(self, template):
-        self._template = template
-        self._jtemplate = Template(template)
+class _Token(object):
+    """Token class wraps a template expression"""
 
-    def value(self, context):
-        return self._value
+    def __init__(self, template_expr):
+        self._render = compile_template(template_expr)
 
-    def render_value(self, context):
-        return self.set_value(self._jtemplate.render(context))
-
-    def set_value(self, current_value):
-        self._value = current_value
-        return self._value
+    def value(self, variables):
+        return self._render(variables)
 
 
 class Request(object):
     def __init__(self, options, before_request, skip_after_request,
-                 after_request, loop_mode, checkpoint):
+
+                 after_request, checkpoint, loop_mode):
         self._options = options
         self._before_request = before_request
         self._skip_after_request = skip_after_request
         self._after_request = after_request
         self._loop_mode = loop_mode
         self._checkpoint = checkpoint
+        self._loop_mode = loop_mode
 
     @property
     def options(self):
@@ -53,50 +49,28 @@ class Request(object):
     def checkpoint(self):
         return self._checkpoint
 
-
-class Header(object):
-    def __init__(self):
-        self._items = dict()
-
-    def add(self, key, value):
-        self._items[key] = TokenizedObject(value)
-
-    def get(self, key):
-        return self._items.get(key)
-
     @property
-    def items(self):
-        return self._items
-
-    def build(self, context):
-        header = {}
-        for k in self._items:
-            header[k] = self.get(k).render_value(context)
-        return header
+    def loop_mode(self):
+        return self._loop_mode
 
 
 class BasicAuthorization(object):
     def __init__(self, options):
         if not options:
-            raise InvalidConfigException("the options field of auth is empty")
-        self._username = options.get("username")
-        self._password = options.get("password")
-        if not self._username:
-            raise InvalidConfigException("username of auth is empty")
-        if not self._password:
-            raise InvalidConfigException("password of auth is empty")
-        self._username = TokenizedObject(self._username)
-        self._password = TokenizedObject(self._password)
+            raise ConfigException('options for basic auth expect to be not none')
+
+        username = options.get('username')
+        if not username:
+            raise ConfigException('username is mandatory for basic auth')
+        password = options.get('password')
+        if not password:
+            raise ConfigException('password is mandatory for basic auth')
+        self._username = _Token(username)
+        self._password = _Token(password)
 
     @property
     def username(self):
         return self._username
-
-    def get_username(self, ctx):
-        return self._username.render_value(ctx)
-
-    def get_password(self, ctx):
-        return self._password.render_value(ctx)
 
     @property
     def password(self):
@@ -104,9 +78,9 @@ class BasicAuthorization(object):
 
 
 class Options(object):
-    def __init__(self, url, header=None, method="GET", auth=None):
-        self._header = header
-        self._url = TokenizedObject(url)
+    def __init__(self, url, method, header=None, auth=None):
+        self._header = {k: _Token(v) for k, v in (header or {}).iteritems()}
+        self._url = _Token(url)
         self._method = method.upper()
         self._auth = auth
 
@@ -127,12 +101,10 @@ class Options(object):
         return self._auth
 
 
-class ProcessHandler(object):
-    def __init__(self, inputs, method):
-        self._inputs = []
-        for item in inputs:
-            self._inputs.append(TokenizedObject(item))
-        self._method = method
+class _Function(object):
+    def __init__(self, inputs, function):
+        self._inputs = [_Token(expr) for expr in (inputs or [])]
+        self._function = function
 
     @property
     def inputs(self):
@@ -143,59 +115,87 @@ class ProcessHandler(object):
         Get rendered input values.
         """
         for it in self._inputs:
-            yield it.render_value(context)
+            yield it.value(context)
 
     @property
-    def method(self):
-        return self._method
+    def function(self):
+        return self._function
 
 
-class BeforeRequest(ProcessHandler):
-    def __init__(self, inputs, method, output=None):
-        super(BeforeRequest, self).__init__(inputs, method)
+class Task(_Function):
+    def __init__(self, inputs, function, output=None):
+        super(Task, self).__init__(inputs, function)
         self._output = output
 
     @property
     def output(self):
         return self._output
 
+    def execute(self, context):
+        args = [arg for arg in self.inputs_values(context)]
+        caller = lookup(self.function)
+        output = self._output
 
-class AfterRequest(BeforeRequest):
+        if output is None:
+            caller(*args)
+            r = {}
+        else:
+            r = {output: caller(*args)}
+        return r
+
+
+class Processor(object):
+    def __init__(self, tasks):
+        self._tasks = tasks
+
+    @property
+    def tasks(self):
+        return self._tasks
+
+
+class BeforeRequest(Processor):
     pass
 
 
-class Condition(ProcessHandler):
+class AfterRequest(Processor):
+    pass
+
+
+class Condition(_Function):
     def calculate(self, context):
-        """
-        Calculates condition result with input and method.
-        :return: `True` if condition meets.
-        """
-        method = lookup(self.method)
-        if method is None:
-            raise ValueError('method {} is not exist'.format(self.method))
-        args = [it for it in self.inputs_values(context)]
-        return method(*args)
+        args = [arg for arg in self.inputs_values(context)]
+        caller = lookup(self.function)
+        return caller(*args)
 
 
-class SkipAfterRequest(object):
-    def __init__(self):
-        self._conditions = []
-
-    def add_condition(self, condition):
-        self._conditions.append(condition)
+class Conditional(object):
+    def __init__(self, conditions):
+        self._conditions = conditions or []
 
     @property
     def conditions(self):
         return self._conditions
 
+    def passed(self, context):
+        """
+        Determine if current conditions are all passed.
+        :param context: variables to render template
+        :return: `True` if all passed else `False`
+        """
+        for condition in self._conditions:
+            if not condition.calculate(context):
+                return False
+        return True
 
-class LoopMode(object):
-    loop_types = ["loop", "once"]
 
-    def __init__(self, type="once", conditions=None):
-        type = type.lower()
-        self._type = type if type in self.loop_types else 'once'
-        self._conditions = conditions
+class SkipAfterRequest(Conditional):
+    pass
+
+
+class LoopMode(Conditional):
+    def __init__(self, loop_type, conditions):
+        super(LoopMode, self).__init__(conditions)
+        self._type = loop_type
 
     @property
     def type(self):
@@ -210,16 +210,11 @@ class LoopMode(object):
 
 
 class Checkpoint(object):
-    def __init__(self, contents, keys=None):
-        self._namespace = []
-        if keys:
-            for key in keys:
-                self._namespace.append(TokenizedObject(key))
+    def __init__(self, namespace, contents):
         if not contents:
-            raise InvalidConfigException("the content field of checkpoint is empty")
-        self._content = dict()
-        for key, value in contents.iteritems():
-            self._content[key] = TokenizedObject(value)
+            raise ConfigException('checkpoint content unexpected to ne empty')
+        self._namespace = [_Token(expr) for expr in (namespace or [])]
+        self._content = {k: _Token(v) for k, v in contents.iteritems()}
 
     @property
     def namespace(self):

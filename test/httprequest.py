@@ -55,11 +55,11 @@ config.add_request(request)
 
 
 context={}
-context["host"] = "ven01034.service-now.com"
+context["host"] = "ven01583.service-now.com"
 context["table_name"] = "incident"
-context["sysparm_limit"] = "100"
-context["since_when"] = "2016-11-01 12:42:23"
-context["username"] = "splunk"
+context["sysparm_limit"] = "1000"
+context["since_when"] = "2016-12-03 19:42:23"
+context["username"] = "admin"
 context["password"] = "Splunk123$"
 client = CloudConnectClient(context, config)
 client.run()

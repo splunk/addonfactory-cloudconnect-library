@@ -86,6 +86,10 @@ def json_empty(candidate, json_path_expr=None):
     return len(json.loads(candidate)) == 0
 
 
+def json_not_empty(candidate, json_path_expr=None):
+    return not json_empty(candidate, json_path_expr)
+
+
 _EXT_FUNCTIONS = {
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
@@ -93,6 +97,7 @@ _EXT_FUNCTIONS = {
     'std_output': std_output,
     'json_path': json_path,
     'json_empty': json_empty,
+    'json_not_empty': json_not_empty,
 }
 
 

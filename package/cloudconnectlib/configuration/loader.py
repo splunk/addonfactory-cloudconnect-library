@@ -41,15 +41,16 @@ class CloudConnectConfigLoaderV1(object):
     @staticmethod
     def _load_schema_from_file(file_path):
         """
-        Load JSON based schema definition from file.
+        Load JSON based schema definition from given file path.
         :param file_path: JSON based schema file path.
         :return: A `dict` contains schema.
         """
         try:
             return util.load_json_file(file_path)
         except:
-            raise ConfigException('Cannot load schema from {}: {}'
-                                  .format(file_path, traceback.format_exc()))
+            raise ConfigException(
+                'Cannot load schema from {}: {}'.format(
+                    file_path, traceback.format_exc()))
 
     @staticmethod
     def _load_definition(file_path):

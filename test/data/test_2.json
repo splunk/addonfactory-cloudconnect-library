@@ -43,7 +43,7 @@
                             "{{__response__.body}}",
                             "$.result[*]"
                         ],
-                        "method": "json_empty"
+                        "method": "json_not_empty"
                     }
                 ],
                 "pipeline": [

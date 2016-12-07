@@ -14,44 +14,33 @@ class _Token(object):
 
 
 class Request(object):
-    def __init__(self, options, before_request, skip_after_request,
-
-                 after_request, checkpoint, loop_mode):
+    def __init__(self, options, pre_process, post_process,
+                 checkpoint, repeat_mode):
         self._options = options
-        self._before_request = before_request
-        self._skip_after_request = skip_after_request
-        self._after_request = after_request
-        self._loop_mode = loop_mode
+        self._pre_process = pre_process
+        self._post_process = post_process
         self._checkpoint = checkpoint
-        self._loop_mode = loop_mode
+        self._repeat_mode = repeat_mode
 
     @property
     def options(self):
         return self._options
 
     @property
-    def before_request(self):
-        return self._before_request
+    def pre_process(self):
+        return self._pre_process
 
     @property
-    def skip_after_request(self):
-        return self._skip_after_request
+    def post_process(self):
+        return self._post_process
 
     @property
-    def after_request(self):
-        return self._after_request
-
-    @property
-    def loop_mode(self):
-        return self._loop_mode
+    def repeat_mode(self):
+        return self._repeat_mode
 
     @property
     def checkpoint(self):
         return self._checkpoint
-
-    @property
-    def loop_mode(self):
-        return self._loop_mode
 
 
 class BasicAuthorization(object):
@@ -144,23 +133,6 @@ class Task(_Function):
         return r
 
 
-class Processor(object):
-    def __init__(self, tasks):
-        self._tasks = tasks
-
-    @property
-    def tasks(self):
-        return self._tasks
-
-
-class BeforeRequest(Processor):
-    pass
-
-
-class AfterRequest(Processor):
-    pass
-
-
 class Condition(_Function):
     def calculate(self, context):
         args = [arg for arg in self.inputs_values(context)]
@@ -168,7 +140,7 @@ class Condition(_Function):
         return caller(*args)
 
 
-class Conditional(object):
+class _Conditional(object):
     def __init__(self, conditions):
         self._conditions = conditions or []
 
@@ -188,13 +160,19 @@ class Conditional(object):
         return True
 
 
-class SkipAfterRequest(Conditional):
-    pass
+class Processor(_Conditional):
+    def __init__(self, conditions, pipeline):
+        super(Processor, self).__init__(conditions)
+        self._pipeline = pipeline or []
+
+    @property
+    def pipeline(self):
+        return self._pipeline
 
 
-class LoopMode(Conditional):
+class RepeatMode(_Conditional):
     def __init__(self, loop_type, conditions):
-        super(LoopMode, self).__init__(conditions)
+        super(RepeatMode, self).__init__(conditions)
         self._type = loop_type
 
     @property

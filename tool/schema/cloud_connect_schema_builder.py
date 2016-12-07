@@ -30,7 +30,7 @@ class Authentication(Document):
     options = DictField()
 
 
-class RequestOptions(Document):
+class Options(Document):
     # required
     url = StringField(required=True)
     method = StringField(enum=_HTTP_METHODS, required=True)
@@ -44,36 +44,35 @@ class RequestOptions(Document):
 class Function(Document):
     input = ArrayField(items=StringField(), required=True)
     method = StringField(required=True)
+
+
+class Task(Function):
     output = StringField()
 
 
-class SkipAfterRequest(Document):
-    conditions = ArrayField(items=DocumentField(Function, as_ref=True),
-                            min_items=1,
-                            required=True)
+class Condition(Function):
+    pass
 
 
-class LoopMode(Document):
+class RepeatMode(Document):
     type = StringField(enum=['loop', 'once'], required=True)
-    stop_conditions = ArrayField(DocumentField(Function, as_ref=True),
+    stop_conditions = ArrayField(DocumentField(Condition, as_ref=True),
                                  min_items=1)
+
+
+class Processor(Document):
+    conditions = ArrayField(DocumentField(Condition, as_ref=True))
+    pipeline = ArrayField(DocumentField(Task), as_ref=True)
 
 
 class Request(Document):
     """
     Represents config scheme for single request.
     """
-    options = DocumentField(RequestOptions, as_ref=True, required=True)
-    before_request = ArrayField(items=DocumentField(Function,
-                                                    as_ref=True),
-                                required=True)
-    skip_after_request = DocumentField(SkipAfterRequest,
-                                       as_ref=True,
-                                       required=True)
-    after_request = ArrayField(items=DocumentField(Function,
-                                                   as_ref=True),
-                               required=True)
-    loop_mode = DocumentField(LoopMode, as_ref=True, required=True)
+    options = DocumentField(Options, as_ref=True, required=True)
+    pre_process = DocumentField(Processor, as_ref=True, required=True)
+    post_process = DocumentField(Processor, as_ref=True, required=True)
+    repeat_mode = DocumentField(RepeatMode, as_ref=True, required=True)
     checkpoint = DocumentField(Checkpoint, as_ref=True, required=True)
 
 
@@ -122,10 +121,10 @@ class Schema(Document):
     """
 
     meta = DocumentField(Meta, as_ref=True, required=True)
-    parameters = ArrayField(items=StringField(), required=True)
-    global_settings = DocumentField(GlobalSettings, as_ref=True)
+    parameters = ArrayField(StringField(), required=True)
 
-    requests = ArrayField(items=[DocumentField(Request, as_ref=True)],
+    global_settings = DocumentField(GlobalSettings, as_ref=True)
+    requests = ArrayField(DocumentField(Request, as_ref=True),
                           min_items=1,
                           required=True)
 
@@ -148,7 +147,7 @@ def build_schema(ordered=True):
 
 if __name__ == '__main__':
     schema_file = op.join(op.dirname(op.dirname(op.dirname(op.abspath(__file__)))),
-                          'package', 'lib-cloud-connect', 'configuration', 'schema.json')
+                          'package', 'cloudconnectlib', 'configuration', 'schema.json')
     schema_as_json = build_schema(True)
     with open(schema_file, 'w') as f:
         f.write(json.dumps(schema_as_json, indent=2))

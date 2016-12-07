@@ -6,9 +6,10 @@ from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core import util
 from ..core.exception import ConfigException
+from ..core.ext import lookup
 from ..core.model import (
-    CloudConnectConfigV1, BasicAuthorization, Request, Options, BeforeRequest,
-    AfterRequest, SkipAfterRequest, Condition, Task, Checkpoint, LoopMode
+    CloudConnectConfigV1, BasicAuthorization, Request, Options, Processor,
+    Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
 from ..splunktalib.common import log
@@ -21,11 +22,7 @@ _AUTH_TYPES = {
     'basic_auth': BasicAuthorization
 }
 
-# Supported loop mode
-_LOOP_MODE_TYPES = ['loop', 'once']
-
-# Supported extended functions
-_EXTEND_FUNCTIONS = ['json_path', 'json_empty', 'regex_not_match', 'regex_match', 'std_output', 'splunk_xml']
+_REPEAT_MODE_TYPES = ['loop', 'once']
 
 _LOGGING_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -151,9 +148,8 @@ class CloudConnectConfigLoaderV1(object):
 
         if auth_type not in _AUTH_TYPES:
             raise ConfigException('auth type expect to be one of [{}]: {}'
-                                  .format(','.join(_AUTH_TYPES), auth_type))
-        auth_cls = _AUTH_TYPES[auth_type]
-        return auth_cls(candidate['options'])
+                                  .format(','.join(_AUTH_TYPES.keys()), auth_type))
+        return _AUTH_TYPES[auth_type](candidate['options'])
 
     def _load_options(self, options):
         return Options(auth=self._load_authorization(options.get('auth')),
@@ -163,10 +159,8 @@ class CloudConnectConfigLoaderV1(object):
 
     @staticmethod
     def _validate_ext_method(method):
-        # FIXME this will be replace with dynamic lookups
-        if method not in _EXTEND_FUNCTIONS:
-            raise ConfigException('method expect to be one of [{}]: {}'
-                                  .format(','.join(_EXTEND_FUNCTIONS), method))
+        if lookup(method) is None:
+            raise ConfigException('unimplemented method: {}'.format(method))
 
     def _parse_tasks(self, raw_tasks):
         tasks = []
@@ -186,30 +180,38 @@ class CloudConnectConfigLoaderV1(object):
     def _load_checkpoint(checkpoint):
         return Checkpoint(checkpoint['namespace'], checkpoint['content'])
 
-    def _load_loop_mode(self, loop_mode):
-        loop_type = loop_mode.get('type')
-        if not loop_type or loop_type.lower() not in _LOOP_MODE_TYPES:
+    def _load_repeat_mode(self, repeat_mode):
+        loop_type = repeat_mode.get('type')
+
+        if not loop_type or loop_type.lower() not in _REPEAT_MODE_TYPES:
             _LOGGER.warn('loop mode type expect to be one of [{}]: found {},'
                          ' setting to default type'
-                         .format(','.join(_LOOP_MODE_TYPES), loop_type))
+                         .format(','.join(_REPEAT_MODE_TYPES), loop_type))
             loop_type = 'once'
+        else:
+            loop_type = loop_type.lower()
 
-        stop_conditions = self._parse_conditions(loop_mode['stop_conditions'])
-        return LoopMode(loop_type, stop_conditions)
+        stop_conditions = self._parse_conditions(repeat_mode['stop_conditions'])
+
+        return RepeatMode(loop_type, stop_conditions)
+
+    def _load_processor(self, processor):
+        conditions = self._parse_conditions(processor.get('conditions', []))
+        tasks = self._parse_tasks(processor.get('tasks', []))
+        return Processor(conditions=conditions, pipeline=tasks)
 
     def _load_request(self, request):
-        before_request = BeforeRequest(self._parse_tasks(request['before_request']))
-        after_request = AfterRequest(self._parse_tasks(request['after_request']))
+        options = self._load_options(request['options'])
+        pre_process = self._load_processor(request['pre_process'])
+        post_process = self._load_processor(request['post_process'])
+        ckpt = self._load_checkpoint(request['checkpoint'])
+        repeat_mode = self._load_repeat_mode(request['repeat_mode'])
 
-        skip_conditions = request['skip_after_request']['conditions']
-        skip_after_request = SkipAfterRequest(self._parse_conditions(skip_conditions))
-
-        return Request(options=self._load_options(request['options']),
-                       before_request=before_request,
-                       skip_after_request=skip_after_request,
-                       after_request=after_request,
-                       checkpoint=self._load_checkpoint(request['checkpoint']),
-                       loop_mode=self._load_loop_mode(request['loop_mode']))
+        return Request(options=options,
+                       pre_process=pre_process,
+                       post_process=post_process,
+                       checkpoint=ckpt,
+                       repeat_mode=repeat_mode)
 
     def _check_version(self, version):
         if version != self._version:
@@ -238,6 +240,7 @@ class CloudConnectConfigLoaderV1(object):
 
         global_settings = self._load_global_setting(
             definition.get('global_settings'), context)
+
         requests = [self._load_request(item) for item in definition['requests']]
 
         return CloudConnectConfigV1(meta=meta,

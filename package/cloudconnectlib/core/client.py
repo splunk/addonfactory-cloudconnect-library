@@ -86,21 +86,18 @@ class CloudConnectRequest(object):
         self._context[key] = value
 
     def _execute_tasks(self, tasks):
+        if not tasks:
+            return
         for task in tasks:
             self._context.update(task.execute(self._context))
 
-    def _do_stuff_before_request(self):
+    def _on_pre_process(self):
         """
-        Execute tasks in before request one by one.
+        Execute tasks in pre process one by one.
         """
-        before_request_tasks = self._request.before_request.tasks
-
-        if before_request_tasks:
-            _LOGGER.info('Got {} tasks in before request'
-                         .format(len(before_request_tasks)))
-            self._execute_tasks(before_request_tasks)
-            return
-        _LOGGER.info("No before request task need to execute")
+        tasks = self._request.pre_process.pipeline
+        _LOGGER.info('Got %s tasks need be executed before process', len(tasks))
+        self._execute_tasks(tasks)
 
     def _invoke_request(self):
         """
@@ -117,22 +114,18 @@ class CloudConnectRequest(object):
         response = CloudConnectResponse(resp, content)
         return response
 
-    def _do_stuff_after_request(self):
-        tasks = self._request.after_request.tasks
-        if tasks:
-            _LOGGER.info('Got {} tasks in after request'.format(len(tasks)))
-            self._execute_tasks(tasks)
-            return
-        _LOGGER.info("No after request task need to execute")
+    def _on_post_process(self):
+        tasks = self._request.post_process.pipeline
+        _LOGGER.info('Got {} tasks need to be executed after process'.format(len(tasks)))
+        self._execute_tasks(tasks)
 
     def _update_checkpoint(self):
+        # TODO
         pass
 
     def _check_stop_condition(self):
-        loop_mode = self._request.loop_mode
-        if loop_mode.is_once():
-            return True
-        return loop_mode.passed(self._context)
+        repeat_mode = self._request.repeat_mode
+        return repeat_mode.is_once() or repeat_mode.passed(self._context)
 
     def start(self):
         """
@@ -142,12 +135,12 @@ class CloudConnectRequest(object):
 
         while 1:
             self._init_request()
-            self._do_stuff_before_request()
+            self._on_pre_process()
 
             self._update_context('__response__', self._invoke_request())
 
-            if not self._request.skip_after_request.passed(self._context):
-                self._do_stuff_after_request()
+            if not self._request.post_process.passed(self._context):
+                self._on_post_process()
             if self._check_stop_condition():
                 _LOGGER.info('Stop condition reached, exit loop now')
                 break

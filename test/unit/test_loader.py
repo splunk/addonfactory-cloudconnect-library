@@ -1,13 +1,15 @@
 import logging
 import os.path as op
+from os import listdir
 
 import pytest
 
+import common
 from package.cloudconnectlib.configuration import CloudConnectConfigLoaderV1
 from package.cloudconnectlib.core import ConfigException
 from package.cloudconnectlib.core.util import is_port
 
-_config_file = op.join(op.dirname(op.dirname(op.abspath(__file__))), 'data', 'test_1.json')
+_config_file = op.join(common.DATA_DIR, 'test_1.json')
 
 
 def test_load_proxy():
@@ -126,3 +128,19 @@ def test_load_config():
     assert config.global_settings.proxy.password == 'pwd'
     assert config.global_settings.proxy.type == 'http'
     assert config.global_settings.proxy.rdns is False
+
+
+def test_load_examples():
+    files = [f for f in listdir(common.EXAMPLE_DIR) if op.isfile(op.join(common.EXAMPLE_DIR, f))]
+    loader = CloudConnectConfigLoaderV1()
+    ctx = {
+        'proxy_port': '1024',
+        'proxy_enabled': '0',
+        'proxy_username': 'admin',
+        'proxy_password': 'pwd',
+        'proxy_type': 'http',
+        'proxy_rdns': ''
+    }
+
+    for f in files:
+        loader.load_config(op.join(common.EXAMPLE_DIR, f), ctx)

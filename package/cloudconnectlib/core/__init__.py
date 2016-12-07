@@ -1,1 +1,1 @@
-from .exception import ConfigException
+from .exceptions import ConfigException

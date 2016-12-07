@@ -5,7 +5,7 @@ import traceback
 from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core import util
-from ..core.exception import ConfigException
+from ..core.exceptions import ConfigException
 from ..core.ext import lookup
 from ..core.model import (
     CloudConnectConfigV1, BasicAuthorization, Request, Options, Processor,
@@ -179,15 +179,15 @@ class CloudConnectConfigLoaderV1(object):
 
     @staticmethod
     def _load_checkpoint(checkpoint):
-        return Checkpoint(checkpoint['namespace'], checkpoint['content'])
+        return Checkpoint(checkpoint.get('namespace', []), checkpoint['content'])
 
     def _load_repeat_mode(self, repeat_mode):
         loop_type = repeat_mode.get('type')
 
         if not loop_type or loop_type.lower() not in _REPEAT_MODE_TYPES:
-            _LOGGER.warn('loop mode type expect to be one of [{}]: found {},'
-                         ' setting to default type'
-                         .format(','.join(_REPEAT_MODE_TYPES), loop_type))
+            _LOGGER.warn('loop mode type expect to be one of [%s]: found %s,'
+                         ' setting to default type',
+                         ','.join(_REPEAT_MODE_TYPES), loop_type)
             loop_type = 'once'
         else:
             loop_type = loop_type.lower()

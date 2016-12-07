@@ -42,5 +42,5 @@ def load_json_file(file_path):
     :param file_path: JSON file path.
     :return: A `dict` object.
     """
-    with open(file_path, 'r') as r:
-        return json.load(r)
+    with open(file_path, 'r') as file_pointer:
+        return json.load(file_pointer)

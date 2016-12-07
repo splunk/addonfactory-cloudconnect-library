@@ -1,7 +1,7 @@
 import base64
 import logging
 
-from ..exception import ConfigException
+from ..exceptions import ConfigException
 from ..ext import lookup
 from ..template import compile_template
 
@@ -116,7 +116,7 @@ class Options(object):
 
 class _Function(object):
     def __init__(self, inputs, function):
-        self._inputs = [_Token(expr) for expr in (inputs or [])]
+        self._inputs = [_Token(expr) for expr in inputs or []]
         self._function = function
 
     @property
@@ -127,8 +127,8 @@ class _Function(object):
         """
         Get rendered input values.
         """
-        for it in self._inputs:
-            yield it.value(context)
+        for arg in self._inputs:
+            yield arg.value(context)
 
     @property
     def function(self):
@@ -149,15 +149,15 @@ class Task(_Function):
         caller = lookup(self.function)
         output = self._output
 
-        _LOGGER.info('Executing task method: [%s], output: [%s]',
-                     self.function, output)
+        _LOGGER.info(
+            'Executing task method: [%s], output: [%s]', self.function, output
+        )
 
         if output is None:
             caller(*args)
-            r = {}
-        else:
-            r = {output: caller(*args)}
-        return r
+            return {}
+
+        return {output: caller(*args)}
 
 
 class Condition(_Function):
@@ -218,7 +218,7 @@ class Checkpoint(object):
     def __init__(self, namespace, contents):
         if not contents:
             raise ConfigException('checkpoint content unexpected to ne empty')
-        self._namespace = [_Token(expr) for expr in (namespace or [])]
+        self._namespace = [_Token(expr) for expr in namespace or []]
         self._content = {k: _Token(v) for k, v in contents.iteritems()}
 
     @property

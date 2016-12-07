@@ -5,7 +5,7 @@ import urllib
 import urlparse
 
 from httplib2 import ProxyInfo, Http
-from .exception import HTTPError
+from .exceptions import HTTPError
 from ..configuration import CloudConnectConfigLoaderV1
 from ..splunktaucclib.common import log as stulog
 
@@ -136,7 +136,7 @@ class HTTPRequest(object):
                                            headers=self._headers)
 
         if resp.status not in (200, 201):
-            raise HTTPError(resp)
+            raise HTTPError(response=resp, status=resp.status)
 
         return HTTPResponse(resp, content)
 
@@ -167,17 +167,18 @@ class HTTPRequest(object):
 
             try:
                 response = self._invoke_request()
-            except HTTPError as e:
-                if e.status == 404:
-                    _LOGGER.warn('stop repeating request cause request returned'
-                                 ' 404 error')
+            except HTTPError as error:
+                if error.status == 404:
+                    _LOGGER.warn(
+                        'Stop repeating request cause request returned 404 error')
                     break
-                _LOGGER.error('unexpected exception thrown on invoking request:'
-                              ' %s', traceback.format_exc())
+                _LOGGER.error(
+                    'Unexpected exception thrown on invoking request: %s',
+                    traceback.format_exc())
                 raise
 
             if not response.body:
-                _LOGGER.warn('stop repeating request cause request returned'
+                _LOGGER.warn('Stop repeating request cause request returned'
                              ' a empty response: [%s]', response.body)
                 break
 

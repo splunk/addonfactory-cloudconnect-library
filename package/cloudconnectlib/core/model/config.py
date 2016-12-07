@@ -1,6 +1,7 @@
 class CloudConnectConfigV1(object):
     """
-    A entity class to hold all configs loaded from JSON file.
+    CloudConnectConfigV1 class holds all configs loaded from JSON file
+    passed from user.
     """
 
     def __init__(self, meta, parameters, global_settings, requests):
@@ -8,9 +9,6 @@ class CloudConnectConfigV1(object):
         self._parameters = parameters
         self._global_settings = global_settings
         self._requests = requests
-
-    def add_request(self, request):
-        self._requests.append(request)
 
     @property
     def meta(self):

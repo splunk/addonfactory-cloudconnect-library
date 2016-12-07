@@ -38,9 +38,6 @@ class TaDataClient(object):
         self._stop = True
 
     def get(self):
-        self._event_write_fn(self._meta_config)
-        self._event_write_fn(self._task_config)
-        self._event_write_fn("dddd")
         raise StopIteration
 
 

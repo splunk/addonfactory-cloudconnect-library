@@ -1,19 +1,22 @@
-import base64
 import logging
 
-from httplib2 import (ProxyInfo, Http)
-from .model.request import BasicAuthorization
+from httplib2 import ProxyInfo, Http
+from .exception import HTTPError
 from ..configuration import CloudConnectConfigLoaderV1
 from ..splunktaucclib.common import log as stulog
 
 _LOGGER = logging
 
 
-class CloudConnectResponse(object):
-    def __init__(self, res_headers, res_body):
+class HTTPResponse(object):
+    """
+    HTTPResponse class wraps response of HTTP request for later use.
+    """
+
+    def __init__(self, res_headers, body):
         self._status_code = res_headers.status
         self._headers = res_headers
-        self._body = res_body
+        self._body = body
 
     @property
     def headers(self):
@@ -54,17 +57,18 @@ class CloudConnectClient(object):
         _LOGGER.info('Start to execute requests')
 
         for item in config.requests:
-            request = CloudConnectRequest(request=item,
-                                          context=self._context,
-                                          proxy=config.global_settings.proxy)
+            request = HTTPRequest(request=item,
+                                  context=self._context,
+                                  proxy=config.global_settings.proxy)
             request.start()
 
         _LOGGER.info('All requests finished')
 
 
-class CloudConnectRequest(object):
+class HTTPRequest(object):
     """
-    A class represents a single request instance.
+    HTTPRequest class represents a single request to send HTTP request until
+    reached it's stop condition.
     """
 
     def __init__(self, request, context, proxy=None):
@@ -82,7 +86,7 @@ class CloudConnectRequest(object):
         self._method = 'GET'
         self._headers = {}
 
-    def _update_context(self, key, value):
+    def _set_context(self, key, value):
         self._context[key] = value
 
     def _execute_tasks(self, tasks):
@@ -111,12 +115,14 @@ class CloudConnectRequest(object):
             uri, body = self._url.split("?")
         resp, content = http.request(uri, body=body, method=self._method,
                                      headers=self._headers)
-        response = CloudConnectResponse(resp, content)
-        return response
+        if resp.status not in (200, 201):
+            raise HTTPError(resp)
+
+        return HTTPResponse(resp, content)
 
     def _on_post_process(self):
         tasks = self._request.post_process.pipeline
-        _LOGGER.info('Got {} tasks need to be executed after process'.format(len(tasks)))
+        _LOGGER.info('Got %s tasks need to be executed after process', len(tasks))
         self._execute_tasks(tasks)
 
     def _update_checkpoint(self):
@@ -137,10 +143,25 @@ class CloudConnectRequest(object):
             self._init_request()
             self._on_pre_process()
 
-            self._update_context('__response__', self._invoke_request())
+            try:
+                response = self._invoke_request()
+            except HTTPError as e:
+                if e.status == 404:
+                    _LOGGER.warn('stop repeating request cause request returned'
+                                 ' 404 error')
+                    break
+                raise
+
+            if not response.body:
+                _LOGGER.warn('stop repeating request cause request returned'
+                             ' a empty response: [%s]', response.body)
+                break
+
+            self._set_context('__response__', response)
 
             if not self._request.post_process.passed(self._context):
                 self._on_post_process()
+
             if self._check_stop_condition():
                 _LOGGER.info('Stop condition reached, exit loop now')
                 break
@@ -177,10 +198,6 @@ class CloudConnectRequest(object):
             self._headers[key] = value.value(self._context)
 
     def _do_auth(self):
-        options = self._request.options
-        auth = options.auth
-        if isinstance(auth, BasicAuthorization):
-            username = auth.username.value(self._context)
-            password = auth.password.value(self._context)
-            encode_str = base64.encodestring(username + ':' + password)
-            self._headers['Authorization'] = 'Basic ' + encode_str
+        auth = self._request.options.auth
+        if auth:
+            auth.authenciate(self._headers, self._context)

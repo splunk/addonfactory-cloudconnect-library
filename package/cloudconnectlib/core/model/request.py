@@ -1,3 +1,5 @@
+import base64
+
 from ..exception import ConfigException
 from ..ext import lookup
 from ..template import compile_template
@@ -43,10 +45,15 @@ class Request(object):
         return self._checkpoint
 
 
-class BasicAuthorization(object):
+class Authentication(object):
+    def authenticate(self, headers, context):
+        pass
+
+
+class BasicAuthorization(Authentication):
     def __init__(self, options):
         if not options:
-            raise ConfigException('options for basic auth expect to be not none')
+            raise ConfigException('options for basic auth unexpected to be empty')
 
         username = options.get('username')
         if not username:
@@ -65,13 +72,20 @@ class BasicAuthorization(object):
     def password(self):
         return self._password
 
+    def authenticate(self, headers, context):
+        username = self._username.value(context)
+        password = self._password.value(context)
+        headers['Authorization'] = \
+            'Basic %s' % base64.encodestring(username + ':' + password)
+
 
 class Options(object):
-    def __init__(self, url, method, header=None, auth=None):
+    def __init__(self, url, method, header=None, auth=None, body=None):
         self._header = {k: _Token(v) for k, v in (header or {}).iteritems()}
         self._url = _Token(url)
         self._method = method.upper()
         self._auth = auth
+        self._body = {k: _Token(v) for k, v in (body or {}).iteritems()}
 
     @property
     def header(self):
@@ -88,6 +102,10 @@ class Options(object):
     @property
     def auth(self):
         return self._auth
+
+    @property
+    def body(self):
+        return self._body
 
 
 class _Function(object):

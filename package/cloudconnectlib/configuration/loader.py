@@ -155,7 +155,8 @@ class CloudConnectConfigLoaderV1(object):
         return Options(auth=self._load_authorization(options.get('auth')),
                        url=options['url'],
                        method=options['method'],
-                       header=options.get('headers', {}))
+                       header=options.get('headers', {}),
+                       body=options.get('body', {}))
 
     @staticmethod
     def _validate_ext_method(method):

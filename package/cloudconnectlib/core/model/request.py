@@ -1,8 +1,12 @@
 import base64
+import logging
 
 from ..exception import ConfigException
 from ..ext import lookup
 from ..template import compile_template
+
+logging.basicConfig(level=logging.DEBUG)
+_LOGGER = logging
 
 
 class _Token(object):
@@ -45,12 +49,12 @@ class Request(object):
         return self._checkpoint
 
 
-class Authentication(object):
-    def authenticate(self, headers, context):
-        pass
+class BaseAuth(object):
+    def __call__(self, headers, context):
+        raise NotImplementedError('Auth must be callable.')
 
 
-class BasicAuthorization(Authentication):
+class BasicAuthorization(BaseAuth):
     def __init__(self, options):
         if not options:
             raise ConfigException('options for basic auth unexpected to be empty')
@@ -64,19 +68,12 @@ class BasicAuthorization(Authentication):
         self._username = _Token(username)
         self._password = _Token(password)
 
-    @property
-    def username(self):
-        return self._username
-
-    @property
-    def password(self):
-        return self._password
-
-    def authenticate(self, headers, context):
+    def __call__(self, headers, context):
         username = self._username.value(context)
         password = self._password.value(context)
-        headers['Authorization'] = \
-            'Basic %s' % base64.encodestring(username + ':' + password)
+        headers['Authorization'] = 'Basic %s' % base64.encodestring(
+            username + ':' + password
+        ).strip()
 
 
 class Options(object):
@@ -106,6 +103,15 @@ class Options(object):
     @property
     def body(self):
         return self._body
+
+    def normalize_url(self, context):
+        return self._url.value(context)
+
+    def normalize_header(self, context):
+        return {k: v.value(context) for k, v in self._header.iteritems()}
+
+    def normalize_body(self, context):
+        return {k: v.value(context) for k, v in self._body.iteritems()}
 
 
 class _Function(object):
@@ -142,6 +148,9 @@ class Task(_Function):
         args = [arg for arg in self.inputs_values(context)]
         caller = lookup(self.function)
         output = self._output
+
+        _LOGGER.info('Executing task method: [%s], output: [%s]',
+                     self.function, output)
 
         if output is None:
             caller(*args)

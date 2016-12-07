@@ -1,10 +1,15 @@
+import json
 import logging
+import traceback
+import urllib
+import urlparse
 
 from httplib2 import ProxyInfo, Http
 from .exception import HTTPError
 from ..configuration import CloudConnectConfigLoaderV1
 from ..splunktaucclib.common import log as stulog
 
+logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging
 
 
@@ -85,6 +90,7 @@ class HTTPRequest(object):
         self._url = None
         self._method = 'GET'
         self._headers = {}
+        self._http = self._build_http_connection()
 
     def _set_context(self, key, value):
         self._context[key] = value
@@ -103,18 +109,32 @@ class HTTPRequest(object):
         _LOGGER.info('Got %s tasks need be executed before process', len(tasks))
         self._execute_tasks(tasks)
 
+    @staticmethod
+    def _encode_url(url):
+        if not url:
+            raise ValueError('url unexpected to be empty')
+        parts = url.split('?', 1)
+        if len(parts) == 1:
+            return url
+        params = urlparse.parse_qs(parts[1])
+        return '?'.join([parts[0], urllib.urlencode(params, True)])
+
     def _invoke_request(self):
         """
         Invoke a request with httplib2 and return it's response.
-        :return: A response of request.
+        :return: A `HTTPResponse` object.
         """
-        http = self._build_http_connection()
-        uri = self._url
-        body = None
-        if "?" in self._url:
-            uri, body = self._url.split("?")
-        resp, content = http.request(uri, body=body, method=self._method,
-                                     headers=self._headers)
+        uri = self._encode_url(self._url) if self._method == 'GET' else self._url
+
+        _LOGGER.info('Preparing to invoke request to [%s]', uri)
+
+        rob = self._request.options.body
+        body = json.dumps(rob) if rob else None
+
+        resp, content = self._http.request(uri, body=body,
+                                           method=self._method,
+                                           headers=self._headers)
+
         if resp.status not in (200, 201):
             raise HTTPError(resp)
 
@@ -122,7 +142,9 @@ class HTTPRequest(object):
 
     def _on_post_process(self):
         tasks = self._request.post_process.pipeline
-        _LOGGER.info('Got %s tasks need to be executed after process', len(tasks))
+        _LOGGER.info(
+            'Got %s tasks need to be executed after process', len(tasks)
+        )
         self._execute_tasks(tasks)
 
     def _update_checkpoint(self):
@@ -150,6 +172,8 @@ class HTTPRequest(object):
                     _LOGGER.warn('stop repeating request cause request returned'
                                  ' 404 error')
                     break
+                _LOGGER.error('unexpected exception thrown on invoking request:'
+                              ' %s', traceback.format_exc())
                 raise
 
             if not response.body:
@@ -186,18 +210,17 @@ class HTTPRequest(object):
         return http
 
     def _init_request(self):
-        request_options = self._request.options
-        self._url = request_options.url.value(self._context)
-        self._method = request_options.method
-        self._do_auth()
+        options = self._request.options
+        self._url = options.normalize_url(self._context)
+        self._method = options.method
         self._handle_headers()
+        self._do_auth()
 
     def _handle_headers(self):
         options = self._request.options
-        for key, value in options.header.iteritems():
-            self._headers[key] = value.value(self._context)
+        self._headers.update(options.normalize_header(self._context))
 
     def _do_auth(self):
         auth = self._request.options.auth
         if auth:
-            auth.authenciate(self._headers, self._context)
+            auth(self._headers, self._context)

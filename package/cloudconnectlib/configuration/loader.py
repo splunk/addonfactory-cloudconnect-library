@@ -198,7 +198,7 @@ class CloudConnectConfigLoaderV1(object):
 
     def _load_processor(self, processor):
         conditions = self._parse_conditions(processor.get('conditions', []))
-        tasks = self._parse_tasks(processor.get('tasks', []))
+        tasks = self._parse_tasks(processor.get('pipeline', []))
         return Processor(conditions=conditions, pipeline=tasks)
 
     def _load_request(self, request):

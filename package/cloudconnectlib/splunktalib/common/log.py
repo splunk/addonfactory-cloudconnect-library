@@ -7,9 +7,9 @@ log utility for TA
 import logging
 import logging.handlers as handlers
 import os.path as op
-from splunktalib.splunk_platform import make_splunkhome_path
-import splunktalib.common.util as cutil
-from splunktalib.common.pattern import singleton
+from ..splunk_platform import make_splunkhome_path
+from . import util as cutil
+from .pattern import singleton
 
 import time
 logging.Formatter.converter = time.gmtime

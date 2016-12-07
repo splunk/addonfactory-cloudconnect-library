@@ -2,7 +2,7 @@ import re
 import json
 from xml.etree import cElementTree as et
 
-import splunktalib.rest as rest
+from . import rest as rest
 
 
 class KVException(Exception):

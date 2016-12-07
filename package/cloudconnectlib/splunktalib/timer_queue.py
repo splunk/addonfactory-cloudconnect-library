@@ -7,8 +7,8 @@ import Queue
 from time import time
 import traceback
 
-from splunktalib.timer import Timer
-from splunktalib.common import log
+from .timer import Timer
+from .common import log
 
 
 class TimerQueue(object):

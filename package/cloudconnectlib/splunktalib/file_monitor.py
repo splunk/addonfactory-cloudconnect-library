@@ -1,7 +1,7 @@
 import os.path as op
 import traceback
 
-from splunktalib.common import log
+from .common import log
 
 
 class FileMonitor(object):

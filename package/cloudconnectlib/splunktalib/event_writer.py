@@ -3,7 +3,7 @@ import multiprocessing
 import threading
 import sys
 from collections import Iterable
-from splunktalib.common import log
+from .common import log
 
 
 class EventWriter(object):

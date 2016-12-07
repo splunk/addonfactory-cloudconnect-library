@@ -2,8 +2,8 @@ import urllib
 import json
 from traceback import format_exc
 
-import splunktalib.common.util as scu
-import splunktalib.common.log as log
+from .common import util as scu
+from .common import log as log
 
 
 from httplib2 import (socks, ProxyInfo, Http)

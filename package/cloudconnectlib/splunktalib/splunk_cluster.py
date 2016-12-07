@@ -1,5 +1,5 @@
-import splunktalib.rest as rest
-import splunktalib.common.xml_dom_parser as xdp
+from ..splunktalib import rest
+from ..splunktalib.common import xml_dom_parser as xdp
 
 
 def _do_rest(uri, session_key):

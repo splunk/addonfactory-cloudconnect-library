@@ -2,7 +2,7 @@ import threading
 from time import time
 import random
 import Queue
-from splunktalib.common import log
+from ..common import log
 
 
 class Scheduler(object):

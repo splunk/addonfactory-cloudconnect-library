@@ -4,7 +4,7 @@ import subprocess
 from ConfigParser import ConfigParser
 from cStringIO import StringIO
 
-from ..splunktalib.common import util as scu
+from .common import util as scu
 
 
 def make_splunkhome_path(parts):

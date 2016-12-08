@@ -9,7 +9,7 @@ import traceback
 import exceptions
 from time import time
 
-from splunktalib.common import log
+from ..common import log
 
 
 class ThreadPool(object):

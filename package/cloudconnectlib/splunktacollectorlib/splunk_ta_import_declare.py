@@ -14,7 +14,4 @@ new_paths = [path for path in sys.path if not pattern.search(path) or ta_name in
 new_paths.insert(0, os.path.sep.join([os.path.dirname(__file__), ta_lib_name]))
 sys.path = new_paths
 
-from splunktalib.common import util
-
-util.remove_http_proxy_env_vars()
 

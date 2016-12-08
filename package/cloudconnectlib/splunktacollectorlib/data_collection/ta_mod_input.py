@@ -7,16 +7,17 @@ This is the main entry point for My TA
 import os.path as op
 import sys
 import time
-import splunktalib.modinput as modinput
-import splunktalib.common.util as utils
-import splunktaucclib.common.log as stulog
-from splunktaucclib.data_collection import ta_data_loader as dl
-from splunktaucclib.data_collection import ta_config as tc
-from splunktaucclib.data_collection import ta_checkpoint_manager as cpmgr
-import splunktalib.orphan_process_monitor as opm
-import splunktalib.file_monitor as fm
-from splunktaucclib.common import load_schema_file as ld
-from splunktaucclib.data_collection import ta_data_client as tdc
+from ...splunktalib import modinput
+from ...splunktalib.common import util as utils
+from ..common import log as stulog
+from . import ta_data_loader as dl
+from . import ta_config as tc
+from . import ta_checkpoint_manager as cpmgr
+from ...splunktalib import orphan_process_monitor as opm
+
+from ...splunktalib import file_monitor as fm
+from ..common import load_schema_file as ld
+from . import ta_data_client as tdc
 
 utils.remove_http_proxy_env_vars()
 
@@ -98,10 +99,12 @@ def _get_conf_files(local_file_list):
 
 
 def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
-        log_suffix=None):
+        log_suffix=None, single_instance=True):
     """
     Main loop. Run this TA forever
     """
+    ta_short_name = settings["meta"]["name"].lower()
+
     # This is for stdout flush
     utils.disable_stdout_buffer()
 
@@ -111,20 +114,21 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
     loader = dl.create_data_loader()
 
     # handle signal
-    _setup_signal_handler(loader, settings["basic"]["title"])
+    _setup_signal_handler(loader, ta_short_name)
 
     # monitor files to reboot
-    if settings["basic"].get("monitor_file"):
-        monitor = fm.FileMonitor(_handle_file_changes(loader),
-                             _get_conf_files(settings["basic"]["monitor_file"]))
-        loader.add_timer(monitor.check_changes, time.time(), 10)
+    # if settings["basic"].get("monitor_file"):
+    #     monitor = fm.FileMonitor(_handle_file_changes(loader),
+    #                          _get_conf_files(settings["basic"]["monitor_file"]))
+    #     loader.add_timer(monitor.check_changes, time.time(), 10)
 
     # add orphan process handling, which will check each 1 second
     orphan_checker = opm.OrphanProcessChecker(loader.tear_down)
     loader.add_timer(orphan_checker.check_orphan, time.time(), 1)
 
-    tconfig = tc.create_ta_config(settings, config_cls or tc.TaConfig, log_suffix)
-    stulog.set_log_level(tconfig.get_log_level())
+    tconfig = tc.create_ta_config(settings, config_cls or tc.TaConfig,
+                                  log_suffix, single_instance=single_instance)
+    #stulog.set_log_level(tconfig.get_log_level())
     task_configs = tconfig.get_task_configs()
 
     if not task_configs:
@@ -132,9 +136,10 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
         return
     meta_config = tconfig.get_meta_config()
 
-    if tconfig.is_shc_but_not_captain():
+    if tconfig.is_shc_member():
         # In SHC env, only captain is able to collect data
-        stulog.logger.debug("This search header is not captain, will exit.")
+        stulog.logger.debug("This host is in search head cluster environment , "
+                            "will exit.")
         return
 
     jobs = [tdc.create_data_collector(loader, tconfig, meta_config, task_config,
@@ -175,8 +180,8 @@ def main(collector_cls, schema_file_path, log_suffix="modinput",
 
     stulog.reset_logger(log_suffix)
     settings = ld(schema_file_path)
-    ta_short_name = settings["basic"]["title"]
-    ta_desc = settings["basic"]["description"]
+    ta_short_name = settings["meta"]["name"].lower()
+    ta_desc = settings["meta"]["displayName"].lower()
 
     args = sys.argv
     if len(args) > 1:
@@ -193,7 +198,8 @@ def main(collector_cls, schema_file_path, log_suffix="modinput",
         stulog.logger.info("Start {} task".format(ta_short_name))
         try:
             run(collector_cls, settings, checkpoint_cls=checkpoint_cls,
-                config_cls=configer_cls, log_suffix=log_suffix)
+                config_cls=configer_cls, log_suffix=log_suffix,
+                single_instance=single_instance)
         except Exception as e:
             stulog.logger.exception(
                 "{} task encounter exception".format(ta_short_name))

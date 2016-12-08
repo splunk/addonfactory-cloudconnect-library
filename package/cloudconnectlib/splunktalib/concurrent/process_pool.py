@@ -3,7 +3,7 @@ A wrapper of multiprocessing.pool
 """
 
 import multiprocessing
-from splunktalib.common import log
+from ..common import log
 
 
 class ProcessPool(object):

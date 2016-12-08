@@ -2,8 +2,8 @@ import os.path as op
 import os
 import json
 import time
-import splunktalib.kv_client as kvc
-from splunktalib.common import util
+from ..splunktalib import kv_client as kvc
+from ..splunktalib.common import util
 
 
 def get_state_store(meta_configs, appname, collection_name="talib_states",

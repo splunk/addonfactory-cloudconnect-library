@@ -4,6 +4,7 @@ import traceback
 
 from jsonschema import validate, ValidationError
 from munch import munchify
+
 from ..core import util
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup
@@ -221,14 +222,14 @@ class CloudConnectConfigLoaderV1(object):
                 'unsupported schema version {}, current supported versions '
                 '{}'.format(version, self._version))
 
-    def load_config(self, json_file_path, context):
+    def load_config(self, file_path, context):
         """
         Load JSON based interface from a file path and validate it with schema.
         :param context: variables to render template in global setting.
-        :param json_file_path: file path of json based interface.
+        :param file_path: file path of json based interface.
         :return: A `CloudConnectConfigV1` object.
         """
-        definition = self._load_definition(json_file_path)
+        definition = self._load_definition(file_path)
         try:
             validate(definition, self._load_schema_from_file(_SCHEMA_LOCATION))
         except ValidationError:

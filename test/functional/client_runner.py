@@ -1,6 +1,6 @@
 import os.path as op
 
-from cloudconnectlib.core.client import CloudConnectClient
+from package.cloudconnectlib import CloudConnectClient
 
 context = {
     'host': 'ven01034.service-now.com',
@@ -15,4 +15,4 @@ context = {
 config_file = op.join(op.dirname(op.dirname(__file__)), 'data', 'test_2.json')
 
 client = CloudConnectClient(context, config_file)
-client.run()
+client.start()

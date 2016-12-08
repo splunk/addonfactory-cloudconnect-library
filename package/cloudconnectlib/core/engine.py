@@ -3,43 +3,41 @@ import traceback
 
 from .exceptions import HTTPError
 from .http import HTTPRequest
-from ..configuration import CloudConnectConfigLoaderV1
-from ..splunktaucclib.common import log as stulog
+from ..splunktacollectorlib.common import log as stulog
 
 logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging
 
 
-class CloudConnectClient(object):
+class CloudConnectEngine(object):
     """
-    The client of cloud connect used to start a cloud connect engine instance.
+    The cloud connect engine to process request instantiated from user options.
     """
 
-    def __init__(self, context, config_file):
+    def __init__(self, context, config):
+        if not config:
+            raise ValueError('config unexpected to be empty')
         self._context = context
-        self._config_file = config_file
+        self._config = config
         self._stopped = False
 
     @staticmethod
     def _set_logging(log_setting):
         stulog.set_log_level(log_setting.level)
 
-    def run(self):
+    def start(self):
         """
         Start current client instance to execute each request parsed from config.
         """
-        config_loader_v1 = CloudConnectConfigLoaderV1()
-        config = config_loader_v1.load_config(self._config_file, self._context)
-
-        global_setting = config.global_settings
+        global_setting = self._config.global_settings
         self._set_logging(global_setting.logging)
 
         _LOGGER.info('Start to execute requests')
 
-        for item in config.requests:
+        for item in self._config.requests:
             job = Job(request=item, context=self._context,
                       proxy=global_setting.proxy)
-            job.start()
+            job.run()
 
         _LOGGER.info('All requests finished')
 
@@ -55,8 +53,8 @@ class Job(object):
 
     def __init__(self, request, context, proxy=None):
         """
-        Constructs a `CloudConnectRequest` with properties request, contenxt
-        and a optional proxy setting.
+        Constructs a `Job` with properties request, context and a
+         optional proxy setting.
         :param request: A `Request` instance which contains request settings.
         :param context: A values set contains initial values for template variables.
         :param proxy: A optional `Proxy` object contains proxy related settings.
@@ -113,7 +111,7 @@ class Job(object):
         repeat_mode = self._request.repeat_mode
         return repeat_mode.is_once() or repeat_mode.passed(self._context)
 
-    def start(self):
+    def run(self):
         """
         Start request instance and exit util meet stop condition.
         """

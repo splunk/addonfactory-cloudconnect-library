@@ -1,1 +1,2 @@
-from .exceptions import ConfigException
+from .engine import CloudConnectEngine
+from .exceptions import ConfigException, HTTPError

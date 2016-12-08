@@ -1,11 +1,16 @@
 import json
 import logging
+import os
 import traceback
 import urllib
 import urlparse
 
-from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 from .exceptions import HTTPError
+from .util import register_syspath
+
+register_syspath(os.path.join(os.path.dirname(__file__), 'cacerts'))
+
+from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 
 logging.basicConfig(level=logging.DEBUG)
 _logger = logging

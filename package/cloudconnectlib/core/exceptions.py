@@ -14,7 +14,6 @@ class HTTPError(Exception):
         """
         Initialize HTTPError with `response` object and `status`.
         """
-        response = kwargs.pop('response', None)
-        self.response = response
+        self.response = kwargs.pop('response', None)
         self.status = kwargs.pop('status', None)
         super(HTTPError, self).__init__(*args, **kwargs)

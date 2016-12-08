@@ -16,29 +16,30 @@ class CloudConnectEngine(object):
     The cloud connect engine to process request instantiated from user options.
     """
 
-    def __init__(self, context, config):
-        if not config:
-            raise ValueError('config unexpected to be empty')
-        self._context = context
-        self._config = config
+    def __init__(self):
         self._stopped = False
 
     @staticmethod
     def _set_logging(log_setting):
         stulog.set_log_level(log_setting.level)
 
-    def start(self):
+    def start(self, context, config):
+        """Start current client instance to execute each request parsed
+         from config.
         """
-        Start current client instance to execute each request parsed from config.
-        """
-        global_setting = self._config.global_settings
-        self._set_logging(global_setting.logging)
+        if not config:
+            raise ValueError('Config must not be empty')
+
+        context = context or {}
+        global_setting = config.global_settings
         handled = 0
+
+        self._set_logging(global_setting.logging)
 
         _LOGGER.info('Start to execute requests')
 
-        for item in self._config.requests:
-            job = Job(request=item, context=self._context,
+        for item in config.requests:
+            job = Job(request=item, context=context,
                       proxy=global_setting.proxy)
             job.run()
 
@@ -127,6 +128,7 @@ class Job(object):
         Start request instance and exit util meet stop condition.
         """
         _LOGGER.info('Start to process request')
+
         options = self._request.options
         method = options.method
         authorizer = options.auth
@@ -168,9 +170,10 @@ class Job(object):
             self._set_context('__response__', response)
             self._on_post_process()
 
+            self._update_checkpoint()
+
             if self._is_stoppable():
                 _LOGGER.info('Stop condition reached, exit job now')
                 break
-            self._update_checkpoint()
 
         _LOGGER.info('Process request finished')

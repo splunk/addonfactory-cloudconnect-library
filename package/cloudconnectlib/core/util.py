@@ -3,8 +3,8 @@ import os
 import sys
 
 
-def register_syspath(new_path):
-    """ register_syspath(new_path): adds a directory to sys.path.
+def register_module(new_path):
+    """ register_module(new_path): adds a directory to sys.path.
     Do nothing if it does not exist or if it's already in sys.path.
     """
     if not os.path.exists(new_path):

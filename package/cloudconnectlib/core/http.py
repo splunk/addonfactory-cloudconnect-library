@@ -6,9 +6,9 @@ import urllib
 import urlparse
 
 from .exceptions import HTTPError
-from .util import register_syspath
+from .util import register_module
 
-register_syspath(os.path.join(os.path.dirname(__file__), 'cacerts'))
+register_module(os.path.join(os.path.dirname(__file__), 'cacerts'))
 
 from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 

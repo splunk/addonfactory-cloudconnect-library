@@ -70,7 +70,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         """
         if candidate is None:
             return None
-        proxy = {k: self._render_template(v, variables)
+        proxy = {k: self._render_template(v, variables).strip()
                  for k, v in candidate.iteritems()}
 
         enabled = proxy.get('enabled', '0')

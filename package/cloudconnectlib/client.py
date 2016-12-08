@@ -35,9 +35,8 @@ class CloudConnectClient(object):
                 'Cannot load JSON config from file {}: {}'.format(
                     self._config_file, traceback.format_exc()))
 
-        try:
-            version = df['meta']['version']
-        except KeyError:
+        version = df.get('meta', {'version', None}).get('version', None)
+        if not version:
             raise ConfigException(
                 'Config meta or version not present in {}'.format(
                     self._config_file))

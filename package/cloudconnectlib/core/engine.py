@@ -1,6 +1,8 @@
+import json
 import logging
 import traceback
 
+from . import defaults
 from .exceptions import HTTPError
 from .http import HTTPRequest
 from ..splunktacollectorlib.common import log as stulog
@@ -133,6 +135,7 @@ class Job(object):
             url = options.normalize_url(self._context)
             header = options.normalize_header(self._context)
             body = options.normalize_body(self._context)
+            rb = json.dumps(body) if body else None
 
             if authorizer:
                 authorizer(header, self._context)
@@ -140,15 +143,14 @@ class Job(object):
             self._on_pre_process()
 
             try:
-                response = self._client.request(url, method, header, body)
+                response = self._client.request(url, method, header, body=rb)
             except HTTPError as error:
-                if error.status == 404:
+                if error.status in defaults.exit_status:
                     _LOGGER.warn(
-                        'Stop repeating request cause returned 404 error on '
+                        'Stop repeating request cause returned status %s on '
                         'sending request to [%s] with method [%s]: %s',
-                        url,
-                        method,
-                        traceback.format_exc())
+                        error.status, url, method, traceback.format_exc()
+                    )
                     break
                 _LOGGER.error(
                     'Unexpected exception thrown on invoking request to [%s]'

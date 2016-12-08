@@ -1,5 +1,5 @@
 import logging
-import splunktalib.common.log as stclog
+from ...splunktalib.common import log as stclog
 
 
 def set_log_level(log_level):

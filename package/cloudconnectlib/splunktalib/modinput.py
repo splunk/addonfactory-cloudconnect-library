@@ -2,8 +2,8 @@ import sys
 import subprocess
 import traceback
 
-import splunktalib.splunk_platform as sp
-from splunktalib.common import log
+from . import splunk_platform as sp
+from . import common as log
 
 
 def _parse_modinput_configs(root, outer_block, inner_block):

@@ -3,7 +3,7 @@ import threading
 import time
 import traceback
 
-from splunktalib.common import log
+from ..splunktalib.common import log
 
 
 class OrphanProcessChecker(object):

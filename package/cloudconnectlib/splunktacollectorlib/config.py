@@ -10,11 +10,11 @@ import logging
 import traceback
 import time
 
-from splunktalib.rest import splunkd_request, code_to_msg
-from splunktalib.common import util as sc_util
+from ..splunktalib.rest import splunkd_request, code_to_msg
+from ..splunktalib.common import util as sc_util
 
-import splunktaucclib.common.log as stulog
-from splunktaucclib.common import UCCException
+from .common import log as stulog
+from .common import UCCException
 from urllib import quote
 
 LOGGING_STOPPED = False

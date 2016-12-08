@@ -2,8 +2,8 @@
 import time
 import threading
 import ta_consts as c
-import splunktaucclib.common.log as stulog
-import splunktalib.common.util as scu
+from ..common import log as stulog
+from ...splunktalib.common import util as scu
 from collections import namedtuple
 
 evt_fmt = ("<stream><event><host>{0}</host>"
@@ -57,8 +57,6 @@ class TADataCollector(object):
     def _get_logger_prefix(self):
         pairs = ['{}="{}"'.format(c.stanza_name, self._task_config[
             c.stanza_name])]
-        for key in self._task_config[c.divide_key]:
-            pairs.append('{}="{}"'.format(key, self._task_config[key]))
         return "[{}]".format(" ".join(pairs))
 
     def stop(self):
@@ -102,9 +100,9 @@ class TADataCollector(object):
 
     def _create_data_client(self):
         ckpt = self._get_ckpt()
-        data_client = self.data_client_cls(
-            self._ta_config.get_all_conf_contents(), self._meta_config,
-            self._task_config, ckpt, self._checkpoint_manager)
+        data_client = self.data_client_cls(self._meta_config,
+            self._task_config, ckpt, self._checkpoint_manager,
+                                           self._data_loader.write_events)
 
         stulog.logger.debug("{} Set {}={} ".format(self._p, c.ckpt_dict, ckpt))
         return data_client
@@ -127,6 +125,9 @@ class TADataCollector(object):
                                         .format(self._p))
             stulog.logger.info("{} End of indexing data for checkpoint_key={}"
                                .format(self._p, checkpoint_key))
+            if not self._ta_config.is_single_instance():
+                self._data_loader.tear_down()
+
 
     def _write_events(self, ckpt, events):
         evts = self._build_event(events)

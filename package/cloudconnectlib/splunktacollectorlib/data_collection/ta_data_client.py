@@ -1,6 +1,6 @@
 #!/usr/bin/python
-from splunktaucclib.data_collection import ta_checkpoint_manager as cp
-import splunktaucclib.data_collection.ta_data_collector as tdc
+from . import ta_checkpoint_manager as cp
+from . import ta_data_collector as tdc
 
 
 def build_event(host=None,
@@ -19,15 +19,15 @@ def build_event(host=None,
 
 class TaDataClient(object):
     def __init__(self,
-                 all_conf_contents,
                  meta_config,
                  task_config,
                  ckpt=None,
-                 checkpoint_mgr=None):
-        self._all_conf_contents = all_conf_contents
+                 checkpoint_mgr=None,
+                 event_write_fn = None):
         self._meta_config = meta_config
         self._task_config = task_config
         self._checkpoint_mgr = checkpoint_mgr
+        self._event_write_fn = event_write_fn
         self._ckpt = ckpt or {}
         self._stop = False
 
@@ -57,10 +57,9 @@ def client_adatper(job_func):
     class TaDataClientAdapter(TaDataClient):
         def __init__(self, all_conf_contents, meta_config, task_config, ckpt,
                      chp_mgr):
-            super(TaDataClientAdapter, self).__init__(
-                all_conf_contents, meta_config, task_config, ckpt, chp_mgr)
+            super(TaDataClientAdapter, self).__init__(meta_config, task_config, ckpt, chp_mgr)
             self._execute_times = 0
-            self._gen = job_func(self._all_conf_contents, self._task_config,
+            self._gen = job_func(self._task_config,
                                  self._ckpt)
 
         def stop(self):

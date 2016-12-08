@@ -7,10 +7,10 @@ import Queue
 import os.path as op
 import ConfigParser
 
-import splunktalib.concurrent.concurrent_executor as ce
-import splunktalib.timer_queue as tq
-import splunktalib.schedule.job as sjob
-from splunktalib.common import log
+from ...splunktalib.concurrent import concurrent_executor as ce
+from ...splunktalib import timer_queue as tq
+from ...splunktalib.schedule import job as sjob
+from ...splunktalib.common import log
 
 
 class TADataLoader(object):
@@ -156,8 +156,8 @@ def create_data_loader():
     create a data loader with default event_writer, job_scheudler
     """
 
-    import splunktalib.event_writer as ew
-    import splunktalib.schedule.scheduler as sched
+    from ...splunktalib import event_writer as ew
+    from ...splunktalib.schedule import scheduler as sched
 
     writer = ew.EventWriter()
     scheduler = sched.Scheduler()

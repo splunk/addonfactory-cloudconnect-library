@@ -2,11 +2,13 @@ import os.path as op
 import re
 from datetime import datetime
 from calendar import timegm
-import splunktaucclib.config as sc
-from splunktalib.common import util
-from splunktaucclib.data_collection import ta_consts as c
+from ...splunktacollectorlib import config as sc
+from ...splunktalib.common import util
+from . import ta_consts as c
 import hashlib
 import json
+from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema
+
 
 
 def utc2timestamp(human_time):
@@ -41,6 +43,17 @@ def get_md5(data):
     elif isinstance(data, (list, tuple, dict)):
         return hashlib.sha256(json.dumps(data).encode('utf-8')).hexdigest()
 
+
+
+def get_all_conf_contents(sessionkey, settings, input_type=None):
+    schema = GlobalConfigSchema(settings)
+    global_config = GlobalConfig(
+    'https://127.0.0.1:8089',sessionkey,schema
+    )
+    inputs = global_config.inputs(name=input_type)
+    configs = global_config.configs()
+    settings = global_config.settings()
+    return inputs, configs, settings
 
 def format_input_name_for_file(name):
     import base64

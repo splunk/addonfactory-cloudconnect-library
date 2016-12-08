@@ -1,8 +1,6 @@
 import ta_consts as c
-import splunktalib.state_store as ss
-import splunktaucclib.common.log as stulog
-import re
-import urllib
+from ...splunktalib import state_store as ss
+from ..common import log as stulog
 import ta_helper as th
 
 
@@ -41,7 +39,5 @@ class TACheckPointMgr(object):
 
     def key_formatter(self):
         divide_value = [self._task_config[c.stanza_name]]
-        for key in self._task_config[c.divide_key]:
-            divide_value.append(self._task_config[key])
         key_str = TACheckPointMgr.SEPARATOR.join(divide_value)
         return th.format_input_name_for_file(key_str)

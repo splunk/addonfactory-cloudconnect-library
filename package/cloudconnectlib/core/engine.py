@@ -109,7 +109,7 @@ class Job(object):
         # TODO
         pass
 
-    def _check_stop_condition(self):
+    def _is_stoppable(self):
         repeat_mode = self._request.repeat_mode
         return repeat_mode.is_once() or repeat_mode.passed(self._context)
 
@@ -137,7 +137,11 @@ class Job(object):
             except HTTPError as error:
                 if error.status == 404:
                     _LOGGER.warn(
-                        'Stop repeating request cause request returned 404 error')
+                        'Stop repeating request cause returned 404 error on '
+                        'sending request to [%s] with method [%s]: %s',
+                        url,
+                        method,
+                        traceback.format_exc())
                     break
                 _LOGGER.error(
                     'Unexpected exception thrown on invoking request: %s',
@@ -152,7 +156,7 @@ class Job(object):
             self._set_context('__response__', response)
             self._on_post_process()
 
-            if self._check_stop_condition():
+            if self._is_stoppable():
                 _LOGGER.info('Stop condition reached, exit job now')
                 break
             self._update_checkpoint()

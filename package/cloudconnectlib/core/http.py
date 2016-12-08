@@ -3,7 +3,7 @@ import logging
 import urllib
 import urlparse
 
-from httplib2 import ProxyInfo, Http
+from httplib2 import ProxyInfo, Http, socks
 from .exceptions import HTTPError
 
 logging.basicConfig(level=logging.DEBUG)
@@ -47,6 +47,13 @@ class HTTPRequest(object):
     reached it's stop condition.
     """
 
+    _PROXY_TYPE = {
+        'http': socks.PROXY_TYPE_HTTP,
+        'http_no_tunnel': socks.PROXY_TYPE_HTTP_NO_TUNNEL,
+        'socks4': socks.PROXY_TYPE_SOCKS4,
+        'socks5': socks.PROXY_TYPE_SOCKS5,
+    }
+
     def __init__(self, proxy=None):
         """
         Constructs a `HTTPRequest` with a optional proxy setting.
@@ -54,7 +61,7 @@ class HTTPRequest(object):
          settings.
         """
         self._proxy = proxy
-        self._http = None
+        self._connection = None
 
     @staticmethod
     def _encode_url(url):
@@ -75,36 +82,42 @@ class HTTPRequest(object):
         :param body: request body.
         :return: A `HTTPResponse` object.
         """
-        if self._http is None:
-            self._http = self._build_http_connection(self._proxy)
+        if self._connection is None:
+            self._connection = self._build_http_connection(self._proxy)
 
         uri = self._encode_url(url) if method == 'GET' else url
 
         _LOGGER.info('Preparing to invoke request to [%s]', uri)
 
         rob = json.dumps(body) if body else None
-        response, content = self._http.request(uri, body=rob, method=method, headers=header)
+        response, content = self._connection.request(
+            uri, body=rob, method=method, headers=header
+        )
 
         if response.status not in (200, 201):
             raise HTTPError(response=response, status=response.status)
 
         return HTTPResponse(response, content)
 
-    @staticmethod
-    def _build_http_connection(proxy=None,
+    def _prepare_proxy_info(self, proxy):
+        if not proxy or not proxy.enabled:
+            _LOGGER.debug('Proxy not enabled')
+            return None
+
+        username = proxy.username if 'username' in proxy else None
+        password = proxy.password if 'password' in proxy else None
+        proxy_type = self._PROXY_TYPE.get(proxy.type) or self._PROXY_TYPE['http']
+
+        return ProxyInfo(proxy_host=proxy.host,
+                         proxy_port=int(proxy.port),
+                         proxy_type=proxy_type,
+                         proxy_user=username,
+                         proxy_pass=password,
+                         proxy_rdns=proxy.rdns)
+
+    def _build_http_connection(self, proxy=None,
                                timeout=120,
                                disable_ssl_cert_validation=True):
-        if proxy and proxy.enabled:
-            proxy_info = ProxyInfo(proxy_type=proxy.type,
-                                   proxy_host=proxy.host,
-                                   proxy_port=proxy.port,
-                                   proxy_user=proxy.username,
-                                   proxy_pass=proxy.password,
-                                   proxy_rdns=proxy.rdns)
-            http = Http(proxy_info=proxy_info,
-                        timeout=timeout,
-                        disable_ssl_certificate_validation=disable_ssl_cert_validation)
-        else:
-            http = Http(timeout=timeout,
-                        disable_ssl_certificate_validation=disable_ssl_cert_validation)
-        return http
+        return Http(proxy_info=self._prepare_proxy_info(proxy),
+                    timeout=timeout,
+                    disable_ssl_certificate_validation=disable_ssl_cert_validation)

@@ -49,7 +49,7 @@ class CloudConnectClient(object):
 
 class Job(object):
     """
-    HTTPRequest class represents a single request to send HTTP request until
+    Job class represents a single request to send HTTP request until
     reached it's stop condition.
     """
 

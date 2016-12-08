@@ -38,11 +38,13 @@ class CloudConnectEngine(object):
             job = Job(request=item, context=self._context,
                       proxy=global_setting.proxy)
             job.run()
+            if self._stopped:
+                break
 
         _LOGGER.info('All requests finished')
 
     def stop(self):
-        pass
+        self._stopped = True
 
 
 class Job(object):

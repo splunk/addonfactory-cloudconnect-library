@@ -4,7 +4,6 @@ import traceback
 
 from jsonschema import validate, ValidationError
 from munch import munchify
-
 from ..core import util
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup
@@ -36,7 +35,14 @@ _LOGGING_LEVELS = {
 _LOGGER = log.Logs().get_logger('cloud_connect')
 
 
-class CloudConnectConfigLoaderV1(object):
+class CloudConnectConfigLoader(object):
+    """The Base cloud connect configuration loader"""
+
+    def load(self, file_path, context):
+        raise NotImplementedError
+
+
+class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     _version = '1.0.0'
 
     @staticmethod
@@ -222,7 +228,7 @@ class CloudConnectConfigLoaderV1(object):
                 'unsupported schema version {}, current supported versions '
                 '{}'.format(version, self._version))
 
-    def load_config(self, file_path, context):
+    def load(self, file_path, context):
         """
         Load JSON based interface from a file path and validate it with schema.
         :param context: variables to render template in global setting.

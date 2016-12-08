@@ -27,7 +27,7 @@ class CloudConnectClient(object):
         """
         if self._config is None:
             config_loader_v1 = CloudConnectConfigLoaderV1()
-            self._config = config_loader_v1.load_config(
+            self._config = config_loader_v1.load(
                 file_path=self._config_file,
                 context=self._context
             )

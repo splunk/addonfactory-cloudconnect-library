@@ -151,13 +151,16 @@ class Job(object):
                         traceback.format_exc())
                     break
                 _LOGGER.error(
-                    'Unexpected exception thrown on invoking request: %s',
-                    traceback.format_exc())
+                    'Unexpected exception thrown on invoking request to [%s]'
+                    ' with method [%s]: %s',
+                    url, method, traceback.format_exc())
                 raise
 
             if not response.body:
-                _LOGGER.warn('Stop repeating request cause request returned'
-                             ' a empty response: [%s]', response.body)
+                _LOGGER.warn(
+                    'Stop repeating request cause request to url [%s]'
+                    ' with method [%s] returned a empty response: '
+                    '[%s]', url, method, response.body)
                 break
 
             self._set_context('__response__', response)

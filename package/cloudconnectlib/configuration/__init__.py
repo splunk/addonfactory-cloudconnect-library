@@ -1,1 +1,1 @@
-from .loader import CloudConnectConfigLoaderV1
+from .loader import loader_from_version

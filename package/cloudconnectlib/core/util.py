@@ -1,32 +1,18 @@
 import json
 
-
-def is_true(val):
-    value = str(val).strip().upper()
-    if value in ("1", "TRUE", "T", "Y", "YES"):
-        return True
-    return False
-
-
-def is_false(val):
-    value = str(val).strip().upper()
-    if value in ("0", "FALSE", "F", "N", "NO", "NONE", ""):
-        return True
-    return False
+from ..splunktalib.common import util
 
 
 def is_bool(val):
-    """
-    Check whether a string can be convert to bool.
+    """Check whether a string can be convert to bool.
     :param val: value as string.
     :return: `True` if value can be convert to bool else `False`.
     """
-    return is_true(val) or is_false(val)
+    return util.is_true(val) or util.is_false(val)
 
 
 def is_port(port):
-    """
-    Check whether a port is valid.
+    """Check whether a port is valid.
     :param port: port to check.
     :return: `True` if port is valid else `False`.
     """

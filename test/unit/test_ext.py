@@ -1,10 +1,4 @@
-import os.path as op
-import sys
-
-sys.path.insert(0, op.join(op.dirname(op.dirname(op.dirname(__file__))),
-                           'package', 'cloudconnectlib'))
-
-from core.ext import (
+from package.cloudconnectlib.core.ext import (
     lookup, regex_match, regex_not_match, std_output,
     splunk_xml, json_path
 )

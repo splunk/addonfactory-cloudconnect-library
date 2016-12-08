@@ -31,6 +31,7 @@ class CloudConnectEngine(object):
         """
         global_setting = self._config.global_settings
         self._set_logging(global_setting.logging)
+        handled = 0
 
         _LOGGER.info('Start to execute requests')
 
@@ -38,6 +39,10 @@ class CloudConnectEngine(object):
             job = Job(request=item, context=self._context,
                       proxy=global_setting.proxy)
             job.run()
+
+            handled += 1
+            _LOGGER.info('%s request(s) process finished', handled)
+
             if self._stopped:
                 break
 

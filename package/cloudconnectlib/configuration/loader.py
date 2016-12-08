@@ -4,7 +4,6 @@ import traceback
 
 from jsonschema import validate, ValidationError
 from munch import munchify
-from ..core import util
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup
 from ..core.model import (
@@ -12,7 +11,10 @@ from ..core.model import (
     Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
-from ..splunktalib.common import log
+from ..core.util import (
+    load_json_file, is_port, is_bool
+)
+from ..splunktalib.common import log, util
 
 # JSON schema file path.
 _SCHEMA_LOCATION = op.join(op.dirname(__file__), 'schema.json')
@@ -53,27 +55,10 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         :return: A `dict` contains schema.
         """
         try:
-            return util.load_json_file(file_path)
+            return load_json_file(file_path)
         except:
             raise ConfigException(
                 'Cannot load schema from {}: {}'.format(
-                    file_path, traceback.format_exc()))
-
-    @staticmethod
-    def _load_definition(file_path):
-        """
-        Load user's JSON interface definition from file.
-        :param file_path: JSON interface file path.
-        :return: A `dict` contains user defined JSON interface.
-        """
-        if not op.isfile(file_path):
-            raise ConfigException(
-                'Invalid interface file {}'.format(file_path))
-        try:
-            return util.load_json_file(file_path)
-        except:
-            raise ConfigException(
-                'Cannot load JSON interface from file {}: {}'.format(
                     file_path, traceback.format_exc()))
 
     @staticmethod
@@ -93,14 +78,14 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                  for k, v in candidate.iteritems()}
 
         enabled = proxy.get('enabled', '0')
-        if not util.is_bool(enabled):
+        if not is_bool(enabled):
             raise ConfigException('proxy enabled expect to be bool type: {}'.
                                   format(enabled))
         else:
             proxy['enabled'] = util.is_true(enabled)
 
         port = proxy['port']
-        if not util.is_port(port):
+        if not is_port(port):
             raise ConfigException('proxy port expected to be in range [1,65535]: {}'.
                                   format(port))
 
@@ -114,7 +99,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
         # proxy rdns default to '0'
         proxy_rdns = proxy.get('rdns', '0')
-        if not util.is_bool(proxy_rdns):
+        if not is_bool(proxy_rdns):
             raise ConfigException('proxy rdns expect to be bool type: {}'.
                                   format(proxy_rdns))
         else:
@@ -222,29 +207,21 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                        checkpoint=ckpt,
                        repeat_mode=repeat_mode)
 
-    def _check_version(self, version):
-        if version != self._version:
-            raise ConfigException(
-                'unsupported schema version {}, current supported versions '
-                '{}'.format(version, self._version))
-
-    def load(self, file_path, context):
-        """
-        Load JSON based interface from a file path and validate it with schema.
+    def load(self, definition, context):
+        """Load a `CloudConnectConfigV1` config from a `dict` and validate
+        it with schema.
+        :param definition: A dictionary contains raw configs.
         :param context: variables to render template in global setting.
-        :param file_path: file path of json based interface.
         :return: A `CloudConnectConfigV1` object.
         """
-        definition = self._load_definition(file_path)
         try:
             validate(definition, self._load_schema_from_file(_SCHEMA_LOCATION))
         except ValidationError:
-            raise ConfigException('Failed to validate interface with schema: '
-                                  '{}'.format(traceback.format_exc()))
+            raise ConfigException(
+                'Failed to validate interface with schema: {}'.format(
+                    traceback.format_exc()))
 
         meta = munchify(definition['meta'])
-        self._check_version(meta.version)
-
         parameters = definition['parameters']
 
         global_settings = self._load_global_setting(
@@ -256,3 +233,23 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                                     parameters=parameters,
                                     global_settings=global_settings,
                                     requests=requests)
+
+
+_LOADER_CLASSES = {
+    '1.0.0': CloudConnectConfigLoaderV1,
+}
+
+
+def loader_from_version(version):
+    """ Instantiate a configuration loader on basis of a given version.
+    A `ConfigException` will raised if the version is not supported.
+    :param version: Version to lookup config loader.
+    :return: A config loader.
+    """
+    supported_versions = _LOADER_CLASSES.keys()
+    if version not in supported_versions:
+        raise ConfigException(
+            'Unsupported schema version {}, current supported'
+            ' versions [{}]'.format(version, ','.join(supported_versions))
+        )
+    return _LOADER_CLASSES[version]()

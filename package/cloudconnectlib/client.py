@@ -1,7 +1,10 @@
 import copy
+import traceback
 
-from .configuration import CloudConnectConfigLoaderV1
+from .configuration import loader_from_version
 from .core import CloudConnectEngine
+from .core.exceptions import ConfigException
+from .core.util import load_json_file
 
 
 class CloudConnectClient(object):
@@ -21,16 +24,33 @@ class CloudConnectClient(object):
         self._engine = None
         self._config = None
 
+    def _lazy_load_config(self):
+        """Load a JSON based configuration definition from file.
+        :return: A `dict` contains user defined JSON interface.
+        """
+        try:
+            df = load_json_file(self._config_file)
+        except:
+            raise ConfigException(
+                'Cannot load JSON config from file {}: {}'.format(
+                    self._config_file, traceback.format_exc()))
+
+        try:
+            version = df['meta']['version']
+        except KeyError:
+            raise ConfigException(
+                'Config version not present in {}'.format(self._config_file))
+
+        config_loader = loader_from_version(version)
+        return config_loader.load(df, self._context)
+
     def start(self):
         """
         Initialize a new `CloudConnectEngine` instance and start it.
         """
         if self._config is None:
-            config_loader_v1 = CloudConnectConfigLoaderV1()
-            self._config = config_loader_v1.load(
-                file_path=self._config_file,
-                context=self._context
-            )
+            self._config = self._lazy_load_config()
+
         self._engine = CloudConnectEngine(
             context=copy.deepcopy(self._context), config=self._config
         )

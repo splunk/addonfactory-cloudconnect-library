@@ -68,7 +68,7 @@
                             "$.result[(@.length-1)].sys_updated_on",
                             "{{__response__.body}}"
                         ],
-                        "method": "jsonpath",
+                        "method": "json_path",
                         "output": "since_when"
                     },
                     {
@@ -76,7 +76,7 @@
                             "$.result.*",
                             "{{__response__.body}}"
                         ],
-                        "method": "jsonpath",
+                        "method": "json_path",
                         "output": "__stdout__"
                     },
                     {

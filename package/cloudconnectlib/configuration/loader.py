@@ -16,9 +16,6 @@ from ..core.util import (
 )
 from ..splunktalib.common import log, util
 
-# JSON schema file path.
-_SCHEMA_LOCATION = op.join(op.dirname(__file__), 'schema.json')
-
 _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _AUTH_TYPES = {
     'basic_auth': BasicAuthorization
@@ -40,26 +37,25 @@ _LOGGER = log.Logs().get_logger('cloud_connect')
 class CloudConnectConfigLoader(object):
     """The Base cloud connect configuration loader"""
 
-    def load(self, file_path, context):
+    _schema_file = op.join(op.dirname(__file__), 'schema.json')
+
+    def _get_schema_from_file(self):
+        """ Load JSON based schema definition from schema file path.
+        :return: A `dict` contains schema.
+        """
+        try:
+            return load_json_file(self._schema_file)
+        except:
+            raise ConfigException(
+                'Cannot load schema from {}: {}'.format(
+                    self._schema_file, traceback.format_exc()))
+
+    def load(self, definition, context):
         raise NotImplementedError
 
 
 class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     _version = '1.0.0'
-
-    @staticmethod
-    def _load_schema_from_file(file_path):
-        """
-        Load JSON based schema definition from given file path.
-        :param file_path: JSON based schema file path.
-        :return: A `dict` contains schema.
-        """
-        try:
-            return load_json_file(file_path)
-        except:
-            raise ConfigException(
-                'Cannot load schema from {}: {}'.format(
-                    file_path, traceback.format_exc()))
 
     @staticmethod
     def _render_template(template, variables):
@@ -215,7 +211,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         :return: A `CloudConnectConfigV1` object.
         """
         try:
-            validate(definition, self._load_schema_from_file(_SCHEMA_LOCATION))
+            validate(definition, self._get_schema_from_file())
         except ValidationError:
             raise ConfigException(
                 'Failed to validate interface with schema: {}'.format(

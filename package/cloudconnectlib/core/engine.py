@@ -44,11 +44,13 @@ class CloudConnectEngine(object):
             _LOGGER.info('%s request(s) process finished', handled)
 
             if self._stopped:
+                _LOGGER.info('Engine already stopped, exiting')
                 break
 
         _LOGGER.info('All requests finished')
 
     def stop(self):
+        _LOGGER.info('Stopping engine')
         self._stopped = True
 
 

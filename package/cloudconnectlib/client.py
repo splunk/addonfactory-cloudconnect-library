@@ -24,7 +24,7 @@ class CloudConnectClient(object):
         self._engine = None
         self._config = None
 
-    def _lazy_load_config(self):
+    def _load_config(self):
         """Load a JSON based configuration definition from file.
         :return: A `dict` contains user defined JSON interface.
         """
@@ -39,7 +39,8 @@ class CloudConnectClient(object):
             version = df['meta']['version']
         except KeyError:
             raise ConfigException(
-                'Config version not present in {}'.format(self._config_file))
+                'Config meta or version not present in {}'.format(
+                    self._config_file))
 
         config_loader = loader_from_version(version)
         return config_loader.load(df, self._context)
@@ -49,7 +50,7 @@ class CloudConnectClient(object):
         Initialize a new `CloudConnectEngine` instance and start it.
         """
         if self._config is None:
-            self._config = self._lazy_load_config()
+            self._config = self._load_config()
 
         self._engine = CloudConnectEngine(
             context=copy.deepcopy(self._context), config=self._config
@@ -57,8 +58,7 @@ class CloudConnectClient(object):
         self._engine.start()
 
     def stop(self):
-        """
-        Stop the current cloud connect engine.
+        """Stop the current cloud connect engine.
         """
         if self._engine:
             self._engine.stop()

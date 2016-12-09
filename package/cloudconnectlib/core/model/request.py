@@ -19,36 +19,6 @@ class _Token(object):
         return self._render(variables)
 
 
-class Request(object):
-    def __init__(self, options, pre_process, post_process,
-                 checkpoint, repeat_mode):
-        self._options = options
-        self._pre_process = pre_process
-        self._post_process = post_process
-        self._checkpoint = checkpoint
-        self._repeat_mode = repeat_mode
-
-    @property
-    def options(self):
-        return self._options
-
-    @property
-    def pre_process(self):
-        return self._pre_process
-
-    @property
-    def post_process(self):
-        return self._post_process
-
-    @property
-    def repeat_mode(self):
-        return self._repeat_mode
-
-    @property
-    def checkpoint(self):
-        return self._checkpoint
-
-
 class BaseAuth(object):
     def __call__(self, headers, context):
         raise NotImplementedError('Auth must be callable.')
@@ -116,7 +86,7 @@ class Options(object):
 
 class _Function(object):
     def __init__(self, inputs, function):
-        self._inputs = [_Token(expr) for expr in inputs or []]
+        self._inputs = tuple(_Token(expr) for expr in inputs or [])
         self._function = function
 
     @property
@@ -200,7 +170,7 @@ class Processor(_Conditional):
 class RepeatMode(_Conditional):
     def __init__(self, loop_type, conditions):
         super(RepeatMode, self).__init__(conditions)
-        self._type = loop_type
+        self._type = loop_type.strip().lower()
 
     @property
     def type(self):
@@ -217,8 +187,9 @@ class RepeatMode(_Conditional):
 class Checkpoint(object):
     def __init__(self, namespace, contents):
         if not contents:
-            raise ConfigException('checkpoint content unexpected to ne empty')
-        self._namespace = [_Token(expr) for expr in namespace or []]
+            raise ConfigException('Checkpoint content must not be empty')
+
+        self._namespace = tuple(_Token(expr) for expr in namespace or [])
         self._content = {k: _Token(v) for k, v in contents.iteritems()}
 
     @property

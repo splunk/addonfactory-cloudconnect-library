@@ -51,10 +51,10 @@ class CloudConnectClient(object):
         if self._config is None:
             self._config = self._load_config()
 
-        self._engine = CloudConnectEngine(
+        self._engine = CloudConnectEngine()
+        self._engine.start(
             context=copy.deepcopy(self._context), config=self._config
         )
-        self._engine.start()
 
     def stop(self):
         """Stop the current cloud connect engine.

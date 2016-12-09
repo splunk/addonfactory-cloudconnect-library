@@ -1,13 +1,14 @@
 import logging
 import os.path as op
 import traceback
+from abc import abstractmethod
 
 from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup
 from ..core.model import (
-    CloudConnectConfigV1, BasicAuthorization, Request, Options, Processor,
+    CloudConnectConfigV1, BasicAuthorization, Options, Processor,
     Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
@@ -37,7 +38,7 @@ _LOGGER = log.Logs().get_logger('cloud_connect')
 class CloudConnectConfigLoader(object):
     """The Base cloud connect configuration loader"""
 
-    _schema_file = op.join(op.dirname(__file__), 'schema.json')
+    _schema_file = op.join(op.dirname(__file__), 'schema_1_0_0.json')
 
     def _get_schema_from_file(self):
         """ Load JSON based schema definition from schema file path.
@@ -50,8 +51,9 @@ class CloudConnectConfigLoader(object):
                 'Cannot load schema from {}: {}'.format(
                     self._schema_file, traceback.format_exc()))
 
+    @abstractmethod
     def load(self, definition, context):
-        raise NotImplementedError
+        pass
 
 
 class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
@@ -197,11 +199,13 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         ckpt = self._load_checkpoint(request['checkpoint'])
         repeat_mode = self._load_repeat_mode(request['repeat_mode'])
 
-        return Request(options=options,
-                       pre_process=pre_process,
-                       post_process=post_process,
-                       checkpoint=ckpt,
-                       repeat_mode=repeat_mode)
+        return munchify({
+            'options': options,
+            'pre_process': pre_process,
+            'post_process': post_process,
+            'checkpoint': ckpt,
+            'repeat_mode': repeat_mode,
+        })
 
     def load(self, definition, context):
         """Load a `CloudConnectConfigV1` config from a `dict` and validate

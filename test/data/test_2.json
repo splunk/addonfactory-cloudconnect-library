@@ -1,0 +1,103 @@
+{
+    "meta": {
+        "version": "1.0.0"
+    },
+    "parameters": [
+        "name",
+        "instance",
+        "sysparm_limit",
+        "table_name",
+        "since_when",
+        "host",
+        "username",
+        "password",
+        "logging_level"
+    ],
+    "global_settings": {
+        "logging": {
+            "level": "{{logging_level}}"
+        }
+    },
+    "requests": [
+        {
+            "options": {
+                "url": "https://{{host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
+                "method": "GET",
+                "auth": {
+                    "type": "basic_auth",
+                    "options": {
+                        "username": "{{username}}",
+                        "password": "{{password}}"
+                    }
+                },
+                "headers": {
+                    "accept": "application/json"
+                }
+            },
+            "pre_process": {
+            },
+            "post_process": {
+                "conditions": [
+                    {
+                        "input": [
+                            "{{__response__.body}}",
+                            "$.result[*]"
+                        ],
+                        "method": "json_not_empty"
+                    }
+                ],
+                "pipeline": [
+                    {
+                        "input": [
+                            "$.result[-1].sys_updated_on",
+                            "{{__response__.body}}"
+                        ],
+                        "method": "json_path",
+                        "output": "since_when"
+                    },
+                    {
+                        "input": [
+                            "$.result[*]",
+                            "{{__response__.body}}"
+                        ],
+                        "method": "json_path",
+                        "output": "result"
+                    },
+                    {
+                        "input": [
+                            "{{result}}"
+                        ],
+                        "method": "splunk_xml",
+                        "output": "events"
+                    },
+                    {
+                        "input": [
+                            "{{events}}"
+                        ],
+                        "method": "std_output"
+                    }
+                ]
+            },
+            "repeat_mode": {
+                "type": "loop",
+                "stop_conditions": [
+                    {
+                        "input": [
+                            "{{__response__.body}}",
+                            "$.result[*]"
+                        ],
+                        "method": "json_empty"
+                    }
+                ]
+            },
+            "checkpoint": {
+                "namespace": [
+                    "{{table_name}}"
+                ],
+                "content": {
+                    "since_when": "{{since_when}}"
+                }
+            }
+        }
+    ]
+}

@@ -7,6 +7,7 @@ log utility for TA
 import logging
 import logging.handlers as handlers
 import os.path as op
+
 from ..splunk_platform import make_splunkhome_path
 from . import util as cutil
 from .pattern import singleton

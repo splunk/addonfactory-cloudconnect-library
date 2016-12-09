@@ -1,0 +1,125 @@
+{
+    "meta": {
+        "version": "1.0.0"
+    },
+    "parameters": [
+        "name",
+        "okta_url",
+        "limit",
+        "api_key",
+        "start_time",
+        "host",
+        "index",
+        "sourcetype",
+        "source",
+        "checkpoint_dir",
+        "proxy_enable",
+        "proxy_host",
+        "proxy_type",
+        "proxy_username",
+        "logging_level"
+    ],
+    "global_settings": {
+        "proxy": {
+            "enabled": "{{proxy_enable}}",
+            "host": "{{proxy_host}}",
+            "port": "{{proxy_port}}",
+            "username": "{{proxy_username}}",
+            "password": "{{proxy_password}}",
+            "rdns": "{{proxy_rdns}}",
+            "type": "{{proxy_type}}"
+        },
+        "logging": {
+            "level": "{{logging_level}}"
+        }
+    },
+    "requests": [
+        {
+            "options": {
+                "url": "http://{{okta_url}}?limit={{limit}}&filter=published gt \"{{start_time}}\"",
+                "method": "GET",
+                "headers": {
+                    "accept": "application/json",
+                    "auth": "SSWS {{api_key}}"
+                }
+            },
+            "pre_process": {
+                "pipeline": [
+                    {
+                        "input": [
+                            "{{next_link}}"
+                        ],
+                        "method": "write_meta",
+                        "output": "__request__.options.url"
+                    }
+                ]
+            },
+            "post_process": {
+                "conditions": [
+                    {
+                        "input": [
+                            "<([^<>]+)>;\\srel=\"next\"",
+                            "{{__response__.headers.link}}"
+                        ],
+                        "method": "regex_not_match"
+                    }
+                ],
+                "pipeline": [
+                    {
+                        "input": [
+                            "<([^<>]+)>;\\srel=\"next\"",
+                            "{{__response__.headers.link}}"
+                        ],
+                        "method": "regex_extract",
+                        "output": "next_link"
+                    },
+                    {
+                        "input": [
+                            "$.*",
+                            "{{__response__.body}}"
+                        ],
+                        "method": "jsonpath",
+                        "output": "__events__"
+                    },
+                    {
+                        "input": [
+                            "{{__events__}}",
+                            "{{index}}",
+                            "{{host}}",
+                            "{{source}}",
+                            "{{sourcetype}}"
+                        ],
+                        "method": "splunk_xml",
+                        "output": "__events__"
+                    },
+                    {
+                        "input": [
+                            "{{__events__}}"
+                        ],
+                        "method": "std_output"
+                    }
+                ]
+            },
+            "repeat_mode": {
+                "type": "loop",
+                "stop_conditions": [
+                    {
+                        "input": [
+                            "<([^<>]+)>;\\srel=\"next\"",
+                            "{{__response__.headers.link}}"
+                        ],
+                        "method": "regex_not_match"
+                    }
+                ]
+            },
+            "checkpoint": {
+                "namespace": [
+                    "{{name}}"
+                ],
+                "content": {
+                    "next_link": "{{next_link}}"
+                }
+            }
+        }
+    ]
+}

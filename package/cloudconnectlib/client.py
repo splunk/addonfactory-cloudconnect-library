@@ -2,7 +2,7 @@ import copy
 import os.path
 import traceback
 
-from .configuration import loader_from_version
+from .configuration import get_loader_by_version
 from .core import CloudConnectEngine
 from .core.exceptions import ConfigException
 from .core.util import load_json_file
@@ -42,7 +42,7 @@ class CloudConnectClient(object):
                 'Config meta or version not present in {}'.format(
                     self._config_file))
 
-        config_loader = loader_from_version(version)
+        config_loader = get_loader_by_version(version)
         schema_file = os.path.join(os.path.dirname(__file__), 'configuration', 'schema_1_0_0.json')
 
         return config_loader.load(df, schema_file, self._context)

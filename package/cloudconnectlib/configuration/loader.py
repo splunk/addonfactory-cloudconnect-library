@@ -1,6 +1,7 @@
 import logging
 import os.path as op
 import traceback
+import re
 from abc import abstractmethod
 
 from jsonschema import validate, ValidationError
@@ -238,7 +239,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
 
 _LOADER_CLASSES = {
-    '1.0.0': CloudConnectConfigLoaderV1,
+    r'1.0.\d+': CloudConnectConfigLoaderV1,
 }
 
 
@@ -248,9 +249,11 @@ def get_loader_by_version(version):
     :param version: Version to lookup config loader.
     :return: A config loader.
     """
-    if version not in _LOADER_CLASSES:
-        raise ConfigException(
-            'Unsupported schema version {}, current supported'
-            ' versions [{}]'.format(version, ','.join(_LOADER_CLASSES))
-        )
-    return _LOADER_CLASSES[version]()
+    for support_version in _LOADER_CLASSES:
+        if re.match(support_version, version):
+            return _LOADER_CLASSES[support_version]()
+    raise ConfigException(
+        'Unsupported schema version {}, current supported'
+        ' versions should match these regex [{}]'.format(version, ','.join(
+            _LOADER_CLASSES))
+    )

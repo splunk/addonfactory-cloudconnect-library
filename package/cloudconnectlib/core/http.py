@@ -1,13 +1,19 @@
 import logging
+import os
+import traceback
 import urllib
 import urlparse
 
-from httplib2 import ProxyInfo, Http, socks
 from . import defaults
 from .exceptions import HTTPError
+from .util import register_module
+
+register_module(os.path.join(os.path.dirname(__file__), 'cacerts'))
+
+from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 
 logging.basicConfig(level=logging.DEBUG)
-_LOGGER = logging
+_logger = logging
 
 
 class HTTPResponse(object):
@@ -60,7 +66,7 @@ class HTTPRequest(object):
         :param proxy: A optional `Proxy` object contains proxy related
          settings.
         """
-        self._proxy = proxy
+        self._proxy_info = self._prepare_proxy_info(proxy)
         self._connection = None
 
     @staticmethod
@@ -73,27 +79,54 @@ class HTTPRequest(object):
         params = urlparse.parse_qs(parts[1])
         return '?'.join([parts[0], urllib.urlencode(params, True)])
 
-    def request(self, url, method='GET', header=None, body=None):
+    def _send_request(self, uri, method, headers=None, body=None):
+        if self._connection is None:
+            self._connection = self._build_http_connection(
+                proxy_info=self._proxy_info,
+                disable_ssl_cert_validation=False)
+
+        try:
+            return self._connection.request(
+                uri, body=body, method=method, headers=headers)
+        except SSLHandshakeError:
+            _logger.warn(
+                "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verification failed. "
+                "The certificate of the https server [%s] is not trusted, "
+                "this add-on will proceed to connect with this certificate. "
+                "You may need to check the certificate and "
+                "refer to the documentation and add it to the trust list. %s",
+                uri,
+                traceback.format_exc()
+            )
+
+            self._connection = self._build_http_connection(
+                proxy_info=self._proxy_info,
+                disable_ssl_cert_validation=True)
+            return self._connection.request(
+                uri, body=body, method=method, headers=headers)
+
+    def request(self, url, method='GET', headers=None, body=None):
         """
         Invoke a request with httplib2 and return it's response.
         :param url: url address to send request to.
         :param method: request method `GET` by default.
-        :param header: request header.
+        :param headers: request headers.
         :param body: request body.
         :return: A `HTTPResponse` object.
         """
+
         if body and not isinstance(body, str):
             raise TypeError('Request body type must be str')
 
         if self._connection is None:
-            self._connection = self._build_http_connection(self._proxy)
+            self._connection = self._build_http_connection(self._proxy_info)
 
         uri = self._encode_url(url) if method.strip().upper() == 'GET' else url
 
-        _LOGGER.info('Preparing to invoke request to [%s]', uri)
+        _logger.info('Preparing to invoke request to [%s]', uri)
 
         response, content = self._connection.request(
-            uri, body=body, method=method, headers=header
+            uri, body=body, method=method, headers=headers
         )
 
         if response.status not in (200, 201):
@@ -103,7 +136,7 @@ class HTTPRequest(object):
 
     def _prepare_proxy_info(self, proxy):
         if not proxy or not proxy.enabled:
-            _LOGGER.debug('Proxy not enabled')
+            _logger.debug('Proxy is not enabled')
             return None
 
         username = proxy.username \
@@ -120,10 +153,11 @@ class HTTPRequest(object):
                          proxy_pass=password,
                          proxy_rdns=proxy.rdns)
 
+    @staticmethod
     def _build_http_connection(
-            self, proxy=None,
+            proxy_info=None,
             timeout=defaults.timeout,
             disable_ssl_cert_validation=defaults.disable_ssl_cert_validation):
-        return Http(proxy_info=self._prepare_proxy_info(proxy),
+        return Http(proxy_info=proxy_info,
                     timeout=timeout,
                     disable_ssl_certificate_validation=disable_ssl_cert_validation)

@@ -1,14 +1,13 @@
+"""APP Cloud Connect errors"""
+
+
 class ConfigException(Exception):
-    """
-    Config exception
-    """
+    """Config exception"""
     pass
 
 
 class HTTPError(Exception):
-    """
-    HTTPError raised when HTTP request returned a error.
-    """
+    """ HTTPError raised when HTTP request returned a error."""
 
     def __init__(self, *args, **kwargs):
         """

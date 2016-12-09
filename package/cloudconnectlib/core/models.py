@@ -1,8 +1,7 @@
 import base64
 import logging
 
-from .exceptions import ConfigException
-from .ext import lookup
+from .ext import lookup_method
 from .template import compile_template
 
 logging.basicConfig(level=logging.DEBUG)
@@ -31,14 +30,15 @@ class BasicAuthorization(BaseAuth):
 
     def __init__(self, options):
         if not options:
-            raise ConfigException('options for basic auth unexpected to be empty')
+            raise ValueError('Options for basic auth unexpected to be empty')
 
         username = options.get('username')
         if not username:
-            raise ConfigException('username is mandatory for basic auth')
+            raise ValueError('Username is mandatory for basic auth')
         password = options.get('password')
         if not password:
-            raise ConfigException('password is mandatory for basic auth')
+            raise ValueError('Password is mandatory for basic auth')
+
         self._username = _Token(username)
         self._password = _Token(password)
 
@@ -123,7 +123,7 @@ class Task(_Function):
     def execute(self, context):
         """Execute task with arguments which rendered from context """
         args = [arg for arg in self.inputs_values(context)]
-        caller = lookup(self.function)
+        caller = lookup_method(self.function)
         output = self._output
 
         _LOGGER.info(
@@ -142,7 +142,7 @@ class Condition(_Function):
 
     def calculate(self, context):
         args = [arg for arg in self.inputs_values(context)]
-        caller = lookup(self.function)
+        caller = lookup_method(self.function)
         return caller(*args)
 
 

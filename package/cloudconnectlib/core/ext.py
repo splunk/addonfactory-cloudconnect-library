@@ -101,9 +101,8 @@ _EXT_FUNCTIONS = {
 }
 
 
-def lookup(name):
-    """
-    Find a predefined function with given function name.
+def lookup_method(name):
+    """ Find a predefined function with given function name.
     :param name: function name.
     :return: A function with given name.
     """

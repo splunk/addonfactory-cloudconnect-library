@@ -2,6 +2,8 @@ import json
 import os
 import sys
 
+from ..splunktalib.common import util
+
 
 def register_module(new_path):
     """ register_module(new_path): adds a directory to sys.path.
@@ -22,10 +24,8 @@ def register_module(new_path):
             return
     sys.path.append(new_path)
 
-from ..splunktalib.common import util
 
-
-def is_bool(val):
+def is_valid_bool(val):
     """Check whether a string can be convert to bool.
     :param val: value as string.
     :return: `True` if value can be convert to bool else `False`.
@@ -33,7 +33,7 @@ def is_bool(val):
     return util.is_true(val) or util.is_false(val)
 
 
-def is_port(port):
+def is_valid_port(port):
     """Check whether a port is valid.
     :param port: port to check.
     :return: `True` if port is valid else `False`.

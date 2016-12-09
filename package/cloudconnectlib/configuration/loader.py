@@ -1,19 +1,18 @@
 import logging
-import os.path as op
 import traceback
 from abc import abstractmethod
 
 from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core.exceptions import ConfigException
-from ..core.ext import lookup
+from ..core.ext import lookup_method
 from ..core.models import (
     BasicAuthorization, Options, Processor,
     Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
 from ..core.util import (
-    load_json_file, is_port, is_bool
+    load_json_file, is_valid_bool, is_valid_port
 )
 from ..splunktalib.common import log, util
 
@@ -38,21 +37,21 @@ _LOGGER = log.Logs().get_logger('cloud_connect')
 class CloudConnectConfigLoader(object):
     """The Base cloud connect configuration loader"""
 
-    _schema_file = op.join(op.dirname(__file__), 'schema_1_0_0.json')
-
-    def _get_schema_from_file(self):
+    @staticmethod
+    def _get_schema_from_file(schema_file):
         """ Load JSON based schema definition from schema file path.
         :return: A `dict` contains schema.
         """
         try:
-            return load_json_file(self._schema_file)
+            return load_json_file(schema_file)
         except:
             raise ConfigException(
                 'Cannot load schema from {}: {}'.format(
-                    self._schema_file, traceback.format_exc()))
+                    schema_file, traceback.format_exc())
+            )
 
     @abstractmethod
-    def load(self, definition, context):
+    def load(self, definition, schema_file, context):
         pass
 
 
@@ -76,32 +75,36 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                  for k, v in candidate.iteritems()}
 
         enabled = proxy.get('enabled', '0')
-        if not is_bool(enabled):
-            raise ConfigException('proxy enabled expect to be bool type: {}'.
-                                  format(enabled))
+        if not is_valid_bool(enabled):
+            raise ValueError(
+                'Proxy enabled expect to be bool type: {}'.format(enabled))
         else:
             proxy['enabled'] = util.is_true(enabled)
 
         port = proxy['port']
-        if not is_port(port):
-            raise ConfigException('proxy port expected to be in range [1,65535]: {}'.
-                                  format(port))
+        if not is_valid_port(port):
+            raise ValueError(
+                'Proxy port expected to be in range [1,65535]: {}'.format(port)
+            )
 
         # proxy type default to 'http'
         proxy_type = proxy.get('type', 'http').lower()
         if proxy_type not in _PROXY_TYPES:
-            raise ConfigException('proxy type expect to be one of [{}]: {}'
-                                  .format(','.join(_PROXY_TYPES), proxy_type))
+            raise ValueError(
+                'Proxy type expect to be one of [{}]: {}'.format(
+                    ','.join(_PROXY_TYPES), proxy_type)
+            )
         else:
             proxy['type'] = proxy_type
 
         # proxy rdns default to '0'
         proxy_rdns = proxy.get('rdns', '0')
-        if not is_bool(proxy_rdns):
-            raise ConfigException('proxy rdns expect to be bool type: {}'.
-                                  format(proxy_rdns))
+        if not is_valid_bool(proxy_rdns):
+            raise ValueError(
+                'Proxy rdns expect to be bool type: {}'.format(proxy_rdns))
         else:
             proxy['rdns'] = util.is_true(proxy_rdns)
+
         return proxy
 
     def _load_logging(self, log_setting, variables):
@@ -138,8 +141,10 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         auth_type = candidate['type'].lower()
 
         if auth_type not in _AUTH_TYPES:
-            raise ConfigException('auth type expect to be one of [{}]: {}'
-                                  .format(','.join(_AUTH_TYPES.keys()), auth_type))
+            raise ValueError(
+                'Auth type expect to be one of [{}]: {}'.format(
+                    ','.join(_AUTH_TYPES.keys()), auth_type)
+            )
         return _AUTH_TYPES[auth_type](candidate['options'])
 
     def _load_options(self, options):
@@ -150,27 +155,28 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                        body=options.get('body', {}))
 
     @staticmethod
-    def _validate_ext_method(method):
-        if lookup(method) is None:
-            raise ConfigException('unimplemented method: {}'.format(method))
+    def _validate_method(method):
+        if lookup_method(method) is None:
+            raise ValueError('Unimplemented method: {}'.format(method))
 
     def _parse_tasks(self, raw_tasks):
         tasks = []
         for item in raw_tasks:
-            self._validate_ext_method(item['method'])
+            self._validate_method(item['method'])
             tasks.append(Task(item['input'], item['method'], item.get('output')))
         return tasks
 
     def _parse_conditions(self, raw_conditions):
         conditions = []
         for item in raw_conditions:
-            self._validate_ext_method(item['method'])
+            self._validate_method(item['method'])
             conditions.append(Condition(item['input'], item['method']))
         return conditions
 
     @staticmethod
     def _load_checkpoint(checkpoint):
-        return Checkpoint(checkpoint.get('namespace', []), checkpoint['content'])
+        return Checkpoint(
+            checkpoint.get('namespace', []), checkpoint['content'])
 
     def _load_repeat_mode(self, repeat_mode):
         loop_type = repeat_mode.get('type')
@@ -196,18 +202,18 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         options = self._load_options(request['options'])
         pre_process = self._load_processor(request['pre_process'])
         post_process = self._load_processor(request['post_process'])
-        ckpt = self._load_checkpoint(request['checkpoint'])
+        checkpoint = self._load_checkpoint(request['checkpoint'])
         repeat_mode = self._load_repeat_mode(request['repeat_mode'])
 
         return munchify({
             'options': options,
             'pre_process': pre_process,
             'post_process': post_process,
-            'checkpoint': ckpt,
+            'checkpoint': checkpoint,
             'repeat_mode': repeat_mode,
         })
 
-    def load(self, definition, context):
+    def load(self, definition, schema_file, context):
         """Load cloud connect configuration from a `dict` and validate
         it with schema and global settings will be rendered.
         :param definition: A dictionary contains raw configs.
@@ -215,26 +221,30 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         :return: A `Munch` object.
         """
         try:
-            validate(definition, self._get_schema_from_file())
+            validate(definition, self._get_schema_from_file(schema_file))
         except ValidationError:
             raise ConfigException(
                 'Failed to validate interface with schema: {}'.format(
                     traceback.format_exc()))
 
-        meta = munchify(definition['meta'])
-        parameters = definition['parameters']
+        try:
+            meta = munchify(definition['meta'])
+            parameters = definition['parameters']
 
-        global_settings = self._load_global_setting(
-            definition.get('global_settings'), context)
+            global_settings = self._load_global_setting(
+                definition.get('global_settings'), context)
 
-        requests = [self._load_request(item) for item in definition['requests']]
+            requests = [self._load_request(item) for item in definition['requests']]
 
-        return munchify({
-            'meta': meta,
-            'parameters': parameters,
-            'global_settings': global_settings,
-            'requests': requests,
-        })
+            return munchify({
+                'meta': meta,
+                'parameters': parameters,
+                'global_settings': global_settings,
+                'requests': requests,
+            })
+        except (TypeError, ValueError):
+            _LOGGER.exception('Unable to parse config')
+            raise ConfigException('Unable to load configuration')
 
 
 _LOADER_CLASSES = {

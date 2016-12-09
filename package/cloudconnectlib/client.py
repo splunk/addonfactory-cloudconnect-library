@@ -1,4 +1,5 @@
 import copy
+import os.path
 import traceback
 
 from .configuration import loader_from_version
@@ -42,7 +43,9 @@ class CloudConnectClient(object):
                     self._config_file))
 
         config_loader = loader_from_version(version)
-        return config_loader.load(df, self._context)
+        schema_file = os.path.join(os.path.dirname(__file__), 'configuration', 'schema_1_0_0.json')
+
+        return config_loader.load(df, schema_file, self._context)
 
     def start(self):
         """

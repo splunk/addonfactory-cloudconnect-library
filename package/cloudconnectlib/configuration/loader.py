@@ -242,16 +242,15 @@ _LOADER_CLASSES = {
 }
 
 
-def loader_from_version(version):
+def get_loader_by_version(version):
     """ Instantiate a configuration loader on basis of a given version.
     A `ConfigException` will raised if the version is not supported.
     :param version: Version to lookup config loader.
     :return: A config loader.
     """
-    supported_versions = _LOADER_CLASSES.keys()
-    if version not in supported_versions:
+    if version not in _LOADER_CLASSES:
         raise ConfigException(
             'Unsupported schema version {}, current supported'
-            ' versions [{}]'.format(version, ','.join(supported_versions))
+            ' versions [{}]'.format(version, ','.join(_LOADER_CLASSES))
         )
     return _LOADER_CLASSES[version]()

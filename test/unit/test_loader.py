@@ -5,7 +5,7 @@ from os import listdir
 import pytest
 
 import common
-from package.cloudconnectlib.configuration import loader_from_version
+from package.cloudconnectlib.configuration import get_loader_by_version
 from package.cloudconnectlib.core import ConfigException
 from package.cloudconnectlib.core.util import is_port
 from package.cloudconnectlib.core.util import load_json_file
@@ -14,7 +14,7 @@ _config_file = op.join(common.DATA_DIR, 'test_1.json')
 
 
 def test_load_proxy():
-    loader = loader_from_version('1.0.0')
+    loader = get_loader_by_version('1.0.0')
 
     bad_proxy = [{'enabled': 'BAD BOOL',
                   'host': 'host',
@@ -78,7 +78,7 @@ def test_load_global_setting():
             'level': 'abc'
         }
     }
-    loader = loader_from_version('1.0.0')
+    loader = get_loader_by_version('1.0.0')
     setting = loader._load_global_setting(setting_log_only, {})
     import logging
     assert setting.logging.level == logging.INFO
@@ -112,7 +112,7 @@ def test_load_global_setting():
 
 
 def test_load_config():
-    loader = loader_from_version('1.0.0')
+    loader = get_loader_by_version('1.0.0')
     conf = load_json_file(_config_file)
     config = loader.load(conf, {
         'proxy_port': '1024',
@@ -134,7 +134,7 @@ def test_load_config():
 
 def test_load_examples():
     files = [f for f in listdir(common.EXAMPLE_DIR) if op.isfile(op.join(common.EXAMPLE_DIR, f))]
-    loader = loader_from_version('1.0.0')
+    loader = get_loader_by_version('1.0.0')
     ctx = {
         'proxy_port': '1024',
         'proxy_enabled': '0',

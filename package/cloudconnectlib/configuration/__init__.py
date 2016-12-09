@@ -1,1 +1,1 @@
-from .loader import loader_from_version
+from .loader import get_loader_by_version

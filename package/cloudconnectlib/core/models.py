@@ -1,9 +1,9 @@
 import base64
 import logging
 
-from ..exceptions import ConfigException
-from ..ext import lookup
-from ..template import compile_template
+from .exceptions import ConfigException
+from .ext import lookup
+from .template import compile_template
 
 logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging
@@ -20,11 +20,15 @@ class _Token(object):
 
 
 class BaseAuth(object):
+    """A base class for all authorization classes"""
+
     def __call__(self, headers, context):
         raise NotImplementedError('Auth must be callable.')
 
 
 class BasicAuthorization(BaseAuth):
+    """BasicAuthorization class implements basic auth"""
+
     def __init__(self, options):
         if not options:
             raise ConfigException('options for basic auth unexpected to be empty')
@@ -106,6 +110,8 @@ class _Function(object):
 
 
 class Task(_Function):
+    """Task class wraps a task in processor pipeline"""
+
     def __init__(self, inputs, function, output=None):
         super(Task, self).__init__(inputs, function)
         self._output = output
@@ -115,6 +121,7 @@ class Task(_Function):
         return self._output
 
     def execute(self, context):
+        """Execute task with arguments which rendered from context """
         args = [arg for arg in self.inputs_values(context)]
         caller = lookup(self.function)
         output = self._output
@@ -131,6 +138,8 @@ class Task(_Function):
 
 
 class Condition(_Function):
+    """A condition return the value calculated from input and function"""
+
     def calculate(self, context):
         args = [arg for arg in self.inputs_values(context)]
         caller = lookup(self.function)
@@ -138,6 +147,8 @@ class Condition(_Function):
 
 
 class _Conditional(object):
+    """A base class for all conditional action"""
+
     def __init__(self, conditions):
         self._conditions = conditions or []
 
@@ -158,6 +169,8 @@ class _Conditional(object):
 
 
 class Processor(_Conditional):
+    """Processor class contains a conditional data process pipeline"""
+
     def __init__(self, conditions, pipeline):
         super(Processor, self).__init__(conditions)
         self._pipeline = pipeline or []
@@ -185,9 +198,12 @@ class RepeatMode(_Conditional):
 
 
 class Checkpoint(object):
+    """A checkpoint includes a namespace to determine the checkpoint location
+    and a content defined the format of content stored in checkpoint."""
+
     def __init__(self, namespace, contents):
         if not contents:
-            raise ConfigException('Checkpoint content must not be empty')
+            raise ValueError('Checkpoint content must not be empty')
 
         self._namespace = tuple(_Token(expr) for expr in namespace or [])
         self._content = {k: _Token(v) for k, v in contents.iteritems()}

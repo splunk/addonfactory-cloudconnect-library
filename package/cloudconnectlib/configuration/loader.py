@@ -7,8 +7,8 @@ from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup
-from ..core.model import (
-    CloudConnectConfigV1, BasicAuthorization, Options, Processor,
+from ..core.models import (
+    BasicAuthorization, Options, Processor,
     Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
@@ -208,11 +208,11 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         })
 
     def load(self, definition, context):
-        """Load a `CloudConnectConfigV1` config from a `dict` and validate
-        it with schema.
+        """Load cloud connect configuration from a `dict` and validate
+        it with schema and global settings will be rendered.
         :param definition: A dictionary contains raw configs.
         :param context: variables to render template in global setting.
-        :return: A `CloudConnectConfigV1` object.
+        :return: A `Munch` object.
         """
         try:
             validate(definition, self._get_schema_from_file())
@@ -229,10 +229,12 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
         requests = [self._load_request(item) for item in definition['requests']]
 
-        return CloudConnectConfigV1(meta=meta,
-                                    parameters=parameters,
-                                    global_settings=global_settings,
-                                    requests=requests)
+        return munchify({
+            'meta': meta,
+            'parameters': parameters,
+            'global_settings': global_settings,
+            'requests': requests,
+        })
 
 
 _LOADER_CLASSES = {

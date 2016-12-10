@@ -1,6 +1,6 @@
 import logging
-import traceback
 import re
+import traceback
 from abc import abstractmethod
 
 from jsonschema import validate, ValidationError

@@ -12,12 +12,12 @@ _LOGGER = logging
 
 
 class CloudConnectEngine(object):
-    """
-    The cloud connect engine to process request instantiated from user options.
-    """
+    """The cloud connect engine to process request instantiated
+     from user options."""
 
     def __init__(self):
         self._stopped = False
+        self._running_job = None
 
     @staticmethod
     def _set_logging(log_setting):
@@ -32,34 +32,43 @@ class CloudConnectEngine(object):
 
         context = context or {}
         global_setting = config.global_settings
-        handled = 0
 
         self._set_logging(global_setting.logging)
 
-        _LOGGER.info('Start to execute requests')
+        _LOGGER.info('Start to execute request jobs')
+        processed = 0
 
-        for item in config.requests:
-            job = Job(request=item, context=context,
-                      proxy=global_setting.proxy)
+        for request in config.requests:
+            job = Job(
+                request=request, context=context, proxy=global_setting.proxy
+            )
+            self._running_job = job
             job.run()
 
-            handled += 1
-            _LOGGER.info('%s request(s) process finished', handled)
+            processed += 1
+            _LOGGER.info('%s job(s) process finished', processed)
 
             if self._stopped:
-                _LOGGER.info('Engine already stopped, exiting')
+                _LOGGER.info(
+                    'Engine has been stopped, stopping to execute jobs.')
                 break
 
-        _LOGGER.info('All requests finished')
+        _LOGGER.info('Engine executing finished')
 
     def stop(self):
+        if self._stopped:
+            _LOGGER.info('Engine already stopped, do nothing.')
+            return
+
         _LOGGER.info('Stopping engine')
+
+        if self._running_job:
+            self._running_job.stop()
         self._stopped = True
 
 
 class Job(object):
-    """
-    Job class represents a single request to send HTTP request until
+    """Job class represents a single request to send HTTP request until
     reached it's stop condition.
     """
 
@@ -68,12 +77,19 @@ class Job(object):
         Constructs a `Job` with properties request, context and a
          optional proxy setting.
         :param request: A `Request` instance which contains request settings.
-        :param context: A values set contains initial values for template variables.
-        :param proxy: A optional `Proxy` object contains proxy related settings.
+        :param context: A values set contains initial values for template
+         variables.
+        :param proxy: A optional `Proxy` object contains proxy related
+         settings.
         """
         self._request = request
         self._context = context
         self._client = HTTPRequest(proxy)
+        self._stopped = False
+
+    def stop(self):
+        _LOGGER.info('Stopping job')
+        self._stopped = True
 
     def _set_context(self, key, value):
         self._context[key] = value
@@ -123,17 +139,23 @@ class Job(object):
         repeat_mode = self._request.repeat_mode
         return repeat_mode.is_once() or repeat_mode.passed(self._context)
 
+    def is_stopped(self):
+        """Return if this job is stopped."""
+        return self._stopped
+
     def run(self):
-        """
-        Start request instance and exit util meet stop condition.
-        """
-        _LOGGER.info('Start to process request')
+        """Start job and exit util meet stop condition. """
+        _LOGGER.info('Start to process job')
 
         options = self._request.options
         method = options.method
         authorizer = options.auth
 
         while 1:
+            if self.is_stopped():
+                _LOGGER.info('Job has been stopped')
+                break
+
             url = options.normalize_url(self._context)
             header = options.normalize_header(self._context)
             body = options.normalize_body(self._context)
@@ -176,4 +198,4 @@ class Job(object):
                 _LOGGER.info('Stop condition reached, exit job now')
                 break
 
-        _LOGGER.info('Process request finished')
+        _LOGGER.info('Job processing finished')

@@ -52,6 +52,9 @@ class TaConfig(object):
     def get_all_conf_contents(self):
         return self._all_conf_contents
 
+    def get_input_type(self):
+        return self._input_type
+
     def _load_task_configs(self):
         inputs, configs, global_settings = th.get_all_conf_contents(
             self._meta_config["session_key"],

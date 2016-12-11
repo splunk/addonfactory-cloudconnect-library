@@ -165,7 +165,7 @@ class TADataCollector(object):
                     if not self._write_events(ckpt, events):
                         break
             except StopIteration:
-                stulog.logger.debug("{} Finished this round".format(self._p))
+                stulog.logger.info("{} Finished this round".format(self._p))
                 return
             except Exception:
                 stulog.logger.exception("{} Failed to get msg".format(self._p))

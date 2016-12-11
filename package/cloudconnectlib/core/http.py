@@ -1,19 +1,18 @@
-import logging
 import os
 import traceback
 import urllib
 import urlparse
 
+from cloudconnectlib.common.util import register_module
 from . import defaults
 from .exceptions import HTTPError
-from .util import register_module
 
 register_module(os.path.join(os.path.dirname(__file__), 'cacerts'))
 
 from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 
-logging.basicConfig(level=logging.DEBUG)
-_logger = logging
+from ..common import log as _logger
+
 
 
 class HTTPResponse(object):

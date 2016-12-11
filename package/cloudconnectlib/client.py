@@ -2,10 +2,10 @@ import copy
 import os.path
 import traceback
 
+from cloudconnectlib.common.util import load_json_file
 from .configuration import get_loader_by_version
 from .core import CloudConnectEngine
 from .core.exceptions import ConfigException
-from .core.util import load_json_file
 
 
 class CloudConnectClient(object):

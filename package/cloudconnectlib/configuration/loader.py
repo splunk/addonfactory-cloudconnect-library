@@ -248,7 +248,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
 
 _loader_and_schema_by_version = {
-    r'1.0.\d+': (CloudConnectConfigLoaderV1, 'schema_1_0_0.json'),
+    r'1\.0\.0': (CloudConnectConfigLoaderV1, 'schema_1_0_0.json'),
 }
 
 

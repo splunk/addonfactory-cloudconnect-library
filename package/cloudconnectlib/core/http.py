@@ -3,7 +3,7 @@ import traceback
 import urllib
 import urlparse
 
-from cloudconnectlib.common.util import register_module
+from ..common.util import register_module
 from . import defaults
 from .exceptions import HTTPError
 

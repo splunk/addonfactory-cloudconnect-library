@@ -1,6 +1,6 @@
 import logging
-import traceback
 import re
+import traceback
 from abc import abstractmethod
 
 from jsonschema import validate, ValidationError
@@ -57,8 +57,6 @@ class CloudConnectConfigLoader(object):
 
 
 class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
-    _version = '1.0.0'
-
     @staticmethod
     def _render_template(template, variables):
         return compile_template(template)(variables)
@@ -217,6 +215,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     def load(self, definition, schema_file, context):
         """Load cloud connect configuration from a `dict` and validate
         it with schema and global settings will be rendered.
+        :param schema_file: Schema file location used to validate config.
         :param definition: A dictionary contains raw configs.
         :param context: variables to render template in global setting.
         :return: A `Munch` object.
@@ -248,8 +247,8 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
             raise ConfigException('Unable to load configuration')
 
 
-_LOADER_CLASSES = {
-    r'1.0.\d+': CloudConnectConfigLoaderV1,
+_loader_and_schema_by_version = {
+    r'1.0.\d+': (CloudConnectConfigLoaderV1, 'schema_1_0_0.json'),
 }
 
 
@@ -259,11 +258,13 @@ def get_loader_by_version(version):
     :param version: Version to lookup config loader.
     :return: A config loader.
     """
-    for support_version in _LOADER_CLASSES:
+    for support_version in _loader_and_schema_by_version:
         if re.match(support_version, version):
-            return _LOADER_CLASSES[support_version]()
+            loader_cls, schema = _loader_and_schema_by_version[support_version]
+            return loader_cls(), schema
+
     raise ConfigException(
         'Unsupported schema version {}, current supported'
         ' versions should match these regex [{}]'.format(version, ','.join(
-            _LOADER_CLASSES))
+            _loader_and_schema_by_version))
     )

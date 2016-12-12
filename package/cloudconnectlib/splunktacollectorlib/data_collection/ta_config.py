@@ -57,6 +57,7 @@ class TaConfig(object):
 
     def _load_task_configs(self):
         inputs, configs, global_settings = th.get_all_conf_contents(
+            self._meta_config["server_uri"],
             self._meta_config["session_key"],
             self._client_schema, self._input_type)
         if self._input_type:

@@ -1,6 +1,7 @@
 import json
 import re
-import sys
+from ..common.splunk_util import std_out
+from ..common import util
 
 
 def regex_match(pattern, candidate):
@@ -43,29 +44,27 @@ def json_path(expr, candidate):
     return results[0] if len(results) == 1 else results
 
 
-def splunk_xml(candidate, time='', index='', host='', source='', sourcetype=''):
+def splunk_xml(candidates, time=None, index=None, host=None, source=None,
+               sourcetype=None):
     """
     Wrap a event with splunk xml format.
     :return: A wrapped event with splunk xml format.
     """
-    return ("<stream><event><host>{host}</host>"
-            "<source>{source}</source>"
-            "<sourcetype>{sourcetype}</sourcetype>"
-            "<time>{time}</time>"
-            "<index>{index}</index><data>"
-            "<![CDATA[{data}]]></data></event></stream>") \
-        .format(host=host or '', source=source or '',
-                sourcetype=sourcetype or '',
-                time=time or '', index=index or '', data=candidate or '')
+    if not isinstance(candidates, (list, tuple)):
+        candidates = [candidates]
+    return util.format_events(candidates, time=time, index=index, host=host,
+                              source=source, sourcetype=sourcetype)
 
 
-def std_output(candidate):
+def std_output(candidates):
     """
     Output a string to stdout.
     :param candidate: string to output to stdout.
     """
-    from ..common.splunk_util import std_out
-    std_out(candidate)
+    if not isinstance(candidates, (list, tuple)):
+        candidates = [candidates]
+    for candidate in candidates:
+        std_out(candidate)
 
 
 def json_empty(candidate, json_path_expr=None):

@@ -33,6 +33,9 @@ def is_valid_bool(val):
     return util.is_true(val) or util.is_false(val)
 
 
+def is_true(val):
+    return util.is_true(val)
+
 def is_valid_port(port):
     """Check whether a port is valid.
     :param port: port to check.

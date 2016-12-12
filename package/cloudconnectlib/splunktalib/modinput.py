@@ -3,7 +3,7 @@ import subprocess
 import traceback
 
 from . import splunk_platform as sp
-from . import common as log
+from .common import log
 
 
 def _parse_modinput_configs(root, outer_block, inner_block):

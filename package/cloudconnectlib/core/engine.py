@@ -5,10 +5,8 @@ import traceback
 from . import defaults
 from .exceptions import HTTPError
 from .http import HTTPRequest
-from ..splunktacollectorlib.common import log as stulog
-
-logging.basicConfig(level=logging.DEBUG)
-_LOGGER = logging
+from ..common import log as _logger
+from ..common import splunk_util
 
 
 class CloudConnectEngine(object):
@@ -21,7 +19,7 @@ class CloudConnectEngine(object):
 
     @staticmethod
     def _set_logging(log_setting):
-        stulog.set_log_level(log_setting.level)
+        _logger.set_log_level(log_setting.level)
 
     def start(self, context, config):
         """Start current client instance to execute each request parsed
@@ -36,7 +34,7 @@ class CloudConnectEngine(object):
 
         self._set_logging(global_setting.logging)
 
-        _LOGGER.info('Start to execute requests')
+        _logger.info('Start to execute requests')
 
         for item in config.requests:
             job = Job(request=item, context=context,
@@ -44,16 +42,16 @@ class CloudConnectEngine(object):
             job.run()
 
             handled += 1
-            _LOGGER.info('%s request(s) process finished', handled)
+            _logger.info('%s request(s) process finished', handled)
 
             if self._stopped:
-                _LOGGER.info('Engine already stopped, exiting')
+                _logger.info('Engine already stopped, exiting')
                 break
 
-        _LOGGER.info('All requests finished')
+        _logger.info('All requests finished')
 
     def stop(self):
-        _LOGGER.info('Stopping engine')
+        _logger.info('Stopping engine')
         self._stopped = True
 
 
@@ -91,11 +89,11 @@ class Job(object):
         pre_processor = self._request.pre_process
 
         if not pre_processor.passed(self._context):
-            _LOGGER.info('Pre process condition not satisfied, do nothing')
+            _logger.info('Pre process condition not satisfied, do nothing')
             return
 
         tasks = pre_processor.pipeline
-        _LOGGER.debug(
+        _logger.debug(
             'Got %s tasks need be executed before process', len(tasks))
         self._execute_tasks(tasks)
 
@@ -105,33 +103,53 @@ class Job(object):
         """
         post_processor = self._request.post_process
 
-        if not post_processor.passed(self._context):
-            _LOGGER.info('Post process condition not satisfied, do nothing')
+        if post_processor.passed(self._context):
+            _logger.info('Skip post process condition satisfied, '
+                         'do nothing')
             return
 
         tasks = post_processor.pipeline
-        _LOGGER.debug(
+        _logger.debug(
             'Got %s tasks need to be executed after process', len(tasks)
         )
         self._execute_tasks(tasks)
 
     def _update_checkpoint(self):
-        # TODO
-        pass
+        namespace = self._request.checkpoint.namespace
+        checkpoint_content = dict()
+        content = self._request.checkpoint.content
+        for checkpoint_key in content:
+            checkpoint_value = content.get(checkpoint_key).value(self._context)
+            checkpoint_content[checkpoint_key] = checkpoint_value
+        splunk_util.update_checkpoint(namespace, checkpoint_content)
+
+    def _get_checkpoint(self):
+        checkpoint = splunk_util.get_checkpoint()
+        if checkpoint:
+            self._context.update(checkpoint)
+
 
     def _is_stoppable(self):
         repeat_mode = self._request.repeat_mode
         return repeat_mode.is_once() or repeat_mode.passed(self._context)
 
     def run(self):
+        try:
+            self._run()
+        except Exception as e:
+            _logger.exception("engine encounter error")
+            raise e
+
+    def _run(self):
         """
         Start request instance and exit util meet stop condition.
         """
-        _LOGGER.info('Start to process request')
+        _logger.info('Start to process request')
 
         options = self._request.options
         method = options.method
         authorizer = options.auth
+        self._get_checkpoint()
 
         while 1:
             url = options.normalize_url(self._context)
@@ -148,20 +166,20 @@ class Job(object):
                 response = self._client.request(url, method, header, body=rb)
             except HTTPError as error:
                 if error.status in defaults.exit_status:
-                    _LOGGER.warn(
+                    _logger.warn(
                         'Stop repeating request cause returned status %s on '
                         'sending request to [%s] with method [%s]: %s',
                         error.status, url, method, traceback.format_exc()
                     )
                     break
-                _LOGGER.error(
+                _logger.error(
                     'Unexpected exception thrown on invoking request to [%s]'
                     ' with method [%s]: %s',
                     url, method, traceback.format_exc())
                 raise
 
             if not response.body:
-                _LOGGER.warn(
+                _logger.warn(
                     'Stop repeating request cause request to url [%s]'
                     ' with method [%s] returned a empty response: '
                     '[%s]', url, method, response.body)
@@ -173,7 +191,7 @@ class Job(object):
             self._update_checkpoint()
 
             if self._is_stoppable():
-                _LOGGER.info('Stop condition reached, exit job now')
+                _logger.info('Stop condition reached, exit job now')
                 break
 
-        _LOGGER.info('Process request finished')
+        _logger.info('Process request finished')

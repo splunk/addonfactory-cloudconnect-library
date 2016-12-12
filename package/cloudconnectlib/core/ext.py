@@ -64,8 +64,8 @@ def std_output(candidate):
     Output a string to stdout.
     :param candidate: string to output to stdout.
     """
-    sys.stdout.write(candidate)
-    sys.stdout.flush()
+    from ..common.splunk_util import std_out
+    std_out(candidate)
 
 
 def json_empty(candidate, json_path_expr=None):

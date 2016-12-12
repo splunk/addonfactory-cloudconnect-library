@@ -69,7 +69,8 @@ class CloudConnectEngine(object):
         if self._running_job:
             self._running_job.stop()
 
-        if self._running_thread != threading.current_thread():
+        if self._running_thread \
+                and self._running_thread != threading.current_thread():
             self._running_thread.join()
 
         self._stopped = True

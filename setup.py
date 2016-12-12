@@ -1,22 +1,54 @@
-import os
-from distutils.version import StrictVersion
+"""
+APP Cloud Connect setup
+"""
 
-basedir = os.path.dirname(os.path.abspath(__file__))
+import ast
+import re
 
-def install_3rdlibs():
-    os.chdir(basedir)
-    pip_version = os.popen("pip -V").read().rstrip().split()[1]
+from setuptools import setup, find_packages
 
-    target = os.path.join(basedir, "package")
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
 
-    install_cmd = "pip install --requirement requirements.txt -i http://repo.splunk.com/artifactory/api/pypi/pypi-virtual/simple --no-compile --no-binary :all: --target " + target
+with open('package/cloudconnectlib/__init__.py', 'rb') as f:
+    version = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
 
-    if StrictVersion(pip_version) > StrictVersion("1.5.6"):
-        install_cmd += " --trusted-host repo.splunk.com"
+if not version:
+    raise RuntimeError('Version not found')
 
-    print "command: " + install_cmd
-    os.system(install_cmd)
-    os.system("rm -rf " + target + "/*.egg-info")
-    os.system("rm -rf " + target + "/_yaml.so")
+setup(
+    name='cloudconnectlib',
+    description='APP Cloud Connect',
+    version=version,
+    author='Splunk, Inc.',
+    author_email='Shanghai-TA-dev@splunk.com',
+    license='http://www.apache.org/licenses/LICENSE-2.0',
+    url='https://git.splunk.com/projects/SOLN/repos/app-cloud-connect',
 
-install_3rdlibs()
+    packages=find_packages('package'),
+
+    package_dir={'': 'package'},
+
+    package_data={
+        '': ['LICENSE']
+    },
+    install_requires=[
+        'jsonschema==2.5.1',
+        'jinja2==2.8',
+        'jsonpath-rw==1.4.0',
+        'httplib2==0.9.2',
+        'splunk-sdk==1.6.0',
+        'sortedcontainers==1.5.2',
+        'munch==2.0.4',
+    ],
+    classifiers=[
+        'Programming Language :: Python',
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Other Environment',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: OS Independent',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Software Development :: Libraries :: Application Frameworks',
+    ]
+)

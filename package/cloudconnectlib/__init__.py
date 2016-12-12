@@ -3,4 +3,4 @@ APP Cloud Connect
 """
 from .client import CloudConnectClient
 
-__version__ = '1.0'
+__version__ = '1.0.0'

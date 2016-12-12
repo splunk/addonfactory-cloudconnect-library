@@ -10,7 +10,6 @@ import json
 from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema
 
 
-
 def utc2timestamp(human_time):
     regex1 = ur"\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
     match = re.search(regex1, human_time)
@@ -44,16 +43,16 @@ def get_md5(data):
         return hashlib.sha256(json.dumps(data).encode('utf-8')).hexdigest()
 
 
-
-def get_all_conf_contents(sessionkey, settings, input_type=None):
+def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
     schema = GlobalConfigSchema(settings)
     global_config = GlobalConfig(
-    'https://127.0.0.1:8089',sessionkey,schema
+        server_uri, sessionkey, schema
     )
     inputs = global_config.inputs(name=input_type)
     configs = global_config.configs()
     settings = global_config.settings()
     return inputs, configs, settings
+
 
 def format_input_name_for_file(name):
     import base64
@@ -84,7 +83,6 @@ class ConfigSchemaHandler(object):
         self._load_conf_contents()
         self._division_settings = self._divide_settings()
 
-
     def get_endpoints(self):
         return self._config.get_endpoints()
 
@@ -104,7 +102,6 @@ class ConfigSchemaHandler(object):
             division_settings[division_endpoint] = self._process_division(
                 division_endpoint, division_contents)
         return division_settings
-
 
     def _load_conf_contents(self):
         self._all_conf_contents = self._config.load()

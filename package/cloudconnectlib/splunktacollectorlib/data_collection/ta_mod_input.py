@@ -29,7 +29,9 @@ def do_scheme(ta_short_name, ta_name, schema_para_list=None,
 
     """
     param_str = ""
-    builtsin_names = {"name", "index", "sourcetype", "host", "source", "disabled"}
+    builtsin_names = {"name", "index", "sourcetype", "host", "source",
+                      "disabled",
+                      "interval"}
 
     schema_para_list = schema_para_list or ()
     for param in schema_para_list:
@@ -99,7 +101,7 @@ def _get_conf_files(local_file_list):
 
 
 def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
-        log_suffix=None, single_instance=True):
+        log_suffix=None, single_instance=True, cc_json_file=None):
     """
     Main loop. Run this TA forever
     """
@@ -135,6 +137,7 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
         stulog.logger.debug("No task and exiting...")
         return
     meta_config = tconfig.get_meta_config()
+    meta_config["cc_json_file"] = cc_json_file
 
     if tconfig.is_shc_member():
         # In SHC env, only captain is able to collect data
@@ -170,7 +173,8 @@ def usage():
 
 
 def main(collector_cls, schema_file_path, log_suffix="modinput",
-         checkpoint_cls=None, configer_cls=None, schema_para_list=None,
+         checkpoint_cls=None, configer_cls=None,
+         cc_json_file=None, schema_para_list=None,
          single_instance=True):
     """
     Main entry point
@@ -199,7 +203,7 @@ def main(collector_cls, schema_file_path, log_suffix="modinput",
         try:
             run(collector_cls, settings, checkpoint_cls=checkpoint_cls,
                 config_cls=configer_cls, log_suffix=log_suffix,
-                single_instance=single_instance)
+                single_instance=single_instance, cc_json_file=cc_json_file)
         except Exception as e:
             stulog.logger.exception(
                 "{} task encounter exception".format(ta_short_name))

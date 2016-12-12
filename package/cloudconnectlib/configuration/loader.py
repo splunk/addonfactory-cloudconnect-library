@@ -3,6 +3,9 @@ import re
 import traceback
 from abc import abstractmethod
 
+from ..common.util import (
+    load_json_file, is_valid_bool, is_valid_port, is_true
+)
 from jsonschema import validate, ValidationError
 from munch import munchify
 from ..core.exceptions import ConfigException
@@ -12,10 +15,7 @@ from ..core.models import (
     Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
-from ..core.util import (
-    load_json_file, is_valid_bool, is_valid_port
-)
-from ..splunktalib.common import log, util
+from ..common import log as _logger
 
 _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _AUTH_TYPES = {
@@ -31,9 +31,6 @@ _LOGGING_LEVELS = {
     'ERROR': logging.ERROR,
     'FATAL': logging.FATAL,
 }
-
-_LOGGER = log.Logs().get_logger('cloud_connect')
-
 
 class CloudConnectConfigLoader(object):
     """The Base cloud connect configuration loader"""
@@ -57,8 +54,6 @@ class CloudConnectConfigLoader(object):
 
 
 class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
-    _version = '1.0.0'
-
     @staticmethod
     def _render_template(template, variables):
         return compile_template(template)(variables)
@@ -80,16 +75,17 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
             raise ValueError(
                 'Proxy enabled expect to be bool type: {}'.format(enabled))
         else:
-            proxy['enabled'] = util.is_true(enabled)
+            proxy['enabled'] = is_true(enabled)
 
         port = proxy['port']
-        if not is_valid_port(port):
+        if proxy['host'] and not is_valid_port(port):
             raise ValueError(
                 'Proxy port expected to be in range [1,65535]: {}'.format(port)
             )
 
         # proxy type default to 'http'
-        proxy_type = proxy.get('type', 'http').lower()
+        proxy_type = proxy.get('type')
+        proxy_type = proxy_type.lower() if proxy_type else 'http'
         if proxy_type not in _PROXY_TYPES:
             raise ValueError(
                 'Proxy type expect to be one of [{}]: {}'.format(
@@ -104,7 +100,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
             raise ValueError(
                 'Proxy rdns expect to be bool type: {}'.format(proxy_rdns))
         else:
-            proxy['rdns'] = util.is_true(proxy_rdns)
+            proxy['rdns'] = is_true(proxy_rdns)
 
         return proxy
 
@@ -116,7 +112,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         level = logger.get('level', '').upper()
 
         if level not in _LOGGING_LEVELS:
-            _LOGGER.warn('Log level not specified, set log level to INFO')
+            _logger.warn('Log level not specified, set log level to INFO')
             logger['level'] = logging.INFO
         else:
             logger['level'] = _LOGGING_LEVELS[level]
@@ -183,7 +179,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         loop_type = repeat_mode.get('type')
 
         if not loop_type or loop_type.lower() not in _REPEAT_MODE_TYPES:
-            _LOGGER.warn('loop mode type expect to be one of [%s]: found %s,'
+            _logger.warn('loop mode type expect to be one of [%s]: found %s,'
                          ' setting to default type',
                          ','.join(_REPEAT_MODE_TYPES), loop_type)
             loop_type = 'once'
@@ -217,6 +213,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     def load(self, definition, schema_file, context):
         """Load cloud connect configuration from a `dict` and validate
         it with schema and global settings will be rendered.
+        :param schema_file: Schema file location used to validate config.
         :param definition: A dictionary contains raw configs.
         :param context: variables to render template in global setting.
         :return: A `Munch` object.
@@ -244,12 +241,12 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                 'requests': requests,
             })
         except (TypeError, ValueError):
-            _LOGGER.exception('Unable to parse config')
+            _logger.exception('Unable to parse config')
             raise ConfigException('Unable to load configuration')
 
 
-_LOADER_CLASSES = {
-    r'1.0.\d+': CloudConnectConfigLoaderV1,
+_loader_and_schema_by_version = {
+    r'1\.0\.0': (CloudConnectConfigLoaderV1, 'schema_1_0_0.json'),
 }
 
 
@@ -259,11 +256,13 @@ def get_loader_by_version(version):
     :param version: Version to lookup config loader.
     :return: A config loader.
     """
-    for support_version in _LOADER_CLASSES:
+    for support_version in _loader_and_schema_by_version:
         if re.match(support_version, version):
-            return _LOADER_CLASSES[support_version]()
+            loader_cls, schema = _loader_and_schema_by_version[support_version]
+            return loader_cls(), schema
+
     raise ConfigException(
         'Unsupported schema version {}, current supported'
         ' versions should match these regex [{}]'.format(version, ','.join(
-            _LOADER_CLASSES))
+            _loader_and_schema_by_version))
     )

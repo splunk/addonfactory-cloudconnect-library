@@ -1,15 +1,12 @@
 import json
-import logging
 import threading
 import traceback
 
 from . import defaults
 from .exceptions import HTTPError
 from .http import HTTPRequest
-from ..splunktacollectorlib.common import log as stulog
-
-logging.basicConfig(level=logging.DEBUG)
-_LOGGER = logging
+from ..common import log as _logger
+from ..common import splunk_util
 
 
 class CloudConnectEngine(object):
@@ -23,7 +20,7 @@ class CloudConnectEngine(object):
 
     @staticmethod
     def _set_logging(log_setting):
-        stulog.set_log_level(log_setting.level)
+        _logger.set_log_level(log_setting.level)
 
     def start(self, context, config):
         """Start current client instance to execute each request parsed
@@ -39,7 +36,7 @@ class CloudConnectEngine(object):
 
         self._set_logging(global_setting.logging)
 
-        _LOGGER.info('Start to execute request jobs')
+        _logger.info('Start to execute requests jobs.')
         processed = 0
 
         for request in config.requests:
@@ -50,21 +47,23 @@ class CloudConnectEngine(object):
             job.run()
 
             processed += 1
-            _LOGGER.info('%s job(s) process finished', processed)
+            _logger.info('%s job(s) process finished', processed)
 
             if self._stopped:
-                _LOGGER.info(
+                _logger.info(
                     'Engine has been stopped, stopping to execute jobs.')
                 break
 
-        _LOGGER.info('Engine executing finished')
+        _logger.info('Engine executing finished')
 
     def stop(self):
+        """Stops engine and running job. Do nothing if engine already
+        been stopped."""
         if self._stopped:
-            _LOGGER.info('Engine already stopped, do nothing.')
+            _logger.info('Engine already stopped, do nothing.')
             return
 
-        _LOGGER.info('Stopping engine')
+        _logger.info('Stopping engine')
 
         if self._running_job:
             self._running_job.stop()
@@ -97,7 +96,8 @@ class Job(object):
         self._stopped = False
 
     def stop(self):
-        _LOGGER.info('Stopping job')
+        """Sets job stopped flag to True"""
+        _logger.info('Stopping job')
         self._stopped = True
 
     def _set_context(self, key, value):
@@ -116,11 +116,11 @@ class Job(object):
         pre_processor = self._request.pre_process
 
         if not pre_processor.passed(self._context):
-            _LOGGER.info('Pre process condition not satisfied, do nothing')
+            _logger.info('Pre process condition not satisfied, do nothing')
             return
 
         tasks = pre_processor.pipeline
-        _LOGGER.debug(
+        _logger.debug(
             'Got %s tasks need be executed before process', len(tasks))
         self._execute_tasks(tasks)
 
@@ -130,19 +130,29 @@ class Job(object):
         """
         post_processor = self._request.post_process
 
-        if not post_processor.passed(self._context):
-            _LOGGER.info('Post process condition not satisfied, do nothing')
+        if post_processor.passed(self._context):
+            _logger.info('Skip post process condition satisfied, '
+                         'do nothing')
             return
 
         tasks = post_processor.pipeline
-        _LOGGER.debug(
+        _logger.debug(
             'Got %s tasks need to be executed after process', len(tasks)
         )
         self._execute_tasks(tasks)
 
     def _update_checkpoint(self):
-        # TODO
-        pass
+        """Updates checkpoint based on checkpoint namespace and content."""
+        checkpoint = self._request.checkpoint
+        splunk_util.update_checkpoint(
+            namespace=checkpoint.normalize_namespace(self._context),
+            value=checkpoint.normalize_content(self._context)
+        )
+
+    def _get_checkpoint(self):
+        checkpoint = splunk_util.get_checkpoint()
+        if checkpoint:
+            self._context.update(checkpoint)
 
     def _is_stoppable(self):
         repeat_mode = self._request.repeat_mode
@@ -154,15 +164,25 @@ class Job(object):
 
     def run(self):
         """Start job and exit util meet stop condition. """
-        _LOGGER.info('Start to process job')
+        _logger.info('Start to process job')
+
+        try:
+            self._run()
+        except Exception as e:
+            _logger.exception("engine encounter error")
+            raise e
+
+    def _run(self):
+        _logger.info('Start to process request')
 
         options = self._request.options
         method = options.method
         authorizer = options.auth
+        self._get_checkpoint()
 
         while 1:
             if self.is_stopped():
-                _LOGGER.info('Job has been stopped')
+                _logger.info('Job has been stopped')
                 break
 
             url = options.normalize_url(self._context)
@@ -179,20 +199,20 @@ class Job(object):
                 response = self._client.request(url, method, header, body=rb)
             except HTTPError as error:
                 if error.status in defaults.exit_status:
-                    _LOGGER.warn(
+                    _logger.warn(
                         'Stop repeating request cause returned status %s on '
                         'sending request to [%s] with method [%s]: %s',
                         error.status, url, method, traceback.format_exc()
                     )
                     break
-                _LOGGER.error(
+                _logger.error(
                     'Unexpected exception thrown on invoking request to [%s]'
                     ' with method [%s]: %s',
                     url, method, traceback.format_exc())
                 raise
 
             if not response.body:
-                _LOGGER.warn(
+                _logger.warn(
                     'Stop repeating request cause request to url [%s]'
                     ' with method [%s] returned a empty response: '
                     '[%s]', url, method, response.body)
@@ -204,7 +224,7 @@ class Job(object):
             self._update_checkpoint()
 
             if self._is_stoppable():
-                _LOGGER.info('Stop condition reached, exit job now')
+                _logger.info('Stop condition reached, exit job now')
                 break
 
-        _LOGGER.info('Job processing finished')
+            _logger.info('Job processing finished')

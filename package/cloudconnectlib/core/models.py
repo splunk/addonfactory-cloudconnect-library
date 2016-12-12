@@ -1,11 +1,8 @@
 import base64
-import logging
 
 from .ext import lookup_method
 from .template import compile_template
-
-logging.basicConfig(level=logging.DEBUG)
-_LOGGER = logging
+from ..common import log as _logger
 
 
 class _Token(object):
@@ -137,7 +134,7 @@ class Task(_Function):
         caller = lookup_method(self.function)
         output = self._output
 
-        _LOGGER.info(
+        _logger.info(
             'Executing task method: [%s], output: [%s]', self.function, output
         )
 
@@ -214,7 +211,7 @@ class Checkpoint(object):
         if not content:
             raise ValueError('Checkpoint content must not be empty')
 
-        self._namespace = tuple(_Token(expr) for expr in namespace or [])
+        self._namespace = tuple(_Token(expr) for expr in namespace or ())
         self._content = _DictToken(content)
 
     @property

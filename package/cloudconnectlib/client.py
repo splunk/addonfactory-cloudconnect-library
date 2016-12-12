@@ -2,15 +2,14 @@ import copy
 import os.path
 import traceback
 
+from .common.util import load_json_file
 from .configuration import get_loader_by_version
 from .core import CloudConnectEngine
 from .core.exceptions import ConfigException
-from .core.util import load_json_file
 
 
 class CloudConnectClient(object):
-    """
-    The client of cloud connect used to start a cloud connect engine instance.
+    """The client of cloud connect used to start a cloud connect engine instance.
     """
 
     def __init__(self, context, config_file):
@@ -30,22 +29,23 @@ class CloudConnectClient(object):
         :return: A `dict` contains user defined JSON interface.
         """
         try:
-            df = load_json_file(self._config_file)
+            conf = load_json_file(self._config_file)
         except:
             raise ConfigException(
                 'Cannot load JSON config from file {}: {}'.format(
                     self._config_file, traceback.format_exc()))
 
-        version = df.get('meta', {'version', None}).get('version', None)
+        version = conf.get('meta', {'version', None}).get('version', None)
         if not version:
             raise ConfigException(
                 'Config meta or version not present in {}'.format(
                     self._config_file))
 
-        config_loader = get_loader_by_version(version)
-        schema_file = os.path.join(os.path.dirname(__file__), 'configuration', 'schema_1_0_0.json')
+        config_loader, schema_file = get_loader_by_version(version)
+        schema_path = os.path.join(
+            os.path.dirname(__file__), 'configuration', schema_file)
 
-        return config_loader.load(df, schema_file, self._context)
+        return config_loader.load(conf, schema_path, self._context)
 
     def start(self):
         """

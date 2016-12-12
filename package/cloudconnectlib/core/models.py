@@ -65,7 +65,7 @@ class Options(object):
     def __init__(self, url, method, header=None, auth=None, body=None):
         self._header = _DictToken(header)
         self._url = _Token(url)
-        self._method = method.trim().upper()
+        self._method = method.upper()
         self._auth = auth
         self._body = _DictToken(body)
 

@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 import traceback
 
 from . import defaults
@@ -18,6 +19,7 @@ class CloudConnectEngine(object):
     def __init__(self):
         self._stopped = False
         self._running_job = None
+        self._running_thread = None
 
     @staticmethod
     def _set_logging(log_setting):
@@ -29,6 +31,8 @@ class CloudConnectEngine(object):
         """
         if not config:
             raise ValueError('Config must not be empty')
+
+        self._running_thread = threading.current_thread()
 
         context = context or {}
         global_setting = config.global_settings
@@ -64,6 +68,10 @@ class CloudConnectEngine(object):
 
         if self._running_job:
             self._running_job.stop()
+
+        if self._running_thread != threading.current_thread():
+            self._running_thread.join()
+
         self._stopped = True
 
 

@@ -31,7 +31,4 @@ def ta_run():
     ), single_instance=False)
 
 if __name__ == "__main__":
-    import sys
-    #old_stdin = sys.stdin  # save it, in case we need to restore it
-    #sys.stdin = sys.stdin = open('input.xml')
     ta_run()

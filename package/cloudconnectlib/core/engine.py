@@ -1,6 +1,6 @@
 import json
 import threading
-import traceback
+import time
 
 from . import defaults
 from .exceptions import HTTPError
@@ -196,26 +196,19 @@ class Job(object):
             self._on_pre_process()
 
             try:
-                response = self._client.request(url, method, header, body=rb)
-            except HTTPError as error:
-                if error.status in defaults.exit_status:
-                    _logger.warn(
-                        'Stop repeating request cause returned status %s on '
-                        'sending request to [%s] with method [%s]: %s',
-                        error.status, url, method, traceback.format_exc()
-                    )
-                    break
-                _logger.error(
-                    'Unexpected exception thrown on invoking request to [%s]'
-                    ' with method [%s]: %s',
-                    url, method, traceback.format_exc())
-                raise
+                response, finished = \
+                    self._do_request(url, method, header, body=rb)
+            except Exception as error:
+                if isinstance(error, HTTPError):
+                    _logger.exception(
+                        'HTTPError %s when sending [%s] request to [%s]',
+                        error.status, method, url)
+                else:
+                    _logger.exception(
+                        'Could not send [%s] request to [%s]', method, url)
+                break
 
-            if not response.body:
-                _logger.warn(
-                    'Stop repeating request cause request to url [%s]'
-                    ' with method [%s] returned a empty response: '
-                    '[%s]', url, method, response.body)
+            if finished:
                 break
 
             self._set_context('__response__', response)
@@ -228,3 +221,47 @@ class Job(object):
                 break
 
             _logger.info('Job processing finished')
+
+    def _do_request(self, url, method='GET', headers=None, body=None):
+        """Do send request with a simple error handling strategy. For 5XX
+        error we'll retry using an exponential backoff. Learn more from
+        https://confluence.splunk.com/display/PROD/CC+1.0+-+Detail+Design"""
+        retries = defaults.default_retries
+
+        for i in xrange(retries):
+            try:
+                response = self._client.request(url, method, headers, body=body)
+            except HTTPError as e:
+                if e.status and (e.status >= 500 or e.status == 429):
+                    if i < retries - 1:
+                        delay = 2 ** i
+                        _logger.warning(
+                            'The response status of request which url is [%s] and'
+                            ' method is [%s] is [%s]. Retry after %s seconds.',
+                            url, method, e.status, delay,
+                        )
+                        time.sleep(delay)
+                        continue
+                    raise
+
+                if e.status and 201 < e.status < 300:
+                    _logger.warning(
+                        'The response status of request which url is [%s] and'
+                        ' method is [%s] is [%s].'
+                        ' The current interval is finished.',
+                        url, method, e.status)
+                    return None, True
+
+                # status in [1XX, 3XX, 4XX]
+                raise
+
+            if not response.body:
+                _logger.info(
+                    'The response body of request which url is [%s] and'
+                    ' method is [%s] is empty, status is [%s].'
+                    ' The current interval is finished.',
+                    url, method, response.status_code
+                )
+                return None, True
+
+            return response, False

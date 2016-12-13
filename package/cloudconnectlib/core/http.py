@@ -128,7 +128,7 @@ class HTTPRequest(object):
             uri, body=body, method=method, headers=headers
         )
 
-        if response.status not in (200, 201):
+        if response.status not in defaults.success_status:
             raise HTTPError(response=response, status=response.status)
 
         return HTTPResponse(response, content)

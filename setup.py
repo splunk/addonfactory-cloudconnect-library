@@ -16,6 +16,9 @@ with open('package/cloudconnectlib/__init__.py', 'rb') as f:
 if not version:
     raise RuntimeError('Version not found')
 
+with open('requirements.txt') as f:
+    install_requires = f.read().splitlines()
+
 setup(
     name='cloudconnectlib',
     description='APP Cloud Connect',
@@ -32,15 +35,8 @@ setup(
     package_data={
         '': ['LICENSE']
     },
-    install_requires=[
-        'jsonschema==2.5.1',
-        'jinja2==2.8',
-        'jsonpath-rw==1.4.0',
-        'httplib2==0.9.2',
-        'splunk-sdk==1.6.0',
-        'sortedcontainers==1.5.2',
-        'munch==2.0.4',
-    ],
+    install_requires=install_requires,
+
     classifiers=[
         'Programming Language :: Python',
         'Development Status :: 4 - Beta',

@@ -12,5 +12,23 @@
     "load-grunt-tasks": "^3.3.0",
     "lodash": "^3.10.1",
     "time-grunt": "^1.2.1"
-  }
+  },
+  "name": "app-cloud-connect",
+  "version": "1.0.0",
+  "main": "Gruntfile.js",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "publish": "python setup.py sdist upload -r pypisolutionslocal"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@git.splunk.com:7999/soln/app-cloud-connect.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }

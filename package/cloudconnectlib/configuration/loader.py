@@ -180,7 +180,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
             iteration_count = int(count)
         except ValueError:
             raise ValueError(
-                'Repeat mode "maximum" must be a integer: %s' % count)
+                'Repeat mode "iteration_count" must be a integer: %s' % count)
 
         stop_conditions = self._parse_conditions(repeat_mode['stop_conditions'])
 

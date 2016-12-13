@@ -1,16 +1,10 @@
-import os
 import traceback
 import urllib
 import urlparse
-
-from ..common.util import register_module
-from . import defaults
-from .exceptions import HTTPError
-
-register_module(os.path.join(os.path.dirname(__file__), 'cacerts'))
-
 from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 
+from . import defaults
+from .exceptions import HTTPError
 from ..common import log as _logger
 
 

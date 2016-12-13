@@ -186,20 +186,17 @@ class Processor(_Conditional):
 
 
 class RepeatMode(_Conditional):
-    def __init__(self, loop_type, conditions):
+    def __init__(self, iteration_count, conditions):
         super(RepeatMode, self).__init__(conditions)
-        self._type = loop_type.strip().lower()
+        self._iteration_count = iteration_count
 
     @property
-    def type(self):
-        return self._type
+    def iteration_count(self):
+        return self._iteration_count
 
     @property
     def conditions(self):
         return self._conditions
-
-    def is_once(self):
-        return self._type == 'once'
 
 
 class Checkpoint(object):

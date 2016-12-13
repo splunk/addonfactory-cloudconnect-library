@@ -55,7 +55,8 @@ class Condition(Function):
 
 
 class RepeatMode(Document):
-    type = StringField(enum=['loop', 'once'], required=True)
+    iteration_count = OneOfField(
+        fields=[StringField(pattern='^[-+]?[1-9]\d*$'), IntField()])
     stop_conditions = ArrayField(DocumentField(Condition, as_ref=True),
                                  min_items=1)
 
@@ -147,7 +148,7 @@ def build_schema(ordered=True):
 
 if __name__ == '__main__':
     schema_file = op.join(op.dirname(op.dirname(op.dirname(op.abspath(__file__)))),
-                          'package', 'cloudconnectlib', 'configuration', 'schema.json')
+                          'package', 'cloudconnectlib', 'configuration', 'schema_1_0_0.json')
     schema_as_json = build_schema(True)
     with open(schema_file, 'w') as f:
         f.write(json.dumps(schema_as_json, indent=2))

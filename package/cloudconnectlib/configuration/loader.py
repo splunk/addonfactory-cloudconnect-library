@@ -3,11 +3,12 @@ import re
 import traceback
 from abc import abstractmethod
 
+from jsonschema import validate, ValidationError
+from munch import munchify
+from ..common import log as _logger
 from ..common.util import (
     load_json_file, is_valid_bool, is_valid_port, is_true
 )
-from jsonschema import validate, ValidationError
-from munch import munchify
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup_method
 from ..core.models import (
@@ -15,14 +16,11 @@ from ..core.models import (
     Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
-from ..common import log as _logger
 
 _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _AUTH_TYPES = {
     'basic_auth': BasicAuthorization
 }
-
-_REPEAT_MODE_TYPES = ['loop', 'once']
 
 _LOGGING_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -31,6 +29,7 @@ _LOGGING_LEVELS = {
     'ERROR': logging.ERROR,
     'FATAL': logging.FATAL,
 }
+
 
 class CloudConnectConfigLoader(object):
     """The Base cloud connect configuration loader"""
@@ -176,19 +175,17 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
             checkpoint.get('namespace', []), checkpoint['content'])
 
     def _load_repeat_mode(self, repeat_mode):
-        loop_type = repeat_mode.get('type')
-
-        if not loop_type or loop_type.lower() not in _REPEAT_MODE_TYPES:
-            _logger.warn('loop mode type expect to be one of [%s]: found %s,'
-                         ' setting to default type',
-                         ','.join(_REPEAT_MODE_TYPES), loop_type)
-            loop_type = 'once'
-        else:
-            loop_type = loop_type.lower()
+        count = repeat_mode.get('iteration_count', '0')
+        try:
+            iteration_count = int(count)
+        except ValueError:
+            raise ValueError(
+                'Repeat mode "maximum" must be a integer: %s' % count)
 
         stop_conditions = self._parse_conditions(repeat_mode['stop_conditions'])
 
-        return RepeatMode(loop_type, stop_conditions)
+        return RepeatMode(iteration_count=iteration_count,
+                          conditions=stop_conditions)
 
     def _load_processor(self, processor):
         conditions = self._parse_conditions(processor.get('conditions', []))

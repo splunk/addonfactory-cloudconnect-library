@@ -210,11 +210,15 @@
         "RepeatMode": {
             "type": "object",
             "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "loop",
-                        "once"
+                "iteration_count": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "pattern": "^[-+]?[1-9]\\d*$"
+                        },
+                        {
+                            "type": "integer"
+                        }
                     ]
                 },
                 "stop_conditions": {
@@ -225,9 +229,6 @@
                     "minItems": 1
                 }
             },
-            "required": [
-                "type"
-            ],
             "additionalProperties": false
         },
         "Request": {

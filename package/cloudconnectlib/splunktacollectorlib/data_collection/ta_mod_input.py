@@ -21,6 +21,7 @@ from . import ta_data_client as tdc
 
 utils.remove_http_proxy_env_vars()
 
+__CHECKPOINT_DIR_MAX_LEN__=180
 
 def do_scheme(ta_short_name, ta_name, schema_para_list=None,
               single_instance=True):
@@ -140,9 +141,18 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
     meta_config["cc_json_file"] = cc_json_file
 
     if tconfig.is_shc_member():
-        # In SHC env, only captain is able to collect data
-        stulog.logger.debug("This host is in search head cluster environment , "
+        # Don't support SHC env
+        stulog.logger.error("This host is in search head cluster environment , "
                             "will exit.")
+        return
+
+    # In this case, use file for checkpoint
+    if not tconfig.is_search_head()and len(meta_config["checkpoint_dir"]) >= \
+            __CHECKPOINT_DIR_MAX_LEN__:
+        stulog.logger.error("The length of the checkpoint directory path: '{}' "
+                            "is too long. The max length we support is {}",
+                            meta_config["checkpoint_dir"],
+                            __CHECKPOINT_DIR_MAX_LEN__)
         return
 
     jobs = [tdc.create_data_collector(loader, tconfig, meta_config, task_config,

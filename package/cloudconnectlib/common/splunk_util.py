@@ -19,10 +19,10 @@ def get_checkpoint():
         return None
 
 
-def update_checkpoint(namespace, value):
+def update_checkpoint(namespaces, value):
     global check_pointer
     if check_pointer and isinstance(check_pointer, TACheckPointMgr):
-       check_pointer.update_ckpt(value)
+       check_pointer.update_ckpt(value, namespaces=namespaces)
     else:
         return
 

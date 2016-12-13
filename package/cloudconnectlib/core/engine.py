@@ -145,7 +145,7 @@ class Job(object):
         """Updates checkpoint based on checkpoint namespace and content."""
         checkpoint = self._request.checkpoint
         splunk_util.update_checkpoint(
-            namespace=checkpoint.normalize_namespace(self._context),
+            namespaces=checkpoint.normalize_namespace(self._context),
             value=checkpoint.normalize_content(self._context)
         )
 

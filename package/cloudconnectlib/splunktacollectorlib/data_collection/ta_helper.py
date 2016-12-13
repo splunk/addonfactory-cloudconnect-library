@@ -1,5 +1,6 @@
 import os.path as op
 import re
+import hashlib
 from datetime import datetime
 from calendar import timegm
 from ...splunktacollectorlib import config as sc
@@ -55,10 +56,8 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
 
 
 def format_input_name_for_file(name):
-    import base64
-    base64_name = base64.b64encode(name, "__")
-    qualified_name_str = re.sub(r'[^a-zA-Z0-9]+', '_', name)
-    return "{}_B64_{}".format(qualified_name_str, base64_name)
+    hash_key = hashlib.sha256(name).hexdigest()
+    return hash_key
 
 
 class ConfigSchemaHandler(object):

@@ -91,11 +91,19 @@ def _handle_file_changes(data_loader):
     return _handle_refresh
 
 
-def _get_conf_files(local_file_list):
-    cur_dir = op.dirname(op.dirname(op.dirname(op.dirname(op.dirname(op.abspath(
-        __file__))))))
+def _get_conf_files(settings):
+    rest_root = settings.get("meta").get("restRoot")
+    configs = settings.get("pages").get("configuration")
+    file_list = [rest_root+"_settings.conf"]
+    tabs = configs.get("tabs")
+    for tab in tabs:
+        if tab.get("table"):
+            file_list.append(rest_root + "_" + tab.get("name") + ".conf")
+    cur_dir = op.dirname(op.dirname(op.dirname(op.dirname(
+        op.dirname(op.dirname(op.abspath(
+        __file__)))))))
     files = []
-    for f in local_file_list:
+    for f in file_list:
         files.append(op.join(cur_dir, "local", f))
     return files
 
@@ -119,10 +127,12 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
     _setup_signal_handler(loader, ta_short_name)
 
     # monitor files to reboot
-    # if settings["basic"].get("monitor_file"):
-    #     monitor = fm.FileMonitor(_handle_file_changes(loader),
-    #                          _get_conf_files(settings["basic"]["monitor_file"]))
-    #     loader.add_timer(monitor.check_changes, time.time(), 10)
+    try:
+        monitor = fm.FileMonitor(_handle_file_changes(loader),
+                              _get_conf_files(settings))
+        loader.add_timer(monitor.check_changes, time.time(), 10)
+    except Exception:
+        stulog.logger.exception("Fail to add files for monitoring")
 
     # add orphan process handling, which will check each 1 second
     orphan_checker = opm.OrphanProcessChecker(loader.tear_down)

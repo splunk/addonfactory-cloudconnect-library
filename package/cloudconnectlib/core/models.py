@@ -165,7 +165,7 @@ class _Conditional(object):
         return self._conditions
 
     def passed(self, context):
-        """Determine if current conditions are all passed.
+        """Determine if any condition is satisfied.
         :param context: variables to render template
         :return: `True` if all passed else `False`
         """
@@ -185,21 +185,18 @@ class Processor(_Conditional):
         return self._pipeline
 
 
-class RepeatMode(_Conditional):
-    def __init__(self, loop_type, conditions):
-        super(RepeatMode, self).__init__(conditions)
-        self._type = loop_type.strip().lower()
+class IterationMode(_Conditional):
+    def __init__(self, iteration_count, conditions):
+        super(IterationMode, self).__init__(conditions)
+        self._iteration_count = iteration_count
 
     @property
-    def type(self):
-        return self._type
+    def iteration_count(self):
+        return self._iteration_count
 
     @property
     def conditions(self):
         return self._conditions
-
-    def is_once(self):
-        return self._type == 'once'
 
 
 class Checkpoint(object):

@@ -1,6 +1,5 @@
 import json
 import threading
-import time
 
 from . import defaults
 from .exceptions import HTTPError
@@ -195,20 +194,11 @@ class Job(object):
 
             self._on_pre_process()
 
-            try:
-                response, finished = \
-                    self._do_request(url, method, header, body=rb)
-            except Exception as error:
-                if isinstance(error, HTTPError):
-                    _logger.exception(
-                        'HTTPError %s when sending [%s] request to [%s]',
-                        error.status, method, url)
-                else:
-                    _logger.exception(
-                        'Could not send [%s] request to [%s]', method, url)
-                break
+            response, finished = \
+                self._send_request(url, method, header, body=rb)
 
             if finished:
+                _logger.info('The current interval is finished.')
                 break
 
             self._set_context('__response__', response)
@@ -222,46 +212,40 @@ class Job(object):
 
             _logger.info('Job processing finished')
 
-    def _do_request(self, url, method='GET', headers=None, body=None):
+    def _send_request(self, url, method, header, body):
         """Do send request with a simple error handling strategy. For 5XX
         error we'll retry using an exponential backoff. Learn more from
         https://confluence.splunk.com/display/PROD/CC+1.0+-+Detail+Design"""
-        retries = defaults.default_retries
+        try:
+            response = self._client.request(
+                url, method, headers=header, body=body
+            )
+        except HTTPError:
+            _logger.exception(
+                'HTTPError when sending request to '
+                'url=%s method=%s', url, method)
+            return None, True
 
-        for i in xrange(retries):
-            try:
-                response = self._client.request(url, method, headers, body=body)
-            except HTTPError as e:
-                if e.status and (e.status >= 500 or e.status == 429):
-                    if i < retries - 1:
-                        delay = 2 ** i
-                        _logger.warning(
-                            'The response status of request which url is [%s] and'
-                            ' method is [%s] is [%s]. Retry after %s seconds.',
-                            url, method, e.status, delay,
-                        )
-                        time.sleep(delay)
-                        continue
-                    raise
+        status = response.status_code
 
-                if e.status and 201 < e.status < 300:
-                    _logger.warning(
-                        'The response status of request which url is [%s] and'
-                        ' method is [%s] is [%s].'
-                        ' The current interval is finished.',
-                        url, method, e.status)
-                    return None, True
-
-                # status in [1XX, 3XX, 4XX]
-                raise
-
-            if not response.body:
+        if status in defaults.success_statuses:
+            if not (response.body or '').strip():
                 _logger.info(
-                    'The response body of request which url is [%s] and'
-                    ' method is [%s] is empty, status is [%s].'
-                    ' The current interval is finished.',
-                    url, method, response.status_code
+                    'The response body of request which url=%s and'
+                    ' method=%s is empty, status=%s.',
+                    url, method, status
                 )
                 return None, True
-
             return response, False
+
+        error_log = ('The response status=%s for request which url=%s and'
+                     ' method=%s.') % (
+                        status, url, method
+                    )
+
+        if status in defaults.warning_statuses:
+            _logger.warning(error_log)
+        else:
+            _logger.error(error_log)
+
+        return None, True

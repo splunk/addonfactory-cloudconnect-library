@@ -165,7 +165,7 @@ class _Conditional(object):
         return self._conditions
 
     def passed(self, context):
-        """Determine if current conditions are all passed.
+        """Determine if any condition is satisfied.
         :param context: variables to render template
         :return: `True` if all passed else `False`
         """

@@ -1,6 +1,8 @@
 from jinja2 import Template, Environment, meta
 import re
 
+# This pattern matches the template with only one token inside like "{{
+# token1}}", "{{ token2 }"
 PATTERN = re.compile(r"^\{\{\s*(\w+)\s*\}\}$")
 
 

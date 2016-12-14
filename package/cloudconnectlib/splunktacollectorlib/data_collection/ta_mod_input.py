@@ -103,10 +103,7 @@ def _get_conf_files(settings):
                 file_list.append(rest_root + "_" + tab.get("name") + ".conf")
     ta_dir = op.dirname(op.dirname(op.abspath(
         get_main_file())))
-    files = []
-    for f in file_list:
-        files.append(op.join(ta_dir, "local", f))
-    return files
+    return [op.join(ta_dir, "local", f) for f in file_list]
 
 
 def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,

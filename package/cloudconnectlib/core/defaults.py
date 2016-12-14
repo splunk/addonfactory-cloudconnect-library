@@ -6,4 +6,4 @@ disable_ssl_cert_validation = False  # default enable SSL validation
 
 success_status = (200, 201)  # statuses be treated as success.
 
-default_retries = 3
+retries = 3  # Default maximum retry times.

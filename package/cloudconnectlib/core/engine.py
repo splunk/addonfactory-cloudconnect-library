@@ -201,11 +201,13 @@ class Job(object):
             except Exception as error:
                 if isinstance(error, HTTPError):
                     _logger.exception(
-                        'HTTPError %s when sending [%s] request to [%s]',
-                        error.status, method, url)
+                        'HTTPError when sending request which url=%s, method=%s,'
+                        ' status=%s',
+                        url, method, error.status)
                 else:
                     _logger.exception(
-                        'Could not send [%s] request to [%s]', method, url)
+                        'Could not send request which url=%s, method=%s',
+                        url, method)
                 break
 
             if finished:
@@ -226,30 +228,33 @@ class Job(object):
         """Do send request with a simple error handling strategy. For 5XX
         error we'll retry using an exponential backoff. Learn more from
         https://confluence.splunk.com/display/PROD/CC+1.0+-+Detail+Design"""
-        retries = defaults.default_retries
+        retries = defaults.retries
 
         for i in xrange(retries):
             try:
-                response = self._client.request(url, method, headers, body=body)
+                response = self._client.request(
+                    url, method, headers, body=body)
             except HTTPError as e:
                 if e.status and (e.status >= 500 or e.status == 429):
-                    if i < retries - 1:
-                        delay = 2 ** i
-                        _logger.warning(
-                            'The response status of request which url is [%s] and'
-                            ' method is [%s] is [%s]. Retry after %s seconds.',
-                            url, method, e.status, delay,
-                        )
-                        time.sleep(delay)
-                        continue
-                    raise
+                    if i >= retries - 1:
+                        raise
+
+                    delay = 2 ** i
+                    _logger.warning(
+                        'Error status=%s responded when sending request'
+                        ' which url=%s and method=%s. Retry after %s seconds.',
+                        e.status, url, method, delay,
+                    )
+
+                    time.sleep(delay)
+                    continue
 
                 if e.status and 201 < e.status < 300:
                     _logger.warning(
-                        'The response status of request which url is [%s] and'
-                        ' method is [%s] is [%s].'
+                        'Error status=%s responded when sending request'
+                        ' which url=%s and method=%s.'
                         ' The current interval is finished.',
-                        url, method, e.status)
+                        e.status, url, method)
                     return None, True
 
                 # status in [1XX, 3XX, 4XX]
@@ -257,8 +262,8 @@ class Job(object):
 
             if not response.body:
                 _logger.info(
-                    'The response body of request which url is [%s] and'
-                    ' method is [%s] is empty, status is [%s].'
+                    'An empty response returned for request which url=%s and'
+                    ' method=%s, status=%s.'
                     ' The current interval is finished.',
                     url, method, response.status_code
                 )

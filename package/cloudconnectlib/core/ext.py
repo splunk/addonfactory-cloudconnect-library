@@ -1,6 +1,6 @@
 import json
 import re
-
+import logging
 from ..common import util
 from ..common.splunk_util import std_out
 
@@ -60,11 +60,14 @@ def splunk_xml(candidates, time=None, index=None, host=None, source=None,
 def std_output(candidates):
     """
     Output a string to stdout.
-    :param candidates: string to output to stdout.
+    :param candidates: List of string to output to stdout or a single string.
     """
-    if not isinstance(candidates, (list, tuple)):
+    if isinstance(candidates, basestring):
         candidates = [candidates]
     for candidate in candidates:
+        if not isinstance(candidate, basestring):
+            logging.warning("The type of data needs to print is {} rather"
+                         "basestring".format(type(candidate)))
         std_out(candidate)
 
 

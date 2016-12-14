@@ -28,6 +28,6 @@ def register_cacert_locater(cacerts_locater_path):
     _HTTPLIB_PATTERN = re.compile(r'(?:\w+.)*httplib$')
     for x in sys.modules:
         if re.match(_HTTPLIB_PATTERN, x):
-            logging.warn("Httplib module '{}' is already installed. "
+            logging.warning("Httplib module '{}' is already installed. "
                          "The ca_certs_locater may not work".format(x))
     register_module(cacerts_locater_path)

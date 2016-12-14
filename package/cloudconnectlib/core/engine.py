@@ -215,11 +215,11 @@ class Job(object):
 
             self._on_pre_process()
 
-            response, finished = \
+            response, need_terminate = \
                 self._send_request(url, method, header, body=rb)
 
-            if finished:
-                _logger.info('The current interval is finished.')
+            if need_terminate:
+                _logger.info('This job need to be terminated.')
                 break
 
             self._request_iterated_count += 1

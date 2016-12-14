@@ -1,4 +1,4 @@
-from jinja2 import Template, Environment, meta
+from jinja2 import Template
 import re
 
 # This pattern matches the template with only one token inside like "{{

@@ -5,8 +5,9 @@ from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 
 from . import defaults
 from .exceptions import HTTPError
-from ..common import log as _logger
+from ..common.log import get_cc_logger
 
+_logger = get_cc_logger()
 
 
 class HTTPResponse(object):

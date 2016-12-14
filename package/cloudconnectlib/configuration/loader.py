@@ -15,7 +15,9 @@ from ..core.models import (
     Condition, Task, Checkpoint, RepeatMode
 )
 from ..core.template import compile_template
-from ..common import log as _logger
+from ..common.log import get_cc_logger
+
+_logger = get_cc_logger()
 
 _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _AUTH_TYPES = {

@@ -35,7 +35,7 @@ def log_enter_exit(logger):
 
 
 def check_add_stderr_handler():
-    env_var = os.environ.get('CloudConnectLogType')
+    env_var = os.environ.get('splunk.cloudconnect.settings.logging.type')
     return env_var and env_var == "stderr"
 
 @singleton
@@ -75,7 +75,7 @@ class Logs(object):
         if check_add_stderr_handler():
             import sys
             ch = logging.StreamHandler(sys.stderr)
-            ch.setLevel(logging.DEBUG)
+            ch.setLevel(logging.ERROR)
             formatter = logging.Formatter(__LOG_FORMAT__)
             ch.setFormatter(formatter)
             logger.addHandler(ch)

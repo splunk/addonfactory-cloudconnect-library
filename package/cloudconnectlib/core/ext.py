@@ -1,8 +1,9 @@
 import json
 import re
-import logging
-from ..common import util
+from ..common import util, log
 from ..common.splunk_util import std_out
+
+_logger = log.get_cc_logger()
 
 
 def regex_match(pattern, candidate):
@@ -66,7 +67,7 @@ def std_output(candidates):
         candidates = [candidates]
     for candidate in candidates:
         if not isinstance(candidate, basestring):
-            logging.warning("The type of data needs to print is {} rather"
+            _logger.warning("The type of data needs to print is {} rather"
                          "basestring".format(type(candidate)))
         std_out(candidate)
 

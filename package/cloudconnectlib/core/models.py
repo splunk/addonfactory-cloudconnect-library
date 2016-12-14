@@ -2,7 +2,9 @@ import base64
 
 from .ext import lookup_method
 from .template import compile_template
-from ..common import log as _logger
+from ..common.log import get_cc_logger
+
+_logger = get_cc_logger()
 
 
 class _Token(object):

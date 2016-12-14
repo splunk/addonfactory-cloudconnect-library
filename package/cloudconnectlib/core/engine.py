@@ -94,6 +94,15 @@ class Job(object):
         self._context = context
         self._client = HTTPRequest(proxy)
         self._stopped = False
+        self._request_iterated_count = 0
+        self._iteration_mode = self._request.iteration_mode
+        self._max_iteration_count = self._get_max_iteration_count()
+
+    def _get_max_iteration_count(self):
+        mode_max_count = self._iteration_mode.iteration_count
+        default_max_count = defaults.max_iteration_count
+        return min(default_max_count, mode_max_count) \
+            if mode_max_count > 0 else default_max_count
 
     def stop(self):
         """Sets job stopped flag to True"""
@@ -155,8 +164,20 @@ class Job(object):
             self._context.update(checkpoint)
 
     def _is_stoppable(self):
-        repeat_mode = self._request.repeat_mode
-        return repeat_mode.is_once() or repeat_mode.passed(self._context)
+        """Check if repeat mode conditions satisfied."""
+        if self._request_iterated_count >= self._max_iteration_count:
+            _logger.info(
+                'Job iteration count is %s, current request count is %s,'
+                ' stop condition satisfied.',
+                self._max_iteration_count, self._request_iterated_count
+            )
+            return True
+
+        if self._iteration_mode.passed(self._context):
+            _logger.info('Job stop condition satisfied.')
+            return True
+
+        return False
 
     def is_stopped(self):
         """Return if this job is stopped."""
@@ -218,6 +239,7 @@ class Job(object):
                     '[%s]', url, method, response.body)
                 break
 
+            self._request_iterated_count += 1
             self._set_context('__response__', response)
             self._on_post_process()
 
@@ -227,4 +249,4 @@ class Job(object):
                 _logger.info('Stop condition reached, exit job now')
                 break
 
-            _logger.info('Job processing finished')
+        _logger.info('Job processing finished')

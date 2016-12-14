@@ -15,6 +15,7 @@ def register_module(new_path):
     if sys.platform == 'win32':
         new_path = new_path.lower()
 
+<<<<<<< HEAD
     for x in sys.path:
         x = os.path.abspath(x)
         if sys.platform == 'win32':
@@ -27,4 +28,5 @@ def register_module(new_path):
 register_module(os.path.join(os.path.dirname(__file__), 'core', 'cacerts'))
 
 from .client import CloudConnectClient
-__version__ = '1.0'
+__version__ = '1.0.0'
+

@@ -5,7 +5,7 @@ from .ta_cloud_connect_client import TACloudConnectClient as collector_cls
 from .mod_helper import get_main_file
 
 
-def run(schema_para_list=[], single_instance=False):
+def run(schema_para_list=None, single_instance=False):
     script_name = os.path.basename(get_main_file()).rstrip(".py")
     print script_name
     cc_json_file = os.path.sep.join(

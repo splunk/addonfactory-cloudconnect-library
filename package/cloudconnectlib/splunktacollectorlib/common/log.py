@@ -28,7 +28,7 @@ def set_log_level(log_level):
 
 
 # Global logger
-logger = stclog.Logs().get_logger("ucc_lib")
+logger = stclog.Logs().get_logger("cloud_connect")
 
 
 def reset_logger(name):
@@ -40,3 +40,5 @@ def reset_logger(name):
 
     global logger
     logger = stclog.Logs().get_logger(name)
+
+

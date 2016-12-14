@@ -6,14 +6,18 @@ log utility for TA
 
 import logging
 import logging.handlers as handlers
+import os
 import os.path as op
 
 from ..splunk_platform import make_splunkhome_path
 from . import util as cutil
 from .pattern import singleton
-
 import time
 logging.Formatter.converter = time.gmtime
+
+__LOG_FORMAT__ = "%(asctime)s +0000 log_level=%(levelname)s, pid=%(process)d, " \
+                 "tid=%(threadName)s, file=%(filename)s, " \
+                 "func_name=%(funcName)s, code_line_no=%(lineno)d | %(message)s"
 
 
 def log_enter_exit(logger):
@@ -29,6 +33,10 @@ def log_enter_exit(logger):
         return wrapper
     return log_decorator
 
+
+def check_add_stderr_handler():
+    env_var = os.environ.get('CloudConnectLogType')
+    return env_var and env_var == "stderr"
 
 @singleton
 class Logs(object):
@@ -62,22 +70,27 @@ class Logs(object):
         if name in self._loggers:
             return self._loggers[name]
 
-        logfile = make_splunkhome_path(["var", "log", "splunk", name])
         logger = logging.getLogger(name)
 
-        handler_exists = any(
-            [True for h in logger.handlers if h.baseFilename == logfile])
-        if not handler_exists:
-            file_handler = handlers.RotatingFileHandler(
-                logfile, mode="a", maxBytes=maxBytes, backupCount=backupCount)
-
-            formatter = logging.Formatter(
-                "%(asctime)s +0000 log_level=%(levelname)s, pid=%(process)d, tid=%(threadName)s, "
-                "file=%(filename)s, func_name=%(funcName)s, code_line_no=%(lineno)d | %(message)s")
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-            logger.setLevel(level)
-            logger.propagate = False
+        if check_add_stderr_handler():
+            import sys
+            ch = logging.StreamHandler(sys.stderr)
+            ch.setLevel(logging.DEBUG)
+            formatter = logging.Formatter(__LOG_FORMAT__)
+            ch.setFormatter(formatter)
+            logger.addHandler(ch)
+        else:
+            logfile = make_splunkhome_path(["var", "log", "splunk", name])
+            handler_exists = any(
+                [True for h in logger.handlers if h.baseFilename == logfile])
+            if not handler_exists:
+                file_handler = handlers.RotatingFileHandler(
+                    logfile, mode="a", maxBytes=maxBytes, backupCount=backupCount)
+                formatter = logging.Formatter(__LOG_FORMAT__ )
+                file_handler.setFormatter(formatter)
+                logger.addHandler(file_handler)
+                logger.setLevel(level)
+                logger.propagate = False
 
         self._loggers[name] = logger
         return logger
@@ -110,7 +123,6 @@ class Logs(object):
         else:
             name = "{}.log" .format(name)
         return name
-
 
 # Global logger
 logger = Logs().get_logger("util")

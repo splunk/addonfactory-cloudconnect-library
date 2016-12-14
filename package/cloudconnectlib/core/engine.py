@@ -95,6 +95,14 @@ class Job(object):
         self._client = HTTPRequest(proxy)
         self._stopped = False
         self._request_count = 0
+        self._iteration_mode = self._request.iteration_mode
+        self._max_iteration_count = self._get_max_iteration_count()
+
+    def _get_max_iteration_count(self):
+        mode_max_count = self._iteration_mode.iteration_count
+        default_max_count = defaults.max_iteration_count
+        return min(default_max_count, mode_max_count) \
+            if mode_max_count > 0 else default_max_count
 
     def stop(self):
         """Sets job stopped flag to True"""
@@ -157,18 +165,15 @@ class Job(object):
 
     def _is_stoppable(self):
         """Check if repeat mode conditions satisfied."""
-        repeat_mode = self._request.repeat_mode
-        iteration_count = repeat_mode.iteration_count
-
-        if 0 < iteration_count <= self._request_count:
+        if self._request_count >= self._max_iteration_count:
             _logger.info(
                 'Job iteration count is %s, current request count is %s,'
                 ' stop condition satisfied.',
-                iteration_count, self._request_count
+                self._max_iteration_count, self._request_count
             )
             return True
 
-        if repeat_mode.passed(self._context):
+        if self._iteration_mode.passed(self._context):
             _logger.info('Job stop condition satisfied.')
             return True
 

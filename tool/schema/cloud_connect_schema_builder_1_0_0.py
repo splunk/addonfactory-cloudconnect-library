@@ -54,7 +54,7 @@ class Condition(Function):
     pass
 
 
-class RepeatMode(Document):
+class IterationMode(Document):
     iteration_count = OneOfField(
         fields=[StringField(pattern='^[-+]?[1-9]\d*$'), IntField()])
     stop_conditions = ArrayField(DocumentField(Condition, as_ref=True),
@@ -73,7 +73,7 @@ class Request(Document):
     options = DocumentField(Options, as_ref=True, required=True)
     pre_process = DocumentField(Processor, as_ref=True, required=True)
     post_process = DocumentField(Processor, as_ref=True, required=True)
-    repeat_mode = DocumentField(RepeatMode, as_ref=True, required=True)
+    iteration_mode = DocumentField(IterationMode, as_ref=True, required=True)
     checkpoint = DocumentField(Checkpoint, as_ref=True, required=True)
 
 

@@ -13,7 +13,7 @@ from ..core.exceptions import ConfigException
 from ..core.ext import lookup_method
 from ..core.models import (
     BasicAuthorization, Options, Processor,
-    Condition, Task, Checkpoint, RepeatMode
+    Condition, Task, Checkpoint, IterationMode
 )
 from ..core.template import compile_template
 
@@ -174,18 +174,19 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         return Checkpoint(
             checkpoint.get('namespace', []), checkpoint['content'])
 
-    def _load_repeat_mode(self, repeat_mode):
-        count = repeat_mode.get('iteration_count', '0')
+    def _load_iteration_mode(self, iteration_mode):
+        count = iteration_mode.get('iteration_count', '0')
         try:
             iteration_count = int(count)
         except ValueError:
             raise ValueError(
                 'Repeat mode "iteration_count" must be a integer: %s' % count)
 
-        stop_conditions = self._parse_conditions(repeat_mode['stop_conditions'])
+        stop_conditions = self._parse_conditions(
+            iteration_mode['stop_conditions'])
 
-        return RepeatMode(iteration_count=iteration_count,
-                          conditions=stop_conditions)
+        return IterationMode(iteration_count=iteration_count,
+                             conditions=stop_conditions)
 
     def _load_processor(self, processor):
         conditions = self._parse_conditions(processor.get('conditions', []))
@@ -197,14 +198,14 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         pre_process = self._load_processor(request['pre_process'])
         post_process = self._load_processor(request['post_process'])
         checkpoint = self._load_checkpoint(request['checkpoint'])
-        repeat_mode = self._load_repeat_mode(request['repeat_mode'])
+        iteration_mode = self._load_iteration_mode(request['iteration_mode'])
 
         return munchify({
             'options': options,
             'pre_process': pre_process,
             'post_process': post_process,
             'checkpoint': checkpoint,
-            'repeat_mode': repeat_mode,
+            'iteration_mode': iteration_mode,
         })
 
     def load(self, definition, schema_file, context):

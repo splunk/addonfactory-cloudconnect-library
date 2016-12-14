@@ -74,6 +74,30 @@
             },
             "additionalProperties": false
         },
+        "IterationMode": {
+            "type": "object",
+            "properties": {
+                "iteration_count": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "pattern": "^[-+]?[1-9]\\d*$"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ]
+                },
+                "stop_conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Condition"
+                    },
+                    "minItems": 1
+                }
+            },
+            "additionalProperties": false
+        },
         "Meta": {
             "type": "object",
             "properties": {
@@ -207,30 +231,6 @@
             ],
             "additionalProperties": false
         },
-        "RepeatMode": {
-            "type": "object",
-            "properties": {
-                "iteration_count": {
-                    "oneOf": [
-                        {
-                            "type": "string",
-                            "pattern": "^[-+]?[1-9]\\d*$"
-                        },
-                        {
-                            "type": "integer"
-                        }
-                    ]
-                },
-                "stop_conditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Condition"
-                    },
-                    "minItems": 1
-                }
-            },
-            "additionalProperties": false
-        },
         "Request": {
             "type": "object",
             "properties": {
@@ -243,8 +243,8 @@
                 "post_process": {
                     "$ref": "#/definitions/Processor"
                 },
-                "repeat_mode": {
-                    "$ref": "#/definitions/RepeatMode"
+                "iteration_mode": {
+                    "$ref": "#/definitions/IterationMode"
                 },
                 "checkpoint": {
                     "$ref": "#/definitions/Checkpoint"
@@ -254,7 +254,7 @@
                 "options",
                 "pre_process",
                 "post_process",
-                "repeat_mode",
+                "iteration_mode",
                 "checkpoint"
             ],
             "additionalProperties": false

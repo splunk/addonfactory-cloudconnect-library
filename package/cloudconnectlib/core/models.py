@@ -185,9 +185,9 @@ class Processor(_Conditional):
         return self._pipeline
 
 
-class RepeatMode(_Conditional):
+class IterationMode(_Conditional):
     def __init__(self, iteration_count, conditions):
-        super(RepeatMode, self).__init__(conditions)
+        super(IterationMode, self).__init__(conditions)
         self._iteration_count = iteration_count
 
     @property

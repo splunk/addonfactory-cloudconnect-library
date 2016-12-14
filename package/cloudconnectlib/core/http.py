@@ -9,8 +9,7 @@ from ..common.util import register_module
 
 register_module(os.path.join(os.path.dirname(__file__), 'cacerts'))
 
-from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError, HttpLib2Error
-import socket
+from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
 import time
 
 from ..common import log as _logger
@@ -165,8 +164,8 @@ class HTTPRequest(object):
                and status in defaults.retry_statuses
 
     def _do_request(self, uri, method='GET', headers=None, body=None):
-        """Invokes request and auto retry if the response status is
-         configured in defaults.retry_statuses."""
+        """Invokes request and auto retry with an exponential backoff
+        if the response status is configured in defaults.retry_statuses."""
         retries = max(defaults.retries, 0)
 
         for i in xrange(retries + 1):
@@ -174,10 +173,10 @@ class HTTPRequest(object):
                 response, content = self._connection.request(
                     uri, body=body, method=method, headers=headers
                 )
-            except (HttpLib2Error, socket.error) as e:
+            except Exception as err:
                 _logger.exception(
                     'Could not send request url=%s method=%s', uri, method)
-                raise HTTPError('HTTP Error %s' % str(e))
+                raise HTTPError('HTTP Error %s' % str(err))
 
             status = response.status
 

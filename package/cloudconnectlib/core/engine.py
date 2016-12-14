@@ -235,17 +235,16 @@ class Job(object):
         _logger.info('Job processing finished')
 
     def _send_request(self, url, method, header, body):
-        """Do send request with a simple error handling strategy. For 5XX
-        error we'll retry using an exponential backoff. Learn more from
+        """Do send request with a simple error handling strategy. Refer to
         https://confluence.splunk.com/display/PROD/CC+1.0+-+Detail+Design"""
         try:
             response = self._client.request(
                 url, method, headers=header, body=body
             )
-        except HTTPError:
+        except HTTPError as error:
             _logger.exception(
-                'HTTPError when sending request to '
-                'url=%s method=%s', url, method)
+                'HTTPError reason=%s when sending request to '
+                'url=%s method=%s', error.reason, url, method)
             return None, True
 
         status = response.status_code

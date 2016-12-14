@@ -9,10 +9,9 @@ class ConfigException(Exception):
 class HTTPError(Exception):
     """ HTTPError raised when HTTP request returned a error."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, reason=None):
         """
         Initialize HTTPError with `response` object and `status`.
         """
-        self.response = kwargs.pop('response', None)
-        self.status = kwargs.pop('status', None)
-        super(HTTPError, self).__init__(*args, **kwargs)
+        self.reason = reason
+        super(HTTPError, self).__init__(reason)

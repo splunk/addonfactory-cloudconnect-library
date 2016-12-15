@@ -1,0 +1,13 @@
+[splunk_ta_snow_account/account1]
+owner = admin
+version = 6.4.3
+modtime = 1481010141.611941000
+
+[inputs/snow_inputs%3A%2F%2Finput1]
+owner = admin
+version = 6.4.3
+modtime = 1481010182.695782000
+
+[splunk_ta_snow_settings/logging]
+version = 6.4.3
+modtime = 1481438488.304411000

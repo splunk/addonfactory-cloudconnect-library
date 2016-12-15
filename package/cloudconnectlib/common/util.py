@@ -1,28 +1,6 @@
 import json
-import os
-import sys
-
 from ..splunktalib.common import util
-
-
-def register_module(new_path):
-    """ register_module(new_path): adds a directory to sys.path.
-    Do nothing if it does not exist or if it's already in sys.path.
-    """
-    if not os.path.exists(new_path):
-        return
-
-    new_path = os.path.abspath(new_path)
-    if sys.platform == 'win32':
-        new_path = new_path.lower()
-
-    for x in sys.path:
-        x = os.path.abspath(x)
-        if sys.platform == 'win32':
-            x = x.lower()
-        if new_path in (x, x + os.sep):
-            return
-    sys.path.append(new_path)
+from solnlib.modular_input.event import XMLEvent
 
 
 def is_valid_bool(val):
@@ -35,6 +13,7 @@ def is_valid_bool(val):
 
 def is_true(val):
     return util.is_true(val)
+
 
 def is_valid_port(port):
     """Check whether a port is valid.
@@ -55,3 +34,15 @@ def load_json_file(file_path):
     """
     with open(file_path, 'r') as file_pointer:
         return json.load(file_pointer)
+
+
+def format_events(raw_events, time=None,
+                  index=None, host=None, source=None, sourcetype=None,
+                  stanza=None, unbroken=False, done=False):
+    return XMLEvent.format_events(XMLEvent(data, time=time,
+                                           index=index, host=host,
+                                           source=source,
+                                           sourcetype=sourcetype,
+                                           stanza=stanza, unbroken=unbroken,
+                                           done=done) for data in
+                                  raw_events)

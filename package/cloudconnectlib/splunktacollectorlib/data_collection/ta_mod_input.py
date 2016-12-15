@@ -6,6 +6,7 @@ This is the main entry point for My TA
 
 import os.path as op
 import sys
+import platform
 import time
 from ...splunktalib import modinput
 from ...splunktalib.common import util as utils
@@ -147,8 +148,8 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
         return
 
     # In this case, use file for checkpoint
-    if not tconfig.is_search_head()and len(meta_config["checkpoint_dir"]) >= \
-            __CHECKPOINT_DIR_MAX_LEN__:
+    if _is_checkpoint_dir_length_exceed_limit(tconfig,
+                                              meta_config["checkpoint_dir"]):
         stulog.logger.error("The length of the checkpoint directory path: '{}' "
                             "is too long. The max length we support is {}",
                             meta_config["checkpoint_dir"],
@@ -161,6 +162,12 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
             for task_config in task_configs]
 
     loader.run(jobs)
+
+
+def _is_checkpoint_dir_length_exceed_limit(config, checkpoint_dir):
+    return platform.system() == 'Windows' \
+           and not config.is_search_head() \
+           and len(checkpoint_dir) >= __CHECKPOINT_DIR_MAX_LEN__
 
 
 def validate_config():

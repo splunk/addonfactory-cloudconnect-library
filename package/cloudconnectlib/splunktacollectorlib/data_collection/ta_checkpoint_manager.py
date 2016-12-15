@@ -1,3 +1,4 @@
+import json
 from . import ta_consts as c
 from ...splunktalib import state_store as ss
 from ..common import log as stulog
@@ -28,6 +29,8 @@ class TACheckPointMgr(object):
     def get_ckpt(self, namespaces=None, show_namespaces=False):
         key, namespaces = self.get_ckpt_key(namespaces)
         raw_checkpoint = self._store.get_state(key)
+        stulog.logger.info("Get checkpoint key='{}' value='{}'"
+                           .format(key, json.dumps(raw_checkpoint)))
         if not show_namespaces and raw_checkpoint:
             return raw_checkpoint.get("data")
         return raw_checkpoint
@@ -37,7 +40,10 @@ class TACheckPointMgr(object):
             stulog.logger.warning("Checkpoint expect to be not empty.")
             return
         key, namespaces = self.get_ckpt_key(namespaces)
-        self._store.update_state(key, {"namespaces": namespaces, "data": ckpt})
+        value = {"namespaces": namespaces, "data": ckpt}
+        stulog.logger.info("Update checkpoint key='{}' value='{}'"
+                           .format(key, json.dumps(value)))
+        self._store.update_state(key, value)
 
     def remove_ckpt(self, namespaces=None):
         key, namespaces = self.get_ckpt_key(namespaces)

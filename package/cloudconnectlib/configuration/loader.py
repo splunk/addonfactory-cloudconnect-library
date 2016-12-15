@@ -2,29 +2,28 @@ import logging
 import re
 import traceback
 from abc import abstractmethod
-
+from jsonschema import validate, ValidationError
+from munch import munchify
+from ..common import log as _logger
 from ..common.util import (
     load_json_file, is_valid_bool, is_valid_port, is_true
 )
-from jsonschema import validate, ValidationError
-from munch import munchify
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup_method
 from ..core.models import (
     BasicAuthorization, Options, Processor,
-    Condition, Task, Checkpoint, RepeatMode
+    Condition, Task, Checkpoint, IterationMode
 )
 from ..core.template import compile_template
 from ..common.log import get_cc_logger
 
 _logger = get_cc_logger()
 
+
 _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _AUTH_TYPES = {
     'basic_auth': BasicAuthorization
 }
-
-_REPEAT_MODE_TYPES = ['loop', 'once']
 
 _LOGGING_LEVELS = {
     'DEBUG': logging.DEBUG,
@@ -33,6 +32,7 @@ _LOGGING_LEVELS = {
     'ERROR': logging.ERROR,
     'FATAL': logging.FATAL,
 }
+
 
 class CloudConnectConfigLoader(object):
     """The Base cloud connect configuration loader"""
@@ -177,20 +177,19 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         return Checkpoint(
             checkpoint.get('namespace', []), checkpoint['content'])
 
-    def _load_repeat_mode(self, repeat_mode):
-        loop_type = repeat_mode.get('type')
+    def _load_iteration_mode(self, iteration_mode):
+        count = iteration_mode.get('iteration_count', '0')
+        try:
+            iteration_count = int(count)
+        except ValueError:
+            raise ValueError(
+                'Repeat mode "iteration_count" must be a integer: %s' % count)
 
-        if not loop_type or loop_type.lower() not in _REPEAT_MODE_TYPES:
-            _logger.warning('loop mode type expect to be one of [%s]: found %s,'
-                         ' setting to default type',
-                         ','.join(_REPEAT_MODE_TYPES), loop_type)
-            loop_type = 'once'
-        else:
-            loop_type = loop_type.lower()
+        stop_conditions = self._parse_conditions(
+            iteration_mode['stop_conditions'])
 
-        stop_conditions = self._parse_conditions(repeat_mode['stop_conditions'])
-
-        return RepeatMode(loop_type, stop_conditions)
+        return IterationMode(iteration_count=iteration_count,
+                             conditions=stop_conditions)
 
     def _load_processor(self, processor):
         conditions = self._parse_conditions(processor.get('conditions', []))
@@ -202,14 +201,14 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         pre_process = self._load_processor(request['pre_process'])
         post_process = self._load_processor(request['post_process'])
         checkpoint = self._load_checkpoint(request['checkpoint'])
-        repeat_mode = self._load_repeat_mode(request['repeat_mode'])
+        iteration_mode = self._load_iteration_mode(request['iteration_mode'])
 
         return munchify({
             'options': options,
             'pre_process': pre_process,
             'post_process': post_process,
             'checkpoint': checkpoint,
-            'repeat_mode': repeat_mode,
+            'iteration_mode': iteration_mode,
         })
 
     def load(self, definition, schema_file, context):

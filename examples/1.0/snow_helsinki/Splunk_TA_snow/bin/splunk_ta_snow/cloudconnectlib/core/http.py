@@ -2,7 +2,6 @@ import traceback
 import urllib
 import urlparse
 from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
-
 from . import defaults
 from .exceptions import HTTPError
 from ..common.log import get_cc_logger
@@ -119,14 +118,11 @@ class HTTPRequest(object):
 
         _logger.info('Preparing to invoke request to [%s]', uri)
 
-        response, content = self._connection.request(
-            uri, body=body, method=method, headers=headers
-        )
+        result = self._do_request(uri, method, headers, body)
 
-        if response.status not in (200, 201):
-            raise HTTPError(response=response, status=response.status)
+        _logger.info('Invoking request to [%s] finished', uri)
 
-        return HTTPResponse(response, content)
+        return result
 
     def _prepare_proxy_info(self, proxy):
         if not proxy or not proxy.enabled:
@@ -155,3 +151,37 @@ class HTTPRequest(object):
         return Http(proxy_info=proxy_info,
                     timeout=timeout,
                     disable_ssl_certificate_validation=disable_ssl_cert_validation)
+
+    @staticmethod
+    def _is_need_retry(status, retried, maximum_retries):
+        return retried < maximum_retries \
+               and status in defaults.retry_statuses
+
+    def _do_request(self, uri, method='GET', headers=None, body=None):
+        """Invokes request and auto retry with an exponential backoff
+        if the response status is configured in defaults.retry_statuses."""
+        retries = max(defaults.retries, 0)
+
+        for i in xrange(retries + 1):
+            try:
+                response, content = self._connection.request(
+                    uri, body=body, method=method, headers=headers
+                )
+            except Exception as err:
+                _logger.exception(
+                    'Could not send request url=%s method=%s', uri, method)
+                raise HTTPError('HTTP Error %s' % str(err))
+
+            status = response.status
+
+            if self._is_need_retry(status, i, retries):
+                delay = 2 ** i
+                _logger.warning(
+                    'The response status=%s of request which url=%s and'
+                    ' method=%s. Retry after %s seconds.',
+                    status, uri, method, delay,
+                )
+                time.sleep(delay)
+                continue
+
+            return HTTPResponse(response, content)

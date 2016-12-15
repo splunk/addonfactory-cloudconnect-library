@@ -99,13 +99,13 @@
                     }
                 ]
             },
-            "repeat_mode": {
-                "type": "loop",
+            "iteration_mode": {
+                "iteration_count": "-1",
                 "stop_conditions": [
                     {
                         "input": [
-                            "{{__response__.body}}",
-                            "$.result[*]"
+                            "$.result[*]",
+                            "{{__response__.body}}"
                         ],
                         "method": "json_empty"
                     }

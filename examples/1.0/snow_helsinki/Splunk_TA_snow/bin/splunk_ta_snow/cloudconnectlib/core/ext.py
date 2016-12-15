@@ -1,7 +1,9 @@
 import json
 import re
+from ..common import util, log
 from ..common.splunk_util import std_out
-from ..common import util
+
+_logger = log.get_cc_logger()
 
 
 def regex_match(pattern, candidate):
@@ -59,11 +61,14 @@ def splunk_xml(candidates, time=None, index=None, host=None, source=None,
 def std_output(candidates):
     """
     Output a string to stdout.
-    :param candidate: string to output to stdout.
+    :param candidates: List of string to output to stdout or a single string.
     """
-    if not isinstance(candidates, (list, tuple)):
+    if isinstance(candidates, basestring):
         candidates = [candidates]
     for candidate in candidates:
+        if not isinstance(candidate, basestring):
+            _logger.warning("The type of data needs to print is {} rather"
+                         "basestring".format(type(candidate)))
         std_out(candidate)
 
 
@@ -86,6 +91,12 @@ def json_empty(candidate, json_path_expr=None):
 
 
 def json_not_empty(candidate, json_path_expr=None):
+    """Check if a JSON object is not empty. A optional jsonpath expression
+    will be used to extract JSON from candidate.
+    :param json_path_expr: A optional jsonpath expression
+    :param candidate: target to extract
+    :return: `True` if the result JSON is not `{}` or `[]` or `None`
+    """
     return not json_empty(candidate, json_path_expr)
 
 

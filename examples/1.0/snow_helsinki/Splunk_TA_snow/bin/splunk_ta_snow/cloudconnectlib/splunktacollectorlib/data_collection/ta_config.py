@@ -70,7 +70,10 @@ class TaConfig(object):
             task_config = dict()
             task_config.update(input)
             task_config["__configs__"] = configs
-            task_config["__settings__"] = global_settings["settings"]
+            settings = dict()
+            for setting in global_settings["settings"]:
+                settings.update(setting)
+            task_config["__settings__"] = settings
             if self.is_single_instance():
                 collection_interval = "collection_interval"
                 task_config[c.interval] = task_config.get(collection_interval)

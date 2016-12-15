@@ -12,7 +12,7 @@ from jinja2._compat import imap, text_type, PY2, implements_to_string
 
 
 class TemplateError(Exception):
-    """Baseclass for all template.py errors."""
+    """Baseclass for all template errors."""
 
     if PY2:
         def __init__(self, message=None):
@@ -43,7 +43,7 @@ class TemplateError(Exception):
 
 @implements_to_string
 class TemplateNotFound(IOError, LookupError, TemplateError):
-    """Raised if a template.py does not exist."""
+    """Raised if a template does not exist."""
 
     # looks weird, but removes the warning descriptor that just
     # bogusly warns us about message being deprecated
@@ -79,7 +79,7 @@ class TemplatesNotFound(TemplateNotFound):
 
 @implements_to_string
 class TemplateSyntaxError(TemplateError):
-    """Raised to tell the user that there is a problem with the template.py."""
+    """Raised to tell the user that there is a problem with the template."""
 
     def __init__(self, message, lineno, name=None, filename=None):
         TemplateError.__init__(self, message)
@@ -117,25 +117,25 @@ class TemplateSyntaxError(TemplateError):
 
 
 class TemplateAssertionError(TemplateSyntaxError):
-    """Like a template.py syntax error, but covers cases where something in the
-    template.py caused an error at compile time that wasn't necessarily caused
+    """Like a template syntax error, but covers cases where something in the
+    template caused an error at compile time that wasn't necessarily caused
     by a syntax error.  However it's a direct subclass of
     :exc:`TemplateSyntaxError` and has the same attributes.
     """
 
 
 class TemplateRuntimeError(TemplateError):
-    """A generic runtime error in the template.py engine.  Under some situations
+    """A generic runtime error in the template engine.  Under some situations
     Jinja may raise this exception.
     """
 
 
 class UndefinedError(TemplateRuntimeError):
-    """Raised if a template.py tries to operate on :class:`Undefined`."""
+    """Raised if a template tries to operate on :class:`Undefined`."""
 
 
 class SecurityError(TemplateRuntimeError):
-    """Raised if a template.py tries to do something insecure if the
+    """Raised if a template tries to do something insecure if the
     sandbox is enabled.
     """
 

@@ -41,10 +41,10 @@ concat = u''.join
 def contextfunction(f):
     """This decorator can be used to mark a function or method context callable.
     A context callable is passed the active :class:`Context` as first argument when
-    called from the template.py.  This is useful if a function wants to get access
+    called from the template.  This is useful if a function wants to get access
     to the context or functions provided on the context object.  For example
-    a function that returns a sorted list of template.py variables the current
-    template.py exports could look like this::
+    a function that returns a sorted list of template variables the current
+    template exports could look like this::
 
         @contextfunction
         def get_exported_names(context):
@@ -235,7 +235,7 @@ def urlize(text, trim_url_limit=None, nofollow=False, target=None):
 
 
 def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
-    """Generate some lorem ipsum for the template.py."""
+    """Generate some lorem ipsum for the template."""
     from jinja2.constants import LOREM_IPSUM_WORDS
     from random import choice, randrange
     words = LOREM_IPSUM_WORDS.split()

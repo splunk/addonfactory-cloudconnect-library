@@ -33,7 +33,7 @@ from jinja2._compat import imap, ifilter, string_types, iteritems, \
 from functools import reduce
 
 
-# for direct template.py usage we have up to ten living environments
+# for direct template usage we have up to ten living environments
 _spontaneous_environments = LRUCache(10)
 
 # the function to create jinja traceback objects.  This is dynamically
@@ -104,8 +104,8 @@ class Environment(object):
     r"""The core component of Jinja is the `Environment`.  It contains
     important shared variables like configuration, filters, tests,
     globals and others.  Instances of this class may be modified if
-    they are not shared and if no template.py was loaded so far.
-    Modifications on environments after the first template.py was loaded
+    they are not shared and if no template was loaded so far.
+    Modifications on environments after the first template was loaded
     will lead to surprising effects and undefined behavior.
 
     Here are the possible initialization parameters:
@@ -157,7 +157,7 @@ class Environment(object):
         `keep_trailing_newline`
             Preserve the trailing newline when rendering templates.
             The default is ``False``, which causes a single newline,
-            if present, to be stripped from the end of the template.py.
+            if present, to be stripped from the end of the template.
 
             .. versionadded:: 2.7
 
@@ -171,7 +171,7 @@ class Environment(object):
 
         `undefined`
             :class:`Undefined` or a subclass of it that is used to represent
-            undefined values in the template.py.
+            undefined values in the template.
 
         `finalize`
             A callable that can be used to process the result of a variable
@@ -182,7 +182,7 @@ class Environment(object):
             If set to true the XML/HTML autoescaping feature is enabled by
             default.  For more details about autoescaping see
             :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
-            be a callable that is passed the template.py name and has to
+            be a callable that is passed the template name and has to
             return `True` or `False` depending on autoescape should be
             enabled by default.
 
@@ -190,12 +190,12 @@ class Environment(object):
                `autoescape` can now be a function
 
         `loader`
-            The template.py loader for this environment.
+            The template loader for this environment.
 
         `cache_size`
             The size of the cache.  Per default this is ``400`` which means
             that if more than 400 templates are loaded the loader will clean
-            out the least recently used template.py.  If the cache size is set to
+            out the least recently used template.  If the cache size is set to
             ``0`` templates are recompiled all the time, if the cache size is
             ``-1`` the cache will not be cleaned.
 
@@ -203,11 +203,11 @@ class Environment(object):
                The cache size was increased to 400 from a low 50.
 
         `auto_reload`
-            Some loaders load templates from locations where the template.py
+            Some loaders load templates from locations where the template
             sources may change (ie: file system or database).  If
-            `auto_reload` is set to `True` (default) every time a template.py is
+            `auto_reload` is set to `True` (default) every time a template is
             requested the loader checks if the source changed and if yes, it
-            will reload the template.py.  For higher performance it's possible to
+            will reload the template.  For higher performance it's possible to
             disable that.
 
         `bytecode_cache`
@@ -452,7 +452,7 @@ class Environment(object):
     @internalcode
     def parse(self, source, name=None, filename=None):
         """Parse the sourcecode and return the abstract syntax tree.  This
-        tree of nodes is used by the compiler to convert the template.py into
+        tree of nodes is used by the compiler to convert the template into
         executable source- or bytecode.  This is useful for debugging or to
         extract information from templates.
 
@@ -525,11 +525,11 @@ class Environment(object):
     @internalcode
     def compile(self, source, name=None, filename=None, raw=False,
                 defer_init=False):
-        """Compile a node or template.py source code.  The `name` parameter is
-        the load name of the template.py after it was joined using
+        """Compile a node or template source code.  The `name` parameter is
+        the load name of the template after it was joined using
         :meth:`join_path` if necessary, not the filename on the file system.
-        the `filename` parameter is the estimated filename of the template.py on
-        the file system.  If the template.py came from a database or memory this
+        the `filename` parameter is the estimated filename of the template on
+        the file system.  If the template came from a database or memory this
         can be omitted.
 
         The return value of this method is a python code object.  If the `raw`
@@ -556,7 +556,7 @@ class Environment(object):
             if raw:
                 return source
             if filename is None:
-                filename = '<template.py>'
+                filename = '<template>'
             else:
                 filename = encode_filename(filename)
             return self._compile(source, filename)
@@ -570,7 +570,7 @@ class Environment(object):
         returns the result of the expression.
 
         This is useful if applications want to use the same rules as Jinja
-        in template.py "configuration files" or similar situations.
+        in template "configuration files" or similar situations.
 
         Example usage:
 
@@ -619,11 +619,11 @@ class Environment(object):
         the stored algorithm, `zip` can be set to ``'stored'``.
 
         `extensions` and `filter_func` are passed to :meth:`list_templates`.
-        Each template.py returned will be compiled to the target folder or
+        Each template returned will be compiled to the target folder or
         zipfile.
 
-        By default template.py compilation errors are ignored.  In case a
-        log function is provided, errors are logged.  If you want template.py
+        By default template compilation errors are ignored.  In case a
+        log function is provided, errors are logged.  If you want template
         syntax errors to abort the compilation you can set `ignore_errors`
         to `False` and you will get an exception on syntax errors.
 
@@ -709,11 +709,11 @@ class Environment(object):
         that the loader supports the loader's
         :meth:`~BaseLoader.list_templates` method.
 
-        If there are other files in the template.py folder besides the
+        If there are other files in the template folder besides the
         actual templates, the returned list can be filtered.  There are two
         ways: either `extensions` is set to a list of file extensions for
         templates, or a `filter_func` can be provided which is a callable that
-        is passed a template.py name and should return `True` if it should end up
+        is passed a template name and should return `True` if it should end up
         in the result list.
 
         If the loader does not support that, a :exc:`TypeError` is raised.
@@ -733,7 +733,7 @@ class Environment(object):
 
     def handle_exception(self, exc_info=None, rendered=False, source_hint=None):
         """Exception handling helper.  This is used internally to either raise
-        rewritten exceptions or return a rendered traceback for the template.py.
+        rewritten exceptions or return a rendered traceback for the template.
         """
         global _make_traceback
         if exc_info is None:
@@ -741,7 +741,7 @@ class Environment(object):
 
         # the debugging module is imported when it's used for the first time.
         # we're doing a lot of stuff there and for applications that do not
-        # get any exceptions in template.py rendering there is no need to load
+        # get any exceptions in template rendering there is no need to load
         # all of that.
         if _make_traceback is None:
             from jinja2.debug import make_traceback as _make_traceback
@@ -754,13 +754,13 @@ class Environment(object):
         reraise(exc_type, exc_value, tb)
 
     def join_path(self, template, parent):
-        """Join a template.py with the parent.  By default all the lookups are
-        relative to the loader root so this method returns the `template.py`
+        """Join a template with the parent.  By default all the lookups are
+        relative to the loader root so this method returns the `template`
         parameter unchanged, but if the paths should be relative to the
-        parent template.py, this function can be used to calculate the real
-        template.py name.
+        parent template, this function can be used to calculate the real
+        template name.
 
-        Subclasses may override this method and implement template.py path
+        Subclasses may override this method and implement template path
         joining here.
         """
         return template
@@ -775,7 +775,7 @@ class Environment(object):
         except RuntimeError:
             # if loader does not implement get_source()
             cache_key = None
-        # if template.py is not file, use name for cache key
+        # if template is not file, use name for cache key
         if cache_key is None:
             cache_key = name
         if self.cache is not None:
@@ -790,15 +790,15 @@ class Environment(object):
 
     @internalcode
     def get_template(self, name, parent=None, globals=None):
-        """Load a template.py from the loader.  If a loader is configured this
-        method ask the loader for the template.py and returns a :class:`Template`.
+        """Load a template from the loader.  If a loader is configured this
+        method ask the loader for the template and returns a :class:`Template`.
         If the `parent` parameter is not `None`, :meth:`join_path` is called
-        to get the real template.py name before loading.
+        to get the real template name before loading.
 
-        The `globals` parameter can be used to provide template.py wide globals.
+        The `globals` parameter can be used to provide template wide globals.
         These variables are available in the context at render time.
 
-        If the template.py does not exist a :exc:`TemplateNotFound` exception is
+        If the template does not exist a :exc:`TemplateNotFound` exception is
         raised.
 
         .. versionchanged:: 2.4
@@ -842,7 +842,7 @@ class Environment(object):
     def get_or_select_template(self, template_name_or_list,
                                parent=None, globals=None):
         """Does a typecheck and dispatches to :meth:`select_template`
-        if an iterable of template.py names is given, otherwise to
+        if an iterable of template names is given, otherwise to
         :meth:`get_template`.
 
         .. versionadded:: 2.3
@@ -854,7 +854,7 @@ class Environment(object):
         return self.select_template(template_name_or_list, parent, globals)
 
     def from_string(self, source, globals=None, template_class=None):
-        """Load a template.py from a string.  This parses the source given and
+        """Load a template from a string.  This parses the source given and
         returns a :class:`Template` object.
         """
         globals = self.make_globals(globals)
@@ -869,16 +869,16 @@ class Environment(object):
 
 
 class Template(object):
-    """The central template.py object.  This class represents a compiled template.py
+    """The central template object.  This class represents a compiled template
     and is used to evaluate it.
 
-    Normally the template.py object is generated from an :class:`Environment` but
-    it also has a constructor that makes it possible to create a template.py
+    Normally the template object is generated from an :class:`Environment` but
+    it also has a constructor that makes it possible to create a template
     instance directly using the constructor.  It takes the same arguments as
     the environment constructor but it's not possible to specify a loader.
 
-    Every template.py object has a few methods and members that are guaranteed
-    to exist.  However it's important that a template.py object should be
+    Every template object has a few methods and members that are guaranteed
+    to exist.  However it's important that a template object should be
     considered immutable.  Modifications on the object are not supported.
 
     Template objects created from the constructor rather than an environment
@@ -886,10 +886,10 @@ class Template(object):
     that is probably shared with other templates created with the constructor
     and compatible settings.
 
-    >>> template.py = Template('Hello {{ name }}!')
-    >>> template.py.render(name='John Doe') == u'Hello John Doe!'
+    >>> template = Template('Hello {{ name }}!')
+    >>> template.render(name='John Doe') == u'Hello John Doe!'
     True
-    >>> stream = template.py.stream(name='John Doe')
+    >>> stream = template.stream(name='John Doe')
     >>> next(stream) == u'Hello John Doe!'
     True
     >>> next(stream)
@@ -927,8 +927,8 @@ class Template(object):
 
     @classmethod
     def from_code(cls, environment, code, globals, uptodate=None):
-        """Creates a template.py object from compiled code and the globals.  This
-        is used by the loaders and environment to create a template.py object.
+        """Creates a template object from compiled code and the globals.  This
+        is used by the loaders and environment to create a template object.
         """
         namespace = {
             'environment':  environment,
@@ -941,8 +941,8 @@ class Template(object):
 
     @classmethod
     def from_module_dict(cls, environment, module_dict, globals):
-        """Creates a template.py object from a module.  This is used by the
-        module loader to create a template.py object.
+        """Creates a template object from a module.  This is used by the
+        module loader to create a template object.
 
         .. versionadded:: 2.4
         """
@@ -976,10 +976,10 @@ class Template(object):
         A dict, a dict subclass or some keyword arguments.  If no arguments
         are given the context will be empty.  These two calls do the same::
 
-            template.py.render(knights='that say nih')
-            template.py.render({'knights': 'that say nih'})
+            template.render(knights='that say nih')
+            template.render({'knights': 'that say nih'})
 
-        This will return the rendered template.py as unicode string.
+        This will return the rendered template as unicode string.
         """
         vars = dict(*args, **kwargs)
         try:
@@ -996,7 +996,7 @@ class Template(object):
 
     def generate(self, *args, **kwargs):
         """For very large templates it can be useful to not render the whole
-        template.py at once but evaluate each statement after another and yield
+        template at once but evaluate each statement after another and yield
         piece for piece.  This method basically does exactly that and returns
         a generator that yields one item after another as unicode strings.
 
@@ -1013,8 +1013,8 @@ class Template(object):
         yield self.environment.handle_exception(exc_info, True)
 
     def new_context(self, vars=None, shared=False, locals=None):
-        """Create a new :class:`Context` for this template.py.  The vars
-        provided will be passed to the template.py.  Per default the globals
+        """Create a new :class:`Context` for this template.  The vars
+        provided will be passed to the template.  Per default the globals
         are added to the context.  If shared is set to `True` the data
         is passed as it to the context without adding the globals.
 
@@ -1025,7 +1025,7 @@ class Template(object):
 
     def make_module(self, vars=None, shared=False, locals=None):
         """This method works like the :attr:`module` attribute when called
-        without arguments but it will evaluate the template.py on every call
+        without arguments but it will evaluate the template on every call
         rather than caching it.  It's also possible to provide
         a dict which is then used as context.  The arguments are the same
         as for the :meth:`new_context` method.
@@ -1034,9 +1034,9 @@ class Template(object):
 
     @property
     def module(self):
-        """The template.py as module.  This is used for imports in the
-        template.py runtime but is also useful if one wants to access
-        exported template.py variables from the Python layer:
+        """The template as module.  This is used for imports in the
+        template runtime but is also useful if one wants to access
+        exported template variables from the Python layer:
 
         >>> t = Template('{% macro foo() %}42{% endmacro %}23')
         >>> str(t.module)
@@ -1081,8 +1081,8 @@ class Template(object):
 
 @implements_to_string
 class TemplateModule(object):
-    """Represents an imported template.py.  All the exported names of the
-    template.py are available as attributes on this object.  Additionally
+    """Represents an imported template.  All the exported names of the
+    template are available as attributes on this object.  Additionally
     converting it into an unicode- or bytestrings renders the contents.
     """
 
@@ -1108,7 +1108,7 @@ class TemplateModule(object):
 class TemplateExpression(object):
     """The :meth:`jinja2.Environment.compile_expression` method returns an
     instance of this object.  It encapsulates the expression-like access
-    to the template.py with an expression it wraps.
+    to the template with an expression it wraps.
     """
 
     def __init__(self, template, undefined_to_none):
@@ -1126,10 +1126,10 @@ class TemplateExpression(object):
 
 @implements_iterator
 class TemplateStream(object):
-    """A template.py stream works pretty much like an ordinary python generator
+    """A template stream works pretty much like an ordinary python generator
     but it can buffer multiple items to reduce the number of total iterations.
     Per default the output is unbuffered which means that for every unbuffered
-    instruction in the template.py one unicode string is yielded.
+    instruction in the template one unicode string is yielded.
 
     If buffering is enabled with a buffer size of 5, five items are combined
     into a new unicode string.  This is mainly useful if you are streaming
@@ -1208,6 +1208,6 @@ class TemplateStream(object):
         return self._next()
 
 
-# hook in default template.py class.  if anyone reads this comment: ignore that
+# hook in default template class.  if anyone reads this comment: ignore that
 # it's possible to use custom templates ;-)
 Environment.template_class = Template

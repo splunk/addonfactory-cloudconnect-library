@@ -3,14 +3,14 @@
     jinja2
     ~~~~~~
 
-    Jinja2 is a template.py engine written in pure Python.  It provides a
+    Jinja2 is a template engine written in pure Python.  It provides a
     Django inspired non-XML syntax but supports inline expressions and
     an optional sandboxed environment.
 
     Nutshell
     --------
 
-    Here a small example of a Jinja2 template.py::
+    Here a small example of a Jinja2 template::
 
         {% extends 'base.html' %}
         {% block title %}Memberlist{% endblock %}

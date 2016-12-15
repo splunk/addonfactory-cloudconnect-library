@@ -20,7 +20,7 @@ from jinja2._compat import imap, text_type, iteritems, \
      implements_iterator, implements_to_string, string_types, PY2
 
 
-# these variables are exported to the template.py runtime
+# these variables are exported to the template runtime
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join', 'to_string', 'identity',
@@ -91,19 +91,19 @@ class TemplateReference(object):
 
 
 class Context(object):
-    """The template.py context holds the variables of a template.py.  It stores the
-    values passed to the template.py and also the names the template.py exports.
+    """The template context holds the variables of a template.  It stores the
+    values passed to the template and also the names the template exports.
     Creating instances is neither supported nor useful as it's created
-    automatically at various stages of the template.py evaluation and should not
+    automatically at various stages of the template evaluation and should not
     be created by hand.
 
     The context is immutable.  Modifications on :attr:`parent` **must not**
     happen and modifications on :attr:`vars` are allowed from generated
-    template.py code only.  Template filters and global functions marked as
+    template code only.  Template filters and global functions marked as
     :func:`contextfunction`\s get the active context passed as first argument
     and are allowed to access the context read-only.
 
-    The template.py context supports read only dict operations (`get`,
+    The template context supports read only dict operations (`get`,
     `keys`, `values`, `items`, `iterkeys`, `itervalues`, `iteritems`,
     `__getitem__`, `__contains__`).  Additionally there is a :meth:`resolve`
     method that doesn't fail with a `KeyError` but returns an
@@ -120,9 +120,9 @@ class Context(object):
         self.exported_vars = set()
         self.name = name
 
-        # create the initial mapping of blocks.  Whenever template.py inheritance
+        # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
-        # from the template.py.
+        # from the template.
         self.blocks = dict((k, [v]) for k, v in iteritems(blocks))
 
     def super(self, name, current):
@@ -138,7 +138,7 @@ class Context(object):
         return BlockReference(name, self, blocks, index)
 
     def get(self, key, default=None):
-        """Returns an item from the template.py context, if it doesn't exist
+        """Returns an item from the template context, if it doesn't exist
         `default` is returned.
         """
         try:
@@ -254,7 +254,7 @@ except ImportError:
 
 
 class BlockReference(object):
-    """One block on a template.py reference."""
+    """One block on a template reference."""
 
     def __init__(self, name, context, stack, depth):
         self.name = name

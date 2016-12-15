@@ -110,7 +110,7 @@ class ProcessedTraceback(object):
 
     @property
     def is_template_syntax_error(self):
-        """`True` if this is a template.py syntax error."""
+        """`True` if this is a template syntax error."""
         return isinstance(self.exc_value, TemplateSyntaxError)
 
     @property
@@ -166,7 +166,7 @@ def translate_exception(exc_info, initial_skip=0):
 
     while tb is not None:
         # skip frames decorated with @internalcode.  These are internal
-        # calls we can't avoid and that are useless in template.py debugging
+        # calls we can't avoid and that are useless in template debugging
         # output.
         if tb.tb_frame.f_code in internal_code:
             tb = tb.tb_next
@@ -176,7 +176,7 @@ def translate_exception(exc_info, initial_skip=0):
         # one with a faked one.
         next = tb.tb_next
 
-        # fake template.py exceptions
+        # fake template exceptions
         template = tb.tb_frame.f_globals.get('__jinja_template__')
         if template is not None:
             lineno = template.get_corresponding_lineno(tb.tb_lineno)
@@ -223,7 +223,7 @@ def fake_exc_info(exc_info, filename, lineno):
         '__file__':             filename,
         '__jinja_exception__':  exc_info[:2],
 
-        # we don't want to keep the reference to the template.py around
+        # we don't want to keep the reference to the template around
         # to not cause circular dependencies, but we mark it as Jinja
         # frame for the ProcessedTraceback
         '__jinja_template__':   None
@@ -236,15 +236,15 @@ def fake_exc_info(exc_info, filename, lineno):
     # on some python environments such as google appengine
     try:
         if tb is None:
-            location = 'template.py'
+            location = 'template'
         else:
             function = tb.tb_frame.f_code.co_name
             if function == 'root':
-                location = 'top-level template.py code'
+                location = 'top-level template code'
             elif function.startswith('block_'):
                 location = 'block "%s"' % function[6:]
             else:
-                location = 'template.py'
+                location = 'template'
 
         if PY2:
             code = CodeType(0, code.co_nlocals, code.co_stacksize,

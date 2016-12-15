@@ -9,7 +9,7 @@
 
     On the one hand it filters out invalid operators like the bitshift
     operators we don't allow in templates. On the other hand it separates
-    template.py code and python code in expressions.
+    template code and python code in expressions.
 
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
@@ -156,8 +156,8 @@ def _describe_token_type(token_type):
         TOKEN_VARIABLE_END:         'end of print statement',
         TOKEN_LINESTATEMENT_BEGIN:  'begin of line statement',
         TOKEN_LINESTATEMENT_END:    'end of line statement',
-        TOKEN_DATA:                 'template.py data / text',
-        TOKEN_EOF:                  'end of template.py'
+        TOKEN_DATA:                 'template data / text',
+        TOKEN_EOF:                  'end of template'
     }.get(token_type, token_type)
 
 
@@ -364,7 +364,7 @@ class TokenStream(object):
         if not self.current.test(expr):
             expr = describe_token_expr(expr)
             if self.current.type is TOKEN_EOF:
-                raise TemplateSyntaxError('unexpected end of template.py, '
+                raise TemplateSyntaxError('unexpected end of template, '
                                           'expected %r.' % expr,
                                           self.current.lineno,
                                           self.name, self.filename)
@@ -536,7 +536,7 @@ class Lexer(object):
         }
 
     def _normalize_newlines(self, value):
-        """Called for strings and template.py data to normalize it to unicode."""
+        """Called for strings and template data to normalize it to unicode."""
         return newline_re.sub(self.newline_sequence, value)
 
     def tokenize(self, source, name=None, filename=None, state=None):
@@ -593,7 +593,7 @@ class Lexer(object):
 
     def tokeniter(self, source, name, filename=None, state=None):
         """This method tokenizes the text and returns the tokens in a
-        generator.  Use this method if you just want to tokenize a template.py.
+        generator.  Use this method if you just want to tokenize a template.
         """
         source = text_type(source)
         lines = source.splitlines()

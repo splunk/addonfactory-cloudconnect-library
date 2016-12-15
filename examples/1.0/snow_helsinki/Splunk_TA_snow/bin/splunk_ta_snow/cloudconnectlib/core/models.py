@@ -1,8 +1,10 @@
 import base64
+
 from .ext import lookup_method
 from .template import compile_template
+from ..common.log import get_cc_logger
 
-from ..common import log as _logger
+_logger = get_cc_logger()
 
 
 class _Token(object):
@@ -13,6 +15,17 @@ class _Token(object):
 
     def value(self, variables):
         return self._render(variables)
+
+
+class _DictToken(object):
+    """DictToken wraps a dict which value is template expression"""
+
+    def __init__(self, template_expr):
+        self._tokens = {k: _Token(v)
+                        for k, v in (template_expr or {}).iteritems()}
+
+    def value(self, variables):
+        return {k: v.value(variables) for k, v in self._tokens.iteritems()}
 
 
 class BaseAuth(object):
@@ -49,11 +62,11 @@ class BasicAuthorization(BaseAuth):
 
 class Options(object):
     def __init__(self, url, method, header=None, auth=None, body=None):
-        self._header = {k: _Token(v) for k, v in (header or {}).iteritems()}
+        self._header = _DictToken(header)
         self._url = _Token(url)
         self._method = method.upper()
         self._auth = auth
-        self._body = {k: _Token(v) for k, v in (body or {}).iteritems()}
+        self._body = _DictToken(body)
 
     @property
     def header(self):
@@ -79,10 +92,10 @@ class Options(object):
         return self._url.value(context)
 
     def normalize_header(self, context):
-        return {k: v.value(context) for k, v in self._header.iteritems()}
+        return self.header.value(context)
 
     def normalize_body(self, context):
-        return {k: v.value(context) for k, v in self._body.iteritems()}
+        return self.body.value(context)
 
 
 class _Function(object):
@@ -154,15 +167,12 @@ class _Conditional(object):
         return self._conditions
 
     def passed(self, context):
-        """
-        Determine if current conditions are all passed.
+        """Determine if current conditions are all passed.
         :param context: variables to render template
         :return: `True` if all passed else `False`
         """
-        for condition in self._conditions:
-            if not condition.calculate(context):
-                return False
-        return True
+        return any(
+            condition.calculate(context) for condition in self._conditions)
 
 
 class Processor(_Conditional):
@@ -198,17 +208,26 @@ class Checkpoint(object):
     """A checkpoint includes a namespace to determine the checkpoint location
     and a content defined the format of content stored in checkpoint."""
 
-    def __init__(self, namespace, contents):
-        if not contents:
+    def __init__(self, namespace, content):
+        """Constructs checkpoint with given namespace and content template. """
+        if not content:
             raise ValueError('Checkpoint content must not be empty')
 
         self._namespace = tuple(_Token(expr) for expr in namespace or ())
-        self._content = {k: _Token(v) for k, v in contents.iteritems()}
+        self._content = _DictToken(content)
 
     @property
     def namespace(self):
         return self._namespace
 
+    def normalize_namespace(self, ctx):
+        """Normalize namespace with context used to render template."""
+        return [token.value(ctx) for token in self._namespace]
+
     @property
     def content(self):
         return self._content
+
+    def normalize_content(self, ctx):
+        """Normalize checkpoint with context used to render template."""
+        return self._content.value(ctx)

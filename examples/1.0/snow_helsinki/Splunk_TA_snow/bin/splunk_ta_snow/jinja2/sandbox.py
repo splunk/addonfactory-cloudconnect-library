@@ -182,7 +182,7 @@ class SandboxedEnvironment(Environment):
     this environment may override the methods that tell the runtime what
     attributes or functions are safe to access.
 
-    If the template.py tries to access insecure code a :exc:`SecurityError` is
+    If the template tries to access insecure code a :exc:`SecurityError` is
     raised.  However also other exceptions may occour during the rendering so
     the caller has to ensure that all exceptions are catched.
     """
@@ -241,7 +241,7 @@ class SandboxedEnvironment(Environment):
     intercepted_unops = frozenset()
 
     def intercept_unop(self, operator):
-        """Called during template.py compilation with the name of a unary
+        """Called during template compilation with the name of a unary
         operator to check if it should be intercepted at runtime.  If this
         method returns `True`, :meth:`call_unop` is excuted for this unary
         operator.  The default implementation of :meth:`call_unop` will use

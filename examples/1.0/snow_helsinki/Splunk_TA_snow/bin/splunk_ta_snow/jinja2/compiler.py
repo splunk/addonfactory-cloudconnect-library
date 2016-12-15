@@ -56,7 +56,7 @@ def generate(node, environment, name, filename, stream=None,
              defer_init=False):
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
-        raise TypeError('Can\'t compile non template.py nodes')
+        raise TypeError('Can\'t compile non template nodes')
     generator = environment.code_generator_class(environment, name, filename,
                                                  stream, defer_init)
     generator.visit(node)
@@ -389,7 +389,7 @@ class CodeGenerator(NodeVisitor):
         self.extends_so_far = 0
 
         # some templates have a rootlevel extends.  In this case we
-        # can safely assume that we're a child template.py and do some
+        # can safely assume that we're a child template and do some
         # more optimizations.
         self.has_known_extends = False
 
@@ -660,7 +660,7 @@ class CodeGenerator(NodeVisitor):
         func_frame.inspect(children)
 
         # variables that are undeclared (accessed before declaration) and
-        # declared locally *and* part of an outside scope raise a template.py
+        # declared locally *and* part of an outside scope raise a template
         # assertion error. Reason: we can't generate reasonable code from
         # it without aliasing all the variables.
         # this could be fixed in Python 3 where we have the nonlocal
@@ -858,10 +858,10 @@ class CodeGenerator(NodeVisitor):
                                                     in self.debug_info))
 
     def visit_Block(self, node, frame):
-        """Call a block and register it for the template.py."""
+        """Call a block and register it for the template."""
         level = 1
         if frame.toplevel:
-            # if we know that we are a child template.py, there is no need to
+            # if we know that we are a child template, there is no need to
             # check if we are one
             if self.has_known_extends:
                 return
@@ -884,10 +884,10 @@ class CodeGenerator(NodeVisitor):
 
         # if the number of extends statements in general is zero so
         # far, we don't have to add a check if something extended
-        # the template.py before this one.
+        # the template before this one.
         if self.extends_so_far > 0:
 
-            # if we have a known extends we just add a template.py runtime
+            # if we have a known extends we just add a template runtime
             # error into the generated code.  We could catch that at compile
             # time too, but i welcome it not to confuse users by throwing the
             # same error at different times just "because we can".
@@ -898,7 +898,7 @@ class CodeGenerator(NodeVisitor):
                            'extended multiple times')
 
             # if we have a known extends already we don't need that code here
-            # as we know that the template.py execution will end here.
+            # as we know that the template execution will end here.
             if self.has_known_extends:
                 raise CompilerExit()
             else:
@@ -940,7 +940,7 @@ class CodeGenerator(NodeVisitor):
         elif isinstance(node.template, (nodes.Tuple, nodes.List)):
             func_name = 'select_template'
 
-        self.writeline('template.py = environment.%s(' % func_name, node)
+        self.writeline('template = environment.%s(' % func_name, node)
         self.visit(node.template, frame)
         self.write(', %r)' % self.name)
         if node.ignore_missing:
@@ -953,11 +953,11 @@ class CodeGenerator(NodeVisitor):
             self.indent()
 
         if node.with_context:
-            self.writeline('for event in template.py.root_render_func('
-                           'template.py.new_context(context.parent, True, '
+            self.writeline('for event in template.root_render_func('
+                           'template.new_context(context.parent, True, '
                            'locals())):')
         else:
-            self.writeline('for event in template.py.module._body_stream:')
+            self.writeline('for event in template.module._body_stream:')
 
         self.indent()
         self.simple_write('event', frame)
@@ -1009,7 +1009,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('l_%s = environment.undefined(%r %% '
                            'included_template.__name__, '
                            'name=%r)' %
-                           (alias, 'the template.py %%r (imported on %s) does '
+                           (alias, 'the template %%r (imported on %s) does '
                            'not export the requested name %s' % (
                                 self.position(node),
                                 repr(name)
@@ -1068,7 +1068,7 @@ class CodeGenerator(NodeVisitor):
             self.buffer(loop_frame)
             aliases = {}
 
-        # make sure the loop variable is a special one and raise a template.py
+        # make sure the loop variable is a special one and raise a template
         # assertion error if a loop tries to write to loop
         if extended_loop:
             self.writeline('l_loop = missing')
@@ -1360,7 +1360,7 @@ class CodeGenerator(NodeVisitor):
 
     def make_assignment_frame(self, frame):
         # toplevel assignments however go into the local namespace and
-        # the current template.py's context.  We create a copy of the frame
+        # the current template's context.  We create a copy of the frame
         # here and add a set so that the Name visitor can add the assigned
         # names here.
         if not frame.toplevel:

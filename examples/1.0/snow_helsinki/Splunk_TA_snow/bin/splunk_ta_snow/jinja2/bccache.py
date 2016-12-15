@@ -4,7 +4,7 @@
     ~~~~~~~~~~~~~~
 
     This module implements the bytecode cache system Jinja is optionally
-    using.  This is useful if you have very complex template.py situations and
+    using.  This is useful if you have very complex template situations and
     the compiliation of all those templates slow down your application too
     much.
 
@@ -58,7 +58,7 @@ bc_magic = 'j2'.encode('ascii') + \
 
 
 class Bucket(object):
-    """Buckets are used to store the bytecode for one template.py.  It's created
+    """Buckets are used to store the bytecode for one template.  It's created
     and initialized by the bytecode cache and passed to the loading functions.
 
     The buckets get an internal checksum from the cache assigned and use this
@@ -164,7 +164,7 @@ class BytecodeCache(object):
         """
 
     def get_cache_key(self, name, filename=None):
-        """Returns the unique hash key for this template.py name."""
+        """Returns the unique hash key for this template name."""
         hash = sha1(name.encode('utf-8'))
         if filename is not None:
             filename = '|' + filename
@@ -178,7 +178,7 @@ class BytecodeCache(object):
         return sha1(source.encode('utf-8')).hexdigest()
 
     def get_bucket(self, environment, name, filename, source):
-        """Return a cache bucket for the given template.py.  All arguments are
+        """Return a cache bucket for the given template.  All arguments are
         mandatory but filename may be `None`.
         """
         key = self.get_cache_key(name, filename)

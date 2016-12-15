@@ -23,7 +23,7 @@ from jinja2.utils import contextfunction, import_string, Markup
 from jinja2._compat import with_metaclass, string_types, iteritems
 
 
-# the only real useful gettext functions for a Jinja template.py.  Note
+# the only real useful gettext functions for a Jinja template.  Note
 # that ugettext must be assigned to gettext as Jinja doesn't support
 # non unicode strings.
 GETTEXT_FUNCTIONS = ('_', 'gettext', 'ngettext')
@@ -39,7 +39,7 @@ class ExtensionRegistry(type):
 
 
 class Extension(with_metaclass(ExtensionRegistry, object)):
-    """Extensions can be used to add extra functionality to the Jinja template.py
+    """Extensions can be used to add extra functionality to the Jinja template
     system at the parser level.  Custom extensions are bound to an environment
     but may not store environment specific data on `self`.  The reason for
     this is that an extension can be bound to another environment (for
@@ -106,7 +106,7 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
 
     def attr(self, name, lineno=None):
         """Return an attribute node for the current extension.  This is useful
-        to pass constants on extensions to generated template.py code.
+        to pass constants on extensions to generated template code.
 
         ::
 
@@ -400,7 +400,7 @@ class ExprStmtExtension(Extension):
 
 
 class LoopControlExtension(Extension):
-    """Adds break and continue to the template.py engine."""
+    """Adds break and continue to the template engine."""
     tags = set(['break', 'continue'])
 
     def parse(self, parser):
@@ -447,7 +447,7 @@ class AutoEscapeExtension(Extension):
 
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
                      babel_style=True):
-    """Extract localizable strings from the given template.py node.  Per
+    """Extract localizable strings from the given template node.  Per
     default this function returns matches in babel style that means non string
     parameters as well as keyword arguments are returned as `None`.  This
     allows Babel to figure out what you really meant if you are using
@@ -566,7 +566,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
        gettext calls.
 
     .. versionchanged:: 2.7
-       A `silent` option can now be provided.  If set to `False` template.py
+       A `silent` option can now be provided.  If set to `False` template
        syntax errors are propagated instead of being ignored.
 
     :param fileobj: the file-like object the messages should be extracted from

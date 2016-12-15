@@ -1,25 +1,28 @@
 import json
-import logging
+import threading
 import traceback
 
 from . import defaults
 from .exceptions import HTTPError
 from .http import HTTPRequest
-from ..common import log as _logger
 from ..common import splunk_util
+from ..common.log import get_cc_logger
+
+_logger = get_cc_logger()
 
 
 class CloudConnectEngine(object):
-    """
-    The cloud connect engine to process request instantiated from user options.
-    """
+    """The cloud connect engine to process request instantiated
+     from user options."""
 
     def __init__(self):
         self._stopped = False
+        self._running_job = None
+        self._running_thread = None
 
     @staticmethod
     def _set_logging(log_setting):
-        _logger.set_log_level(log_setting.level)
+        _logger.set_level(log_setting.level)
 
     def start(self, context, config):
         """Start current client instance to execute each request parsed
@@ -28,36 +31,54 @@ class CloudConnectEngine(object):
         if not config:
             raise ValueError('Config must not be empty')
 
+        self._running_thread = threading.current_thread()
+
         context = context or {}
         global_setting = config.global_settings
-        handled = 0
 
-        self._set_logging(global_setting.logging)
+        CloudConnectEngine._set_logging(global_setting.logging)
 
-        _logger.info('Start to execute requests')
+        _logger.info('Start to execute requests jobs.')
+        processed = 0
 
-        for item in config.requests:
-            job = Job(request=item, context=context,
-                      proxy=global_setting.proxy)
+        for request in config.requests:
+            job = Job(
+                request=request, context=context, proxy=global_setting.proxy
+            )
+            self._running_job = job
             job.run()
 
-            handled += 1
-            _logger.info('%s request(s) process finished', handled)
+            processed += 1
+            _logger.info('%s job(s) process finished', processed)
 
             if self._stopped:
-                _logger.info('Engine already stopped, exiting')
+                _logger.info(
+                    'Engine has been stopped, stopping to execute jobs.')
                 break
 
-        _logger.info('All requests finished')
+        _logger.info('Engine executing finished')
 
     def stop(self):
+        """Stops engine and running job. Do nothing if engine already
+        been stopped."""
+        if self._stopped:
+            _logger.info('Engine already stopped, do nothing.')
+            return
+
         _logger.info('Stopping engine')
+
+        if self._running_job:
+            self._running_job.stop()
+
+        if self._running_thread \
+                and self._running_thread != threading.current_thread():
+            self._running_thread.join()
+
         self._stopped = True
 
 
 class Job(object):
-    """
-    Job class represents a single request to send HTTP request until
+    """Job class represents a single request to send HTTP request until
     reached it's stop condition.
     """
 
@@ -66,12 +87,20 @@ class Job(object):
         Constructs a `Job` with properties request, context and a
          optional proxy setting.
         :param request: A `Request` instance which contains request settings.
-        :param context: A values set contains initial values for template variables.
-        :param proxy: A optional `Proxy` object contains proxy related settings.
+        :param context: A values set contains initial values for template
+         variables.
+        :param proxy: A optional `Proxy` object contains proxy related
+         settings.
         """
         self._request = request
         self._context = context
         self._client = HTTPRequest(proxy)
+        self._stopped = False
+
+    def stop(self):
+        """Sets job stopped flag to True"""
+        _logger.info('Stopping job')
+        self._stopped = True
 
     def _set_context(self, key, value):
         self._context[key] = value
@@ -115,25 +144,30 @@ class Job(object):
         self._execute_tasks(tasks)
 
     def _update_checkpoint(self):
-        namespace = self._request.checkpoint.namespace
-        checkpoint_content = dict()
-        content = self._request.checkpoint.content
-        for checkpoint_key in content:
-            checkpoint_value = content.get(checkpoint_key).value(self._context)
-            checkpoint_content[checkpoint_key] = checkpoint_value
-        splunk_util.update_checkpoint(namespace, checkpoint_content)
+        """Updates checkpoint based on checkpoint namespace and content."""
+        checkpoint = self._request.checkpoint
+        splunk_util.update_checkpoint(
+            namespace=checkpoint.normalize_namespace(self._context),
+            value=checkpoint.normalize_content(self._context)
+        )
 
     def _get_checkpoint(self):
         checkpoint = splunk_util.get_checkpoint()
         if checkpoint:
             self._context.update(checkpoint)
 
-
     def _is_stoppable(self):
         repeat_mode = self._request.repeat_mode
         return repeat_mode.is_once() or repeat_mode.passed(self._context)
 
+    def is_stopped(self):
+        """Return if this job is stopped."""
+        return self._stopped
+
     def run(self):
+        """Start job and exit util meet stop condition. """
+        _logger.info('Start to process job')
+
         try:
             self._run()
         except Exception as e:
@@ -141,9 +175,6 @@ class Job(object):
             raise e
 
     def _run(self):
-        """
-        Start request instance and exit util meet stop condition.
-        """
         _logger.info('Start to process request')
 
         options = self._request.options
@@ -152,6 +183,10 @@ class Job(object):
         self._get_checkpoint()
 
         while 1:
+            if self.is_stopped():
+                _logger.info('Job has been stopped')
+                break
+
             url = options.normalize_url(self._context)
             header = options.normalize_header(self._context)
             body = options.normalize_body(self._context)
@@ -194,4 +229,4 @@ class Job(object):
                 _logger.info('Stop condition reached, exit job now')
                 break
 
-        _logger.info('Process request finished')
+            _logger.info('Job processing finished')

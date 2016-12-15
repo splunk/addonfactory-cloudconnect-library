@@ -51,10 +51,10 @@ class BaseLoader(object):
             def __init__(self, path):
                 self.path = path
 
-            def get_source(self, environment, template.py):
-                path = join(self.path, template.py)
+            def get_source(self, environment, template):
+                path = join(self.path, template)
                 if not exists(path):
-                    raise TemplateNotFound(template.py)
+                    raise TemplateNotFound(template)
                 mtime = getmtime(path)
                 with file(path) as f:
                     source = f.read().decode('utf-8')
@@ -68,22 +68,22 @@ class BaseLoader(object):
     has_source_access = True
 
     def get_source(self, environment, template):
-        """Get the template.py source, filename and reload helper for a template.py.
-        It's passed the environment and template.py name and has to return a
+        """Get the template source, filename and reload helper for a template.
+        It's passed the environment and template name and has to return a
         tuple in the form ``(source, filename, uptodate)`` or raise a
-        `TemplateNotFound` error if it can't locate the template.py.
+        `TemplateNotFound` error if it can't locate the template.
 
         The source part of the returned tuple must be the source of the
-        template.py as unicode string or a ASCII bytestring.  The filename should
+        template as unicode string or a ASCII bytestring.  The filename should
         be the name of the file on the filesystem if it was loaded from there,
         otherwise `None`.  The filename is used by python for the tracebacks
         if no loader extension is used.
 
         The last item in the tuple is the `uptodate` function.  If auto
-        reloading is enabled it's always called to check if the template.py
+        reloading is enabled it's always called to check if the template
         changed.  No arguments are passed so the function must store the
         old state somewhere (for example in a closure).  If it returns `False`
-        the template.py will be reloaded.
+        the template will be reloaded.
         """
         if not self.has_source_access:
             raise RuntimeError('%s cannot provide access to the source' %
@@ -98,7 +98,7 @@ class BaseLoader(object):
 
     @internalcode
     def load(self, environment, name, globals=None):
-        """Loads a template.py.  This method looks up the template.py in the cache
+        """Loads a template.  This method looks up the template in the cache
         or loads one by calling :meth:`get_source`.  Subclasses should not
         override this method as loaders working on collections of other
         loaders (such as :class:`PrefixLoader` or :class:`ChoiceLoader`)
@@ -108,7 +108,7 @@ class BaseLoader(object):
         if globals is None:
             globals = {}
 
-        # first we try to get the source for this template.py together
+        # first we try to get the source for this template together
         # with the filename and the uptodate function.
         source, filename, uptodate = self.get_source(environment, name)
 
@@ -120,7 +120,7 @@ class BaseLoader(object):
             code = bucket.code
 
         # if we don't have code so far (not cached, no longer up to
-        # date) etc. we compile the template.py
+        # date) etc. we compile the template
         if code is None:
             code = environment.compile(source, name, filename)
 
@@ -146,7 +146,7 @@ class FileSystemLoader(BaseLoader):
     >>> loader = FileSystemLoader('/path/to/templates')
     >>> loader = FileSystemLoader(['/path/to/templates', '/other/path'])
 
-    Per default the template.py encoding is ``'utf-8'`` which can be changed
+    Per default the template encoding is ``'utf-8'`` which can be changed
     by setting the `encoding` parameter to something else.
 
     To follow symbolic links, set the *followlinks* parameter to ``True``::
@@ -211,7 +211,7 @@ class PackageLoader(BaseLoader):
 
     If the package path is not given, ``'templates'`` is assumed.
 
-    Per default the template.py encoding is ``'utf-8'`` which can be changed
+    Per default the template encoding is ``'utf-8'`` which can be changed
     by setting the `encoding` parameter to something else.  Due to the nature
     of eggs it's only possible to reload templates if the package was loaded
     from the file system and not a zip file.
@@ -268,8 +268,8 @@ class PackageLoader(BaseLoader):
 
 
 class DictLoader(BaseLoader):
-    """Loads a template.py from a python dict.  It's passed a dict of unicode
-    strings bound to template.py names.  This loader is useful for unittesting:
+    """Loads a template from a python dict.  It's passed a dict of unicode
+    strings bound to template names.  This loader is useful for unittesting:
 
     >>> loader = DictLoader({'index.html': 'source here'})
 
@@ -291,9 +291,9 @@ class DictLoader(BaseLoader):
 
 class FunctionLoader(BaseLoader):
     """A loader that is passed a function which does the loading.  The
-    function receives the name of the template.py and has to return either
-    an unicode string with the template.py source, a tuple in the form ``(source,
-    filename, uptodatefunc)`` or `None` if the template.py does not exist.
+    function receives the name of the template and has to return either
+    an unicode string with the template source, a tuple in the form ``(source,
+    filename, uptodatefunc)`` or `None` if the template does not exist.
 
     >>> def load_template(name):
     ...     if name == 'index.html':
@@ -302,7 +302,7 @@ class FunctionLoader(BaseLoader):
     >>> loader = FunctionLoader(load_template)
 
     The `uptodatefunc` is a function that is called if autoreload is enabled
-    and has to return `True` if the template.py is still up to date.  For more
+    and has to return `True` if the template is still up to date.  For more
     details have a look at :meth:`BaseLoader.get_source` which has the same
     return value.
     """
@@ -321,7 +321,7 @@ class FunctionLoader(BaseLoader):
 
 class PrefixLoader(BaseLoader):
     """A loader that is passed a dict of loaders where each loader is bound
-    to a prefix.  The prefix is delimited from the template.py by a slash per
+    to a prefix.  The prefix is delimited from the template by a slash per
     default, which can be changed by setting the `delimiter` argument to
     something else::
 
@@ -375,7 +375,7 @@ class PrefixLoader(BaseLoader):
 
 class ChoiceLoader(BaseLoader):
     """This loader works like the `PrefixLoader` just that no prefix is
-    specified.  If a template.py could not be found by one loader the next one
+    specified.  If a template could not be found by one loader the next one
     is tried.
 
     >>> loader = ChoiceLoader([

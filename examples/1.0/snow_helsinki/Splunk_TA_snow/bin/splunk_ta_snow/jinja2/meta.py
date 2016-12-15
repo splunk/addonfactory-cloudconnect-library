@@ -56,7 +56,7 @@ def find_undeclared_variables(ast):
 
 def find_referenced_templates(ast):
     """Finds all the referenced templates from the AST.  This will return an
-    iterator over all the hardcoded template.py extensions, inclusions and
+    iterator over all the hardcoded template extensions, inclusions and
     imports.  If dynamic inheritance or inclusion is used, `None` will be
     yielded.
 
@@ -67,7 +67,7 @@ def find_referenced_templates(ast):
     ['layout.html', None]
 
     This function is useful for dependency tracking.  For example if you want
-    to rebuild parts of the website after a layout template.py has changed.
+    to rebuild parts of the website after a layout template has changed.
     """
     for node in ast.find_all((nodes.Extends, nodes.FromImport, nodes.Import,
                               nodes.Include)):
@@ -87,7 +87,7 @@ def find_referenced_templates(ast):
             else:
                 yield None
             continue
-        # constant is a basestring, direct template.py name
+        # constant is a basestring, direct template name
         if isinstance(node.template.value, string_types):
             yield node.template.value
         # a tuple or list (latter *should* not happen) made of consts,

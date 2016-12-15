@@ -3,7 +3,7 @@
     jinja2.parser
     ~~~~~~~~~~~~~
 
-    Implements the template.py parser.
+    Implements the template parser.
 
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
@@ -61,7 +61,7 @@ class Parser(object):
             currently_looking = None
 
         if name is None:
-            message = ['Unexpected end of template.py.']
+            message = ['Unexpected end of template.']
         else:
             message = ['Encountered unknown tag \'%s\'.' % name]
 
@@ -88,7 +88,7 @@ class Parser(object):
         return self._fail_ut_eof(name, self._end_token_stack, lineno)
 
     def fail_eof(self, end_tokens=None, lineno=None):
-        """Like fail_unknown_tag but for end of template.py situations."""
+        """Like fail_unknown_tag but for end of template situations."""
         stack = list(self._end_token_stack)
         if end_tokens is not None:
             stack.append(end_tokens)
@@ -140,7 +140,7 @@ class Parser(object):
     def parse_statements(self, end_tokens, drop_needle=False):
         """Parse multiple statements into a list until one of the end tokens
         is reached.  This is used to parse the body of statements as it also
-        parses template.py data if appropriate.  The parser checks first if the
+        parses template data if appropriate.  The parser checks first if the
         current token is a colon and skips it if there is one.  Then it checks
         for the block end and parses until if one of the `end_tokens` is
         reached.  Per default the active token in the stream at the end of
@@ -155,7 +155,7 @@ class Parser(object):
         self.stream.expect('block_end')
         result = self.subparse(end_tokens)
 
-        # we reached the end of the template.py too early, the subparser
+        # we reached the end of the template too early, the subparser
         # does not check for this, so we do that now
         if self.stream.current.type == 'eof':
             self.fail_eof(end_tokens)
@@ -893,7 +893,7 @@ class Parser(object):
         return body
 
     def parse(self):
-        """Parse the whole template.py into a `Template` node."""
+        """Parse the whole template into a `Template` node."""
         result = nodes.Template(self.subparse(), lineno=1)
         result.set_environment(self.environment)
         return result

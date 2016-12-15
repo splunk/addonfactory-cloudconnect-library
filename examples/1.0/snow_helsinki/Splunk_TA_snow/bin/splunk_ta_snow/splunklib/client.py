@@ -150,12 +150,12 @@ class NotSupportedError(Exception):
 
 
 def _trailing(template, *targets):
-    """Substring of *template.py* following all *targets*.
+    """Substring of *template* following all *targets*.
 
     **Example**::
 
-        template.py = "this is a test of the bunnies."
-        _trailing(template.py, "is", "est", "the") == " bunnies"
+        template = "this is a test of the bunnies."
+        _trailing(template, "is", "est", "the") == " bunnies"
 
     Each target is matched successively in the string, and the string
     remaining after the last target is returned. If one of the targets
@@ -163,7 +163,7 @@ def _trailing(template, *targets):
 
     :param template: Template to extract a trailing string from.
     :type template: ``string``
-    :param targets: Strings to successively match in *template.py*.
+    :param targets: Strings to successively match in *template*.
     :type targets: list of ``string``s
     :return: Trailing string after all targets are matched.
     :rtype: ``string``
@@ -173,7 +173,7 @@ def _trailing(template, *targets):
     for t in targets:
         n = s.find(t)
         if n == -1:
-            raise ValueError("Target " + t + " not found in template.py.")
+            raise ValueError("Target " + t + " not found in template.")
         s = s[n + len(t):]
     return s
 
@@ -1366,7 +1366,7 @@ class ReadOnlyCollection(Endpoint):
                                         'description',
                                         'label',
                                         'manageable',
-                                        'template.py',
+                                        'template',
                                         'visible'],
                                         'required': ['name'], 'wildcard': []}}
         """

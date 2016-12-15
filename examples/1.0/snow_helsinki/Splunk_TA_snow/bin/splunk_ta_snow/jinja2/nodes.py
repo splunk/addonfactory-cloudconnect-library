@@ -254,7 +254,7 @@ class Helper(Node):
 
 
 class Template(Node):
-    """Node that represents a template.py.  This must be the outermost node that
+    """Node that represents a template.  This must be the outermost node that
     is passed to the compiler.
     """
     fields = ('body',)
@@ -262,14 +262,14 @@ class Template(Node):
 
 class Output(Stmt):
     """A node that holds multiple expressions which are then printed out.
-    This is used both for the `print` statement and the regular template.py data.
+    This is used both for the `print` statement and the regular template data.
     """
     fields = ('nodes',)
 
 
 class Extends(Stmt):
     """Represents an extends statement."""
-    fields = ('template.py',)
+    fields = ('template',)
 
 
 class For(Stmt):
@@ -315,12 +315,12 @@ class Block(Stmt):
 
 class Include(Stmt):
     """A node that represents the include tag."""
-    fields = ('template.py', 'with_context', 'ignore_missing')
+    fields = ('template', 'with_context', 'ignore_missing')
 
 
 class Import(Stmt):
     """A node that represents the import tag."""
-    fields = ('template.py', 'target', 'with_context')
+    fields = ('template', 'target', 'with_context')
 
 
 class FromImport(Stmt):
@@ -334,7 +334,7 @@ class FromImport(Stmt):
 
     The list of names may contain tuples if aliases are wanted.
     """
-    fields = ('template.py', 'names', 'with_context')
+    fields = ('template', 'names', 'with_context')
 
 
 class ExprStmt(Stmt):
@@ -456,7 +456,7 @@ class Const(Literal):
 
 
 class TemplateData(Literal):
-    """A constant template.py string."""
+    """A constant template string."""
     fields = ('data',)
 
     def as_const(self, eval_ctx=None):
@@ -832,7 +832,7 @@ class InternalName(Expr):
     yourself but the parser provides a
     :meth:`~jinja2.parser.Parser.free_identifier` method that creates
     a new identifier for you.  This identifier is not available from the
-    template.py and is not threated specially by the compiler.
+    template and is not threated specially by the compiler.
     """
     fields = ('name',)
 
@@ -869,11 +869,11 @@ class MarkSafeIfAutoescape(Expr):
 
 
 class ContextReference(Expr):
-    """Returns the current template.py context.  It can be used like a
+    """Returns the current template context.  It can be used like a
     :class:`Name` node, with a ``'load'`` ctx and will return the
     current :class:`~jinja2.runtime.Context` object.
 
-    Here an example that assigns the current template.py name to a
+    Here an example that assigns the current template name to a
     variable named `foo`::
 
         Assign(Name('foo', ctx='store'),

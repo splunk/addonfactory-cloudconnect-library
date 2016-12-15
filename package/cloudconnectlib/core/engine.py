@@ -4,7 +4,6 @@ import threading
 from . import defaults
 from .exceptions import HTTPError
 from .http import HTTPRequest
-from ..common import splunk_util
 from ..common.log import get_cc_logger
 
 _logger = get_cc_logger()

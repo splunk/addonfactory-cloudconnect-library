@@ -102,7 +102,7 @@ class TADataCollector(object):
         ckpt = self._get_ckpt()
         data_client = self.data_client_cls(self._meta_config,
             self._task_config, ckpt, self._checkpoint_manager,
-                                           self._data_loader.write_events)
+                                           self._data_loader.get_event_writer())
 
         stulog.logger.debug("{} Set {}={} ".format(self._p, c.ckpt_dict, ckpt))
         return data_client

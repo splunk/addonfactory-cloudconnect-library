@@ -1,5 +1,4 @@
 from .data_collection.ta_data_client import TaDataClient
-from ..common import splunk_util
 from ..splunktacollectorlib.common import log as stulog
 from ..splunktacollectorlib.data_collection import ta_consts as c
 from ..common.log import set_cc_logger
@@ -11,19 +10,20 @@ class TACloudConnectClient(TaDataClient):
                  task_config,
                  ckpt=None,
                  checkpoint_mgr=None,
-                 event_write_fn=None
+                 event_writer=None
                  ):
         super(TACloudConnectClient, self).__init__(meta_config,
                                                    task_config,
                                                    ckpt,
                                                    checkpoint_mgr,
-                                                   event_write_fn)
+                                                   event_writer)
         self._set_log()
         self._cc_config_file = self._meta_config["cc_json_file"]
+        from ..core.pipemgr import PipeManager
         from ..client import CloudConnectClient as Client
+        self._pipe_mgr = PipeManager(event_writer=event_writer)
         self._client = Client(self._task_config, self._cc_config_file,
                               checkpoint_mgr)
-        splunk_util.set_std_out(event_write_fn)
 
     def _set_log(self):
         pairs = ['{}="{}"'.format(c.stanza_name, self._task_config[

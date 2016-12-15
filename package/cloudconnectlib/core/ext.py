@@ -1,7 +1,7 @@
 import json
 import re
+from .exceptions import FuncException
 from ..common import util, log
-from ..common.splunk_util import std_out
 
 _logger = log.get_cc_logger()
 
@@ -71,7 +71,10 @@ def std_output(candidates):
             all_str = False
             _logger.warning("The type of data needs to print is {} rather "
                             "than basestring".format(type(candidate)))
-        std_out(candidate)
+        from .pipemgr import PipeManager
+        if not PipeManager().write_events(candidate):
+            raise FuncException("Fail to output data to stdout. The Event "
+                                "writer has stopped or encountered exception")
 
 
 def json_empty(json_path_expr, candidate):

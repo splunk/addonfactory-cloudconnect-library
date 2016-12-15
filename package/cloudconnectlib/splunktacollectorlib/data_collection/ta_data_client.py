@@ -23,11 +23,11 @@ class TaDataClient(object):
                  task_config,
                  ckpt=None,
                  checkpoint_mgr=None,
-                 event_write_fn = None):
+                 event_writer=None):
         self._meta_config = meta_config
         self._task_config = task_config
         self._checkpoint_mgr = checkpoint_mgr
-        self._event_write_fn = event_write_fn
+        self._event_writer = event_writer
         self._ckpt = ckpt or {}
         self._stop = False
 

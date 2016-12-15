@@ -6,6 +6,11 @@ class ConfigException(Exception):
     pass
 
 
+class FuncException(Exception):
+    """Ext function call exception"""
+    pass
+
+
 class HTTPError(Exception):
     """ HTTPError raised when HTTP request returned a error."""
 

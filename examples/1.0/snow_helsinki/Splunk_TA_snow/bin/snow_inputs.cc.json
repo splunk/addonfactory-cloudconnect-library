@@ -32,7 +32,7 @@
             "type": "{{__settings__.proxy_type}}"
         },
         "logging": {
-            "level": "{{__settings__.loglevel}}"
+            "level": "{{__settings__.logging.loglevel}}"
         }
     },
     "requests": [

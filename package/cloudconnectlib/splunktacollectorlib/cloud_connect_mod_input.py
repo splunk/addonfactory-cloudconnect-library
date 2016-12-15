@@ -7,7 +7,6 @@ from .mod_helper import get_main_file
 
 def run(schema_para_list=None, single_instance=False):
     script_name = os.path.basename(get_main_file()).rstrip(".py")
-    print script_name
     cc_json_file = os.path.sep.join(
         [os.path.dirname(os.path.abspath(get_main_file())),
                                      ".".join([script_name, "cc.json"])])

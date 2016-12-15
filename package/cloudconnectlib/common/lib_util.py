@@ -25,9 +25,9 @@ def register_module(new_path):
 
 
 def register_cacert_locater(cacerts_locater_path):
-    _HTTPLIB_PATTERN = re.compile(r'(?:\w+.)*httplib$')
     for x in sys.modules:
-        if re.match(_HTTPLIB_PATTERN, x):
-            stulog.logger.warning("Httplib module '{}' is already installed. "
-                         "The ca_certs_locater may not work".format(x))
+        if (x == "httplib2" or x.endswith(".httplib2")) and sys.modules[x] \
+                is not None:
+            stulog.logger.warning("Httplib2 module '{}' is already installed. "
+                                  "The ca_certs_locater may not work".format(x))
     register_module(cacerts_locater_path)

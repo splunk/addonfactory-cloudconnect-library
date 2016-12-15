@@ -114,7 +114,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         level = logger.get('level', '').upper()
 
         if level not in _LOGGING_LEVELS:
-            _logger.warn('Log level not specified, set log level to INFO')
+            _logger.warning('Log level not specified, set log level to INFO')
             logger['level'] = logging.INFO
         else:
             logger['level'] = _LOGGING_LEVELS[level]
@@ -181,7 +181,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         loop_type = repeat_mode.get('type')
 
         if not loop_type or loop_type.lower() not in _REPEAT_MODE_TYPES:
-            _logger.warn('loop mode type expect to be one of [%s]: found %s,'
+            _logger.warning('loop mode type expect to be one of [%s]: found %s,'
                          ' setting to default type',
                          ','.join(_REPEAT_MODE_TYPES), loop_type)
             loop_type = 'once'

@@ -14,13 +14,13 @@ class CloudClientLogAdapter(logging.LoggerAdapter):
 
     __metaclass__ = Singleton
 
-    def __init__(self, logger, extra=None, prefix=""):
+    def __init__(self, logger=None, extra=None, prefix=""):
         super(CloudClientLogAdapter, self).__init__(logger, extra)
         self.cc_prefix = prefix if prefix else ""
 
     def process(self, msg, kwargs):
         msg = "{} {}".format(self.cc_prefix, msg)
-        super(CloudClientLogAdapter, self).process(msg, kwargs)
+        return super(CloudClientLogAdapter, self).process(msg, kwargs)
 
     def set_level(self, val):
         self.logger.setLevel(val)

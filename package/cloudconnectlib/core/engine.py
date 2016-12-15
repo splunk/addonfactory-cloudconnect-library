@@ -22,7 +22,7 @@ class CloudConnectEngine(object):
 
     @staticmethod
     def _set_logging(log_setting):
-        _logger.set_log_level(log_setting.level)
+        _logger.set_level(log_setting.level)
 
     def start(self, context, config):
         """Start current client instance to execute each request parsed
@@ -36,7 +36,7 @@ class CloudConnectEngine(object):
         context = context or {}
         global_setting = config.global_settings
 
-        self._set_logging(global_setting.logging)
+        CloudConnectEngine._set_logging(global_setting.logging)
 
         _logger.info('Start to execute requests jobs.')
         processed = 0

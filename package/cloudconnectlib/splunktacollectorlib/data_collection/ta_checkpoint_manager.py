@@ -34,6 +34,7 @@ class TACheckPointMgr(object):
 
     def update_ckpt(self, ckpt, namespaces=None):
         if not ckpt:
+            stulog.logger.warning("Checkpoint expect to be not empty.")
             return
         key, namespaces = self.get_ckpt_key(namespaces)
         self._store.update_state(key, {"namespaces": namespaces, "data": ckpt})
@@ -44,6 +45,9 @@ class TACheckPointMgr(object):
 
     def _key_formatter(self, namespaces=None):
         if not namespaces:
+            stulog.logger.info('Namespaces is empty, using stanza name instead.')
             namespaces = [self._task_config[c.stanza_name]]
         key_str = TACheckPointMgr.SEPARATOR.join(namespaces)
-        return th.format_input_name_for_file(key_str), namespaces
+        hashed_file = th.format_input_name_for_file(key_str)
+        stulog.logger.info('raw file=%s hashed file=%s', key_str, hashed_file)
+        return hashed_file, namespaces

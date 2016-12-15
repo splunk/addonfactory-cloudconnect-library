@@ -12,9 +12,7 @@ __import__(ta_lib_name + "_import_declare")
 import cloudconnectlib.splunktacollectorlib.cloud_connect_mod_input as mod_input
 
 def ta_run():
-    schema_para_list = ["account", "interval", "snow_host", "sysparm_limit",
-                         "since_when", "table_name"]
-    mod_input.run(schema_para_list=schema_para_list)
+    mod_input.run()
 
 if __name__ == "__main__":
     ta_run()

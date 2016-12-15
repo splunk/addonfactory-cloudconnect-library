@@ -56,8 +56,8 @@
                 "conditions": [
                     {
                         "input": [
-                            "{{__response__.body}}",
-                            "$.result[*]"
+                            "$.result[*]",
+                            "{{__response__.body}}"
                         ],
                         "method": "json_empty"
                     }

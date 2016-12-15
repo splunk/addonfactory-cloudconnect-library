@@ -74,7 +74,7 @@ def std_output(candidates):
         std_out(candidate)
 
 
-def json_empty(candidate, json_path_expr=None):
+def json_empty(json_path_expr, candidate):
     """
     Check whether a JSON is empty.
     :param json_path_expr: A optional jsonpath expression

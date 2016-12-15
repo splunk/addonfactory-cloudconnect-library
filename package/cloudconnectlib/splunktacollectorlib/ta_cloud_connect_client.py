@@ -21,9 +21,9 @@ class TACloudConnectClient(TaDataClient):
         self._set_log()
         self._cc_config_file = self._meta_config["cc_json_file"]
         from ..client import CloudConnectClient as Client
-        self._client = Client(self._task_config, self._cc_config_file)
+        self._client = Client(self._task_config, self._cc_config_file,
+                              checkpoint_mgr)
         splunk_util.set_std_out(event_write_fn)
-        splunk_util.set_check_pointer(checkpoint_mgr)
 
     def _set_log(self):
         pairs = ['{}="{}"'.format(c.stanza_name, self._task_config[

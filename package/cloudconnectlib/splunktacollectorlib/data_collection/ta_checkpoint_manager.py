@@ -48,6 +48,6 @@ class TACheckPointMgr(object):
             stulog.logger.info('Namespaces is empty, using stanza name instead.')
             namespaces = [self._task_config[c.stanza_name]]
         key_str = TACheckPointMgr.SEPARATOR.join(namespaces)
-        hashed_file = th.format_input_name_for_file(key_str)
+        hashed_file = th.format_name_for_file(key_str)
         stulog.logger.info('raw file=%s hashed file=%s', key_str, hashed_file)
         return hashed_file, namespaces

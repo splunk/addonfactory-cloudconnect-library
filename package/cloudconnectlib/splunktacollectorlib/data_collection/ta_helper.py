@@ -55,7 +55,7 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
     return inputs, configs, settings
 
 
-def format_input_name_for_file(name):
+def format_name_for_file(name):
     hash_key = hashlib.sha256(name).hexdigest()
     return hash_key
 

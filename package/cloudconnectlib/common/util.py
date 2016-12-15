@@ -39,10 +39,10 @@ def load_json_file(file_path):
 def format_events(raw_events, time=None,
                   index=None, host=None, source=None, sourcetype=None,
                   stanza=None, unbroken=False, done=False):
-    return XMLEvent.format_events([XMLEvent(data, time=time,
-                                            index=index, host=host,
-                                            source=source,
-                                            sourcetype=sourcetype,
-                                            stanza=stanza, unbroken=unbroken,
-                                            done=done) for data in
-                                   raw_events])
+    return XMLEvent.format_events(XMLEvent(data, time=time,
+                                           index=index, host=host,
+                                           source=source,
+                                           sourcetype=sourcetype,
+                                           stanza=stanza, unbroken=unbroken,
+                                           done=done) for data in
+                                  raw_events)

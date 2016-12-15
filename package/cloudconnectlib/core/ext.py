@@ -65,10 +65,12 @@ def std_output(candidates):
     """
     if isinstance(candidates, basestring):
         candidates = [candidates]
+    all_str = True
     for candidate in candidates:
-        if not isinstance(candidate, basestring):
-            _logger.warning("The type of data needs to print is {} rather"
-                         "basestring".format(type(candidate)))
+        if all_str and not isinstance(candidate, basestring):
+            all_str = False
+            _logger.warning("The type of data needs to print is {} rather "
+                            "than basestring".format(type(candidate)))
         std_out(candidate)
 
 

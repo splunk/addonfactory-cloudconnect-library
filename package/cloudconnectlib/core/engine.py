@@ -1,5 +1,5 @@
 import json
-import threading
+import time
 
 from . import defaults
 from .exceptions import HTTPError
@@ -17,7 +17,6 @@ class CloudConnectEngine(object):
     def __init__(self):
         self._stopped = False
         self._running_job = None
-        self._running_thread = None
 
     @staticmethod
     def _set_logging(log_setting):
@@ -29,8 +28,6 @@ class CloudConnectEngine(object):
         """
         if not config:
             raise ValueError('Config must not be empty')
-
-        self._running_thread = threading.current_thread()
 
         context = context or {}
         global_setting = config.global_settings
@@ -67,11 +64,13 @@ class CloudConnectEngine(object):
         _logger.info('Stopping engine')
 
         if self._running_job:
+            _logger.info('Attempting to stop the running job.')
             self._running_job.stop()
 
-        if self._running_thread \
-                and self._running_thread != threading.current_thread():
-            self._running_thread.join()
+            while not self._running_job.is_stopped():
+                time.sleep(0.1)
+
+            _logger.info('Stopping job finished.')
 
         self._stopped = True
 
@@ -95,6 +94,8 @@ class Job(object):
         self._context = context
         self._client = HTTPRequest(proxy)
         self._stopped = False
+        self._should_stop = False
+
         self._request_iterated_count = 0
         self._iteration_mode = self._request.iteration_mode
         self._max_iteration_count = self._get_max_iteration_count()
@@ -107,8 +108,11 @@ class Job(object):
 
     def stop(self):
         """Sets job stopped flag to True"""
+        if self.is_stopped():
+            _logger.info('Job already been stopped.')
+            return
         _logger.info('Stopping job')
-        self._stopped = True
+        self._should_stop = True
 
     def _set_context(self, key, value):
         self._context[key] = value
@@ -203,8 +207,8 @@ class Job(object):
         self._get_checkpoint()
 
         while 1:
-            if self.is_stopped():
-                _logger.info('Job has been stopped')
+            if self._should_stop:
+                _logger.info('Job should been stopped.')
                 break
 
             url = options.normalize_url(self._context)
@@ -233,6 +237,8 @@ class Job(object):
             if self._is_stoppable():
                 _logger.info('Stop condition reached, exit job now')
                 break
+
+        self._stopped = True
 
         _logger.info('Job processing finished')
 

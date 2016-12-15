@@ -19,6 +19,7 @@ from ...splunktalib import orphan_process_monitor as opm
 from ...splunktalib import file_monitor as fm
 from ..common import load_schema_file as ld
 from . import ta_data_client as tdc
+from ..mod_helper import get_main_file
 
 utils.remove_http_proxy_env_vars()
 
@@ -93,13 +94,18 @@ def _handle_file_changes(data_loader):
     return _handle_refresh
 
 
-def _get_conf_files(local_file_list):
-    cur_dir = op.dirname(op.dirname(op.dirname(op.dirname(op.dirname(op.abspath(
-        __file__))))))
-    files = []
-    for f in local_file_list:
-        files.append(op.join(cur_dir, "local", f))
-    return files
+def _get_conf_files(settings):
+    rest_root = settings.get("meta").get("restRoot")
+    file_list = [rest_root+"_settings.conf"]
+    if settings.get("pages") and settings.get("pages").get("configuration"):
+        configs = settings.get("pages").get("configuration")
+        tabs = configs.get("tabs") if configs.get("tabs") else []
+        for tab in tabs:
+            if tab.get("table"):
+                file_list.append(rest_root + "_" + tab.get("name") + ".conf")
+    ta_dir = op.dirname(op.dirname(op.abspath(
+        get_main_file())))
+    return [op.join(ta_dir, "local", f) for f in file_list]
 
 
 def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
@@ -121,10 +127,12 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
     _setup_signal_handler(loader, ta_short_name)
 
     # monitor files to reboot
-    # if settings["basic"].get("monitor_file"):
-    #     monitor = fm.FileMonitor(_handle_file_changes(loader),
-    #                          _get_conf_files(settings["basic"]["monitor_file"]))
-    #     loader.add_timer(monitor.check_changes, time.time(), 10)
+    try:
+        monitor = fm.FileMonitor(_handle_file_changes(loader),
+                              _get_conf_files(settings))
+        loader.add_timer(monitor.check_changes, time.time(), 10)
+    except Exception:
+        stulog.logger.exception("Fail to add files for monitoring")
 
     # add orphan process handling, which will check each 1 second
     orphan_checker = opm.OrphanProcessChecker(loader.tear_down)

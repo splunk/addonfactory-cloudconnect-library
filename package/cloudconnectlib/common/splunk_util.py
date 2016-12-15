@@ -1,5 +1,6 @@
 import sys
-from ..splunktacollectorlib.data_collection.ta_checkpoint_manager import TACheckPointMgr
+from ..splunktacollectorlib.data_collection.ta_checkpoint_manager import \
+    TACheckPointMgr
 
 check_pointer = None
 
@@ -12,7 +13,6 @@ def set_check_pointer(checkpointer):
 
 
 def get_checkpoint():
-    global check_pointer
     if check_pointer and isinstance(check_pointer, TACheckPointMgr):
         return check_pointer.get_ckpt()
     else:

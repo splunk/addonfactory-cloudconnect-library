@@ -1,0 +1,124 @@
+{
+    "meta": {
+        "version": "1.0.0"
+    },
+    "parameters": [
+        "name",
+        "snow_host",
+        "sysparm_limit",
+        "table_name",
+        "since_when",
+        "index",
+        "sourcetype",
+        "source",
+        "__settings__.proxy_enable",
+        "__settings__.proxy_host",
+        "__settings__.proxy_type",
+        "__settings__.proxy_username",
+        "__settings__.proxy_rdns",
+        "__settings__.proxy_type",
+        "__settings__.logging_level",
+        "account.username",
+        "account.password"
+    ],
+    "global_settings": {
+        "proxy": {
+            "enabled": "{{__settings__.proxy_enable}}",
+            "host": "{{__settings__.proxy_host}}",
+            "port": "{{__settings__.proxy_port}}",
+            "username": "{{__settings__.proxy_username}}",
+            "password": "{{__settings__.proxy_password}}",
+            "rdns": "{{__settings__.proxy_rdns}}",
+            "type": "{{__settings__.proxy_type}}"
+        },
+        "logging": {
+            "level": "{{__settings__.logging.loglevel}}"
+        }
+    },
+    "requests": [
+        {
+            "options": {
+                "url": "https://{{snow_host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
+                "method": "GET",
+                "auth": {
+                    "type": "basic_auth",
+                    "options": {
+                        "username": "{{account.username}}",
+                        "password": "{{account.password}}"
+                    }
+                },
+                "headers": {
+                    "accept": "application/json"
+                }
+            },
+            "pre_process": {},
+            "post_process": {
+                "conditions": [
+                    {
+                        "input": [
+                            "{{__response__.body}}",
+                            "$.result[*]"
+                        ],
+                        "method": "json_empty"
+                    }
+                ],
+                "pipeline": [
+                    {
+                        "input": [
+                            "$.result[-1].sys_updated_on",
+                            "{{__response__.body}}"
+                        ],
+                        "method": "json_path",
+                        "output": "since_when"
+                    },
+                    {
+                        "input": [
+                            "$.result[*]",
+                            "{{__response__.body}}"
+                        ],
+                        "method": "json_path",
+                        "output": "__stdout__"
+                    },
+                    {
+                        "input": [
+                            "{{__stdout__}}",
+                            "",
+                            "{{index}}",
+                            "{{host}}",
+                            "{{source}}",
+                            "{{sourcetype}}"
+                        ],
+                        "method": "splunk_xml",
+                        "output": "__stdout__"
+                    },
+                    {
+                        "input": [
+                            "{{__stdout__}}"
+                        ],
+                        "method": "std_output"
+                    }
+                ]
+            },
+            "iteration_mode": {
+                "iteration_count": "-1",
+                "stop_conditions": [
+                    {
+                        "input": [
+                            "$.result[*]",
+                            "{{__response__.body}}"
+                        ],
+                        "method": "json_empty"
+                    }
+                ]
+            },
+            "checkpoint": {
+                "namespace": [
+                    "{{name}}"
+                ],
+                "content": {
+                    "since_when": "{{since_when}}"
+                }
+            }
+        }
+    ]
+}

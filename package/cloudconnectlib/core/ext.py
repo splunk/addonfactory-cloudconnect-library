@@ -1,5 +1,9 @@
 import json
 import re
+from ..common import util, log
+from ..common.splunk_util import std_out
+
+_logger = log.get_cc_logger()
 
 
 def regex_match(pattern, candidate):
@@ -42,29 +46,32 @@ def json_path(expr, candidate):
     return results[0] if len(results) == 1 else results
 
 
-def splunk_xml(candidate, time='', index='', host='', source='', sourcetype=''):
+def splunk_xml(candidates, time=None, index=None, host=None, source=None,
+               sourcetype=None):
     """
     Wrap a event with splunk xml format.
     :return: A wrapped event with splunk xml format.
     """
-    return ("<stream><event><host>{host}</host>"
-            "<source>{source}</source>"
-            "<sourcetype>{sourcetype}</sourcetype>"
-            "<time>{time}</time>"
-            "<index>{index}</index><data>"
-            "<![CDATA[{data}]]></data></event></stream>") \
-        .format(host=host or '', source=source or '',
-                sourcetype=sourcetype or '',
-                time=time or '', index=index or '', data=candidate or '')
+    if not isinstance(candidates, (list, tuple)):
+        candidates = [candidates]
+    return util.format_events(candidates, time=time, index=index, host=host,
+                              source=source, sourcetype=sourcetype)
 
 
-def std_output(candidate):
+def std_output(candidates):
     """
     Output a string to stdout.
-    :param candidate: string to output to stdout.
+    :param candidates: List of string to output to stdout or a single string.
     """
-    from ..common.splunk_util import std_out
-    std_out(candidate)
+    if isinstance(candidates, basestring):
+        candidates = [candidates]
+    all_str = True
+    for candidate in candidates:
+        if all_str and not isinstance(candidate, basestring):
+            all_str = False
+            _logger.warning("The type of data needs to print is {} rather "
+                            "than basestring".format(type(candidate)))
+        std_out(candidate)
 
 
 def json_empty(candidate, json_path_expr=None):
@@ -86,6 +93,12 @@ def json_empty(candidate, json_path_expr=None):
 
 
 def json_not_empty(candidate, json_path_expr=None):
+    """Check if a JSON object is not empty. A optional jsonpath expression
+    will be used to extract JSON from candidate.
+    :param json_path_expr: A optional jsonpath expression
+    :param candidate: target to extract
+    :return: `True` if the result JSON is not `{}` or `[]` or `None`
+    """
     return not json_empty(candidate, json_path_expr)
 
 

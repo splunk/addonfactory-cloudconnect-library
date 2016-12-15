@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<input>
+  <server_host>xxu-mbp</server_host>
+  <server_uri>https://127.0.0.1:8089</server_uri>
+  <session_key>xGx1VN_3j65CCmxBPe^aL7s8TCw1BRAn3nGwwm331rsOKFMQFzacy3LYVszt1DB6XGdZF^DKl4uPkD975^ZwIwUIwjxaCxwLQaq63vdr0rYuWbC</session_key>
+  <checkpoint_dir>/Applications/Splunk/var/lib/splunk/modinputs/snow_inputs</checkpoint_dir>
+  <configuration>
+    <stanza name="snow_inputs://input1">
+      <param name="account">account1</param>
+      <param name="host">xxu-mbp</param>
+      <param name="index">default</param>
+      <param name="interval">3600</param>
+      <param name="since_when">2016-11-02 19:42:23</param>
+      <param name="snow_host">ven01583.service-now.com</param>
+      <param name="sysparm_limit">1000</param>
+      <param name="table_name">incident</param>
+    </stanza>
+  </configuration>
+</input>

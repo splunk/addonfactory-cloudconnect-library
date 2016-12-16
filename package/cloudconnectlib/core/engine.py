@@ -195,8 +195,10 @@ class Job(object):
         try:
             self._run()
         except Exception as e:
-            _logger.exception("engine encounter error")
+            _logger.exception('Encountered error while running job.')
             raise e
+        finally:
+            self._stopped = True
 
     def _run(self):
         _logger.info('Start to process request')
@@ -209,7 +211,7 @@ class Job(object):
         while 1:
             if self._should_stop:
                 _logger.info('Job should been stopped.')
-                break
+                return
 
             url = options.normalize_url(self._context)
             header = options.normalize_header(self._context)
@@ -237,8 +239,6 @@ class Job(object):
             if self._is_stoppable():
                 _logger.info('Stop condition reached, exit job now')
                 break
-
-        self._stopped = True
 
         _logger.info('Job processing finished')
 

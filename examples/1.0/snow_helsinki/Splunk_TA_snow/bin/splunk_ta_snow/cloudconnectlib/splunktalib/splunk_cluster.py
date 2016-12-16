@@ -41,7 +41,10 @@ class ServerInfo(object):
         return False
 
     def is_shc_member(self):
-        return "cluster_search_head" in self._server_info["server_roles"]
+        for sh in ('shc_member', 'shc_captain'):
+            if sh in self._server_info['server_roles']:
+                return True
+        return False
 
     def version(self):
         return self._server_info["version"]

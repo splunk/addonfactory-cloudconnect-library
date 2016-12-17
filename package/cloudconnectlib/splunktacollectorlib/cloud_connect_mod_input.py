@@ -1,9 +1,7 @@
 import ConfigParser
 import os
 import os.path as op
-import re
 
-from .common import log as stulog
 from .data_collection import ta_mod_input as ta_input
 from .mod_helper import get_main_file
 from .ta_cloud_connect_client import TACloudConnectClient as collector_cls
@@ -12,17 +10,10 @@ from .ta_cloud_connect_client import TACloudConnectClient as collector_cls
 def _load_options_from_inputs_spec(stanza_name):
     root = op.dirname(op.dirname(op.abspath(get_main_file())))
     input_spec_file = 'inputs.conf.spec'
-    file_path = None
+    file_path = op.join(root, 'README', input_spec_file)
 
-    for d in os.listdir(root):
-        if re.match('^README$', d, re.IGNORECASE):
-            file_path = op.join(root, d, input_spec_file)
-            if op.isfile(file_path):
-                break
-
-    if not file_path:
-        stulog.logger.warning("%s doesn't exist", input_spec_file)
-        return None
+    if not op.isfile(file_path):
+        raise RuntimeError("README/%s doesn't exist" % input_spec_file)
 
     parser = ConfigParser.RawConfigParser(allow_no_value=True)
     parser.read(file_path)
@@ -30,7 +21,7 @@ def _load_options_from_inputs_spec(stanza_name):
     stanza_prefix = '%s://' % stanza_name
 
     for section in parser.sections():
-        if section.startswith(stanza_prefix):
+        if section == stanza_name or section.startswith(stanza_prefix):
             options.extend(parser.options(section))
     return set(options)
 

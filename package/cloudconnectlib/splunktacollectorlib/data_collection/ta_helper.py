@@ -1,14 +1,15 @@
-import os.path as op
-import re
-import hashlib
-from datetime import datetime
-from calendar import timegm
-from ...splunktacollectorlib import config as sc
-from ...splunktalib.common import util
-from . import ta_consts as c
 import hashlib
 import json
+import os.path as op
+import re
+from calendar import timegm
+from datetime import datetime
+
+import functools32
 from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema
+from . import ta_consts as c
+from ...splunktacollectorlib import config as sc
+from ...splunktalib.common import util
 
 
 def utc2timestamp(human_time):
@@ -55,9 +56,9 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
     return inputs, configs, settings
 
 
+@functools32.lru_cache(maxsize=64)
 def format_name_for_file(name):
-    hash_key = hashlib.sha256(name).hexdigest()
-    return hash_key
+    return hashlib.sha256(name).hexdigest()
 
 
 class ConfigSchemaHandler(object):

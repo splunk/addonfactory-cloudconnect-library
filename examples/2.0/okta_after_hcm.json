@@ -2,7 +2,7 @@
     "meta": {
         "version": "1.0.0"
     },
-    "parameters": [
+    "tokens": [
         "name",
         "okta_url",
         "limit",
@@ -55,7 +55,7 @@
                 ]
             },
             "post_process": {
-                "conditions": [
+                "skip_conditions": [
                     {
                         "input": [
                             "$.*",

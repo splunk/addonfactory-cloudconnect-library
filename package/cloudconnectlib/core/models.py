@@ -178,8 +178,8 @@ class _Conditional(object):
 class Processor(_Conditional):
     """Processor class contains a conditional data process pipeline"""
 
-    def __init__(self, conditions, pipeline):
-        super(Processor, self).__init__(conditions)
+    def __init__(self, skip_conditions, pipeline):
+        super(Processor, self).__init__(skip_conditions)
         self._pipeline = pipeline or []
 
     @property

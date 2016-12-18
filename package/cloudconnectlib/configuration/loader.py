@@ -2,9 +2,10 @@ import logging
 import re
 import traceback
 from abc import abstractmethod
+
 from jsonschema import validate, ValidationError
 from munch import munchify
-from ..common import log as _logger
+from ..common.log import get_cc_logger
 from ..common.util import (
     load_json_file, is_valid_bool, is_valid_port, is_true
 )
@@ -15,10 +16,8 @@ from ..core.models import (
     Condition, Task, Checkpoint, IterationMode
 )
 from ..core.template import compile_template
-from ..common.log import get_cc_logger
 
 _logger = get_cc_logger()
-
 
 _PROXY_TYPES = ['http', 'socks4', 'socks5', 'http_no_tunnel']
 _AUTH_TYPES = {
@@ -82,7 +81,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         port = proxy['port']
         if proxy['host'] and not is_valid_port(port):
             raise ValueError(
-                'Proxy port expected to be in range [1,65535]: {}'.format(port)
+                'Proxy port expect to be in range [1,65535]: {}'.format(port)
             )
 
         # proxy type default to 'http'
@@ -183,7 +182,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
             iteration_count = int(count)
         except ValueError:
             raise ValueError(
-                'Repeat mode "iteration_count" must be a integer: %s' % count)
+                'Iteration mode "iteration_count" must be an integer: %s' % count)
 
         stop_conditions = self._parse_conditions(
             iteration_mode['stop_conditions'])
@@ -192,9 +191,14 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                              conditions=stop_conditions)
 
     def _load_processor(self, processor):
-        conditions = self._parse_conditions(processor.get('conditions', []))
-        tasks = self._parse_tasks(processor.get('pipeline', []))
-        return Processor(conditions=conditions, pipeline=tasks)
+        skip_conditions = self._parse_conditions(
+            processor.get('skip_conditions', [])
+        )
+        pipeline = self._parse_tasks(processor.get('pipeline', []))
+        return Processor(
+            skip_conditions=skip_conditions,
+            pipeline=pipeline
+        )
 
     def _load_request(self, request):
         options = self._load_options(request['options'])
@@ -227,17 +231,14 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                     traceback.format_exc()))
 
         try:
-            meta = munchify(definition['meta'])
-            parameters = definition['parameters']
-
             global_settings = self._load_global_setting(
                 definition.get('global_settings'), context)
 
             requests = [self._load_request(item) for item in definition['requests']]
 
             return munchify({
-                'meta': meta,
-                'parameters': parameters,
+                'meta': munchify(definition['meta']),
+                'tokens': definition['tokens'],
                 'global_settings': global_settings,
                 'requests': requests,
             })

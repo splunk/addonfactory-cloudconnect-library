@@ -1,7 +1,8 @@
+import time
 import traceback
-import urllib
-import urlparse
+
 from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
+from solnlib.packages.requests import PreparedRequest
 from . import defaults
 from .exceptions import HTTPError
 from ..common.log import get_cc_logger
@@ -40,6 +41,17 @@ class HTTPResponse(object):
         return self._status_code
 
 
+def _make_prepare_url_func():
+    """Expose prepare_url in `PreparedRequest`"""
+    pr = PreparedRequest()
+
+    def prepare_url(url, params=None):
+        pr.prepare_url(url, params=params)
+        return pr.url
+
+    return prepare_url
+
+
 class HTTPRequest(object):
     """
     HTTPRequest class represents a single request to send HTTP request until
@@ -61,16 +73,7 @@ class HTTPRequest(object):
         """
         self._proxy_info = self._prepare_proxy_info(proxy)
         self._connection = None
-
-    @staticmethod
-    def _encode_url(url):
-        if not url:
-            raise ValueError('Request url unexpected to be empty')
-        parts = url.split('?', 1)
-        if len(parts) == 1:
-            return url
-        params = urlparse.parse_qs(parts[1])
-        return '?'.join([parts[0], urllib.urlencode(params, True)])
+        self._prepare_url_func = _make_prepare_url_func()
 
     def _send_request(self, uri, method, headers=None, body=None):
         if self._connection is None:
@@ -114,7 +117,14 @@ class HTTPRequest(object):
         if self._connection is None:
             self._connection = self._build_http_connection(self._proxy_info)
 
-        uri = self._encode_url(url) if method.strip().upper() == 'GET' else url
+        try:
+            uri = self._prepare_url_func(url)
+        except Exception:
+            _logger.warning(
+                'Unable to encode url %s, cancel encoding: %s',
+                url, traceback.format_exc()
+            )
+            uri = url
 
         _logger.info('Preparing to invoke request to [%s]', uri)
 

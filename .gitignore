@@ -17,4 +17,5 @@
 /package/solnlib/
 /package/splunktaucclib/
 
+/venv
 examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/

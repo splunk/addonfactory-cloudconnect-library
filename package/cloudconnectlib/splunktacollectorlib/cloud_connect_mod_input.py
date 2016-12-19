@@ -20,9 +20,13 @@ def _load_options_from_inputs_spec(stanza_name):
     options = parser.defaults().keys()
     stanza_prefix = '%s://' % stanza_name
 
+    stanza_exist = False
     for section in parser.sections():
         if section == stanza_name or section.startswith(stanza_prefix):
             options.extend(parser.options(section))
+            stanza_exist = True
+    if not stanza_exist:
+        raise RuntimeError("Stanza %s doesn't exist" % stanza_name)
     return set(options)
 
 

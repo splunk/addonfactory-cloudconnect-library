@@ -23,7 +23,7 @@ class TaConfig(object):
         self._single_instance = single_instance
         if self._stanza_name and self._log_suffix:
             stulog.reset_logger(self._log_suffix + "_" +
-                                th.format_input_name_for_file(
+                                th.format_name_for_file(
                                     self._stanza_name))
             stulog.logger.info("Start {} task".format(self._stanza_name))
         self._task_configs = []

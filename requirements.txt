@@ -7,3 +7,4 @@ sortedcontainers==1.5.2
 munch==2.0.4
 splunktaucclib==3.0.0
 solnlib==1.0.15
+functools32==3.2.3-2

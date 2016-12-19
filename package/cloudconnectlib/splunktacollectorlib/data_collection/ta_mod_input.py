@@ -6,6 +6,7 @@ This is the main entry point for My TA
 
 import os.path as op
 import sys
+import platform
 import time
 from ...splunktalib import modinput
 from ...splunktalib.common import util as utils
@@ -22,6 +23,7 @@ from ..mod_helper import get_main_file
 
 utils.remove_http_proxy_env_vars()
 
+__CHECKPOINT_DIR_MAX_LEN__=180
 
 def do_scheme(ta_short_name, ta_name, schema_para_list=None,
               single_instance=True):
@@ -148,9 +150,18 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
     meta_config["cc_json_file"] = cc_json_file
 
     if tconfig.is_shc_member():
-        # In SHC env, only captain is able to collect data
-        stulog.logger.debug("This host is in search head cluster environment , "
+        # Don't support SHC env
+        stulog.logger.error("This host is in search head cluster environment , "
                             "will exit.")
+        return
+
+    # In this case, use file for checkpoint
+    if _is_checkpoint_dir_length_exceed_limit(tconfig,
+                                              meta_config["checkpoint_dir"]):
+        stulog.logger.error("The length of the checkpoint directory path: '{}' "
+                            "is too long. The max length we support is {}",
+                            meta_config["checkpoint_dir"],
+                            __CHECKPOINT_DIR_MAX_LEN__)
         return
 
     jobs = [tdc.create_data_collector(loader, tconfig, meta_config, task_config,
@@ -159,6 +170,12 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
             for task_config in task_configs]
 
     loader.run(jobs)
+
+
+def _is_checkpoint_dir_length_exceed_limit(config, checkpoint_dir):
+    return platform.system() == 'Windows' \
+           and not config.is_search_head() \
+           and len(checkpoint_dir) >= __CHECKPOINT_DIR_MAX_LEN__
 
 
 def validate_config():

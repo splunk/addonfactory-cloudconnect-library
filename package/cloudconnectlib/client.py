@@ -36,10 +36,10 @@ class CloudConnectClient(object):
                 'Cannot load JSON config from file {}: {}'.format(
                     self._config_file, traceback.format_exc()))
 
-        version = conf.get('meta', {'version', None}).get('version', None)
+        version = conf.get('meta', {'apiVersion', None}).get('apiVersion', None)
         if not version:
             raise ConfigException(
-                'Config meta or version not present in {}'.format(
+                'Config meta or api version not present in {}'.format(
                     self._config_file))
 
         config_loader, schema_file = get_loader_by_version(version)

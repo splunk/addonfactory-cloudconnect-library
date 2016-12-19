@@ -57,13 +57,13 @@ class Condition(Function):
 class IterationMode(Document):
     iteration_count = OneOfField(
         fields=[StringField(pattern='^[-+]?[1-9]\d*$'), IntField()])
-    stop_conditions = ArrayField(DocumentField(Condition, as_ref=True),
+    stop_conditions = ArrayField(DocumentField(Condition),
                                  min_items=1)
 
 
 class Processor(Document):
-    conditions = ArrayField(DocumentField(Condition, as_ref=True))
-    pipeline = ArrayField(DocumentField(Task), as_ref=True)
+    skip_conditions = ArrayField(DocumentField(Condition))
+    pipeline = ArrayField(DocumentField(Task))
 
 
 class Request(Document):
@@ -71,10 +71,10 @@ class Request(Document):
     Represents config scheme for single request.
     """
     options = DocumentField(Options, as_ref=True, required=True)
-    pre_process = DocumentField(Processor, as_ref=True, required=True)
-    post_process = DocumentField(Processor, as_ref=True, required=True)
+    pre_process = DocumentField(Processor, required=True)
+    post_process = DocumentField(Processor, required=True)
     iteration_mode = DocumentField(IterationMode, as_ref=True, required=True)
-    checkpoint = DocumentField(Checkpoint, as_ref=True, required=True)
+    checkpoint = DocumentField(Checkpoint, as_ref=True)
 
 
 class Proxy(Document):
@@ -102,7 +102,7 @@ class Meta(Document):
     """
     Represents scheme of metadata which contains version, etc.
     """
-    version = StringField(required=True, pattern='(?:\d{1,3}\.){2}[\w\-]{1,15}')
+    apiVersion = StringField(required=True, pattern='(?:\d{1,3}\.){2}[\w\-]{1,15}')
 
 
 class GlobalSettings(Document):
@@ -122,7 +122,7 @@ class Schema(Document):
     """
 
     meta = DocumentField(Meta, as_ref=True, required=True)
-    parameters = ArrayField(StringField(), required=True)
+    tokens = ArrayField(StringField(), required=True)
 
     global_settings = DocumentField(GlobalSettings, as_ref=True)
     requests = ArrayField(DocumentField(Request, as_ref=True),

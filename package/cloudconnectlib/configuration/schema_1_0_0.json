@@ -38,25 +38,6 @@
             ],
             "additionalProperties": false
         },
-        "Condition": {
-            "type": "object",
-            "properties": {
-                "input": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "method": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "input",
-                "method"
-            ],
-            "additionalProperties": false
-        },
         "GlobalSettings": {
             "type": "object",
             "properties": {
@@ -91,7 +72,23 @@
                 "stop_conditions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Condition"
+                        "type": "object",
+                        "properties": {
+                            "input": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "method": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "input",
+                            "method"
+                        ],
+                        "additionalProperties": false
                     },
                     "minItems": 1
                 }
@@ -101,13 +98,13 @@
         "Meta": {
             "type": "object",
             "properties": {
-                "version": {
+                "apiVersion": {
                     "type": "string",
                     "pattern": "(?:\\d{1,3}\\.){2}[\\w\\-]{1,15}"
                 }
             },
             "required": [
-                "version"
+                "apiVersion"
             ],
             "additionalProperties": false
         },
@@ -139,43 +136,6 @@
                 "method",
                 "headers"
             ],
-            "additionalProperties": false
-        },
-        "Processor": {
-            "type": "object",
-            "properties": {
-                "conditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Condition"
-                    }
-                },
-                "pipeline": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "input": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "method": {
-                                "type": "string"
-                            },
-                            "output": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "input",
-                            "method"
-                        ],
-                        "additionalProperties": false
-                    }
-                }
-            },
             "additionalProperties": false
         },
         "Proxy": {
@@ -238,10 +198,110 @@
                     "$ref": "#/definitions/Options"
                 },
                 "pre_process": {
-                    "$ref": "#/definitions/Processor"
+                    "type": "object",
+                    "properties": {
+                        "skip_conditions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "input": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "method": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "input",
+                                    "method"
+                                ],
+                                "additionalProperties": false
+                            }
+                        },
+                        "pipeline": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "input": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "method": {
+                                        "type": "string"
+                                    },
+                                    "output": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "input",
+                                    "method"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    },
+                    "additionalProperties": false
                 },
                 "post_process": {
-                    "$ref": "#/definitions/Processor"
+                    "type": "object",
+                    "properties": {
+                        "skip_conditions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "input": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "method": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "input",
+                                    "method"
+                                ],
+                                "additionalProperties": false
+                            }
+                        },
+                        "pipeline": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "input": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "method": {
+                                        "type": "string"
+                                    },
+                                    "output": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "input",
+                                    "method"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    },
+                    "additionalProperties": false
                 },
                 "iteration_mode": {
                     "$ref": "#/definitions/IterationMode"
@@ -254,8 +314,7 @@
                 "options",
                 "pre_process",
                 "post_process",
-                "iteration_mode",
-                "checkpoint"
+                "iteration_mode"
             ],
             "additionalProperties": false
         }
@@ -265,7 +324,7 @@
         "meta": {
             "$ref": "#/definitions/Meta"
         },
-        "parameters": {
+        "tokens": {
             "type": "array",
             "items": {
                 "type": "string"
@@ -284,7 +343,7 @@
     },
     "required": [
         "meta",
-        "parameters",
+        "tokens",
         "requests"
     ],
     "additionalProperties": false

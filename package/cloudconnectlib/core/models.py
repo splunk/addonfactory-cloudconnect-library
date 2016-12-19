@@ -178,13 +178,17 @@ class _Conditional(object):
 class Processor(_Conditional):
     """Processor class contains a conditional data process pipeline"""
 
-    def __init__(self, conditions, pipeline):
-        super(Processor, self).__init__(conditions)
+    def __init__(self, skip_conditions, pipeline):
+        super(Processor, self).__init__(skip_conditions)
         self._pipeline = pipeline or []
 
     @property
     def pipeline(self):
         return self._pipeline
+
+    def should_skipped(self, context):
+        """Determine processor if should skip process"""
+        return self.passed(context)
 
 
 class IterationMode(_Conditional):

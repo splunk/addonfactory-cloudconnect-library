@@ -111,6 +111,9 @@ class TADataLoader(object):
     def write_events(self, events):
         return self._event_writer.write_events(events)
 
+    def get_event_writer(self):
+        return self._event_writer
+
     @staticmethod
     def _read_default_settings():
         cur_dir = op.dirname(op.abspath(__file__))

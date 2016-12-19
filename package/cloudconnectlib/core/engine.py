@@ -4,7 +4,6 @@ import threading
 from . import defaults
 from .exceptions import HTTPError
 from .http import HTTPRequest
-from ..common import splunk_util
 from ..common.log import get_cc_logger
 
 _logger = get_cc_logger()
@@ -23,7 +22,7 @@ class CloudConnectEngine(object):
     def _set_logging(log_setting):
         _logger.set_level(log_setting.level)
 
-    def start(self, context, config):
+    def start(self, context, config, checkpoint_mgr):
         """Start current client instance to execute each request parsed
          from config.
         """
@@ -42,7 +41,9 @@ class CloudConnectEngine(object):
 
         for request in config.requests:
             job = Job(
-                request=request, context=context, proxy=global_setting.proxy
+                request=request, context=context,
+                checkpoint_mgr=checkpoint_mgr,
+                proxy=global_setting.proxy,
             )
             self._running_job = job
             job.run()
@@ -81,7 +82,7 @@ class Job(object):
     reached it's stop condition.
     """
 
-    def __init__(self, request, context, proxy=None):
+    def __init__(self, request, context, checkpoint_mgr, proxy=None):
         """
         Constructs a `Job` with properties request, context and a
          optional proxy setting.
@@ -93,6 +94,7 @@ class Job(object):
         """
         self._request = request
         self._context = context
+        self._checkpoint_mgr = checkpoint_mgr
         self._client = HTTPRequest(proxy)
         self._stopped = False
         self._request_iterated_count = 0
@@ -158,17 +160,19 @@ class Job(object):
             _logger.info('Checkpoint not specified, do not update it.')
             return
 
-        splunk_util.update_checkpoint(
-            namespace=checkpoint.normalize_namespace(self._context),
-            value=checkpoint.normalize_content(self._context)
+        self._checkpoint_mgr.update_ckpt(
+            checkpoint.normalize_content(self._context),
+            namespaces=checkpoint.normalize_namespace(self._context),
         )
 
     def _get_checkpoint(self):
+        checkpoint = self._request.checkpoint
         if not self._request.checkpoint:
             _logger.info('Checkpoint not specified, do not read it.')
             return
 
-        checkpoint = splunk_util.get_checkpoint()
+        namespaces = checkpoint.normalize_namespace(self._context)
+        checkpoint = self._checkpoint_mgr.get_ckpt(namespaces)
         if checkpoint:
             self._context.update(checkpoint)
 

@@ -12,7 +12,7 @@ class CloudConnectClient(object):
     """The client of cloud connect used to start a cloud connect engine instance.
     """
 
-    def __init__(self, context, config_file):
+    def __init__(self, context, config_file, checkpoint_mgr):
         """
         Constructs a `CloudConnectClient` with `context` which contains variables
         to render template in the configuration parsed from file `config_file`.
@@ -23,6 +23,7 @@ class CloudConnectClient(object):
         self._config_file = config_file
         self._engine = None
         self._config = None
+        self._checkpoint_mgr = checkpoint_mgr
 
     def _load_config(self):
         """Load a JSON based configuration definition from file.
@@ -56,7 +57,8 @@ class CloudConnectClient(object):
 
         self._engine = CloudConnectEngine()
         self._engine.start(
-            context=copy.deepcopy(self._context), config=self._config
+            context=copy.deepcopy(self._context), config=self._config,
+            checkpoint_mgr = self._checkpoint_mgr
         )
 
     def stop(self):

@@ -2,7 +2,6 @@ import os
 import sys
 import platform
 from ..splunktacollectorlib.common import log as stulog
-import re
 
 
 def register_module(new_path):

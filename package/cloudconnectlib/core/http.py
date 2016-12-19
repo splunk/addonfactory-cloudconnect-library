@@ -46,6 +46,7 @@ def _make_prepare_url_func():
     pr = PreparedRequest()
 
     def prepare_url(url, params=None):
+        """Prepare the given HTTP URL"""
         pr.prepare_url(url, params=params)
         return pr.url
 
@@ -121,8 +122,7 @@ class HTTPRequest(object):
             uri = self._prepare_url_func(url)
         except Exception:
             _logger.warning(
-                'Unable to encode url %s, cancel encoding: %s',
-                url, traceback.format_exc()
+                'Failed to encode url=%s: %s', url, traceback.format_exc()
             )
             uri = url
 

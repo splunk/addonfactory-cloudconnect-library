@@ -173,6 +173,8 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
     @staticmethod
     def _load_checkpoint(checkpoint):
+        if not checkpoint:
+            return None
         return Checkpoint(
             checkpoint.get('namespace', []), checkpoint['content'])
 
@@ -204,7 +206,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         options = self._load_options(request['options'])
         pre_process = self._load_processor(request['pre_process'])
         post_process = self._load_processor(request['post_process'])
-        checkpoint = self._load_checkpoint(request['checkpoint'])
+        checkpoint = self._load_checkpoint(request.get('checkpoint'))
         iteration_mode = self._load_iteration_mode(request['iteration_mode'])
 
         return munchify({

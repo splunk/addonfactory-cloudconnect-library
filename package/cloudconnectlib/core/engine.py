@@ -125,8 +125,8 @@ class Job(object):
         """
         pre_processor = self._request.pre_process
 
-        if not pre_processor.passed(self._context):
-            _logger.info('Pre process condition not satisfied, do nothing')
+        if not pre_processor.should_skipped(self._context):
+            _logger.info('Skip pre process condition satisfied, do nothing')
             return
 
         tasks = pre_processor.pipeline
@@ -140,7 +140,7 @@ class Job(object):
         """
         post_processor = self._request.post_process
 
-        if post_processor.passed(self._context):
+        if post_processor.should_skipped(self._context):
             _logger.info('Skip post process condition satisfied, '
                          'do nothing')
             return
@@ -154,12 +154,20 @@ class Job(object):
     def _update_checkpoint(self):
         """Updates checkpoint based on checkpoint namespace and content."""
         checkpoint = self._request.checkpoint
+        if not checkpoint:
+            _logger.info('Checkpoint not specified, do not update it.')
+            return
+
         splunk_util.update_checkpoint(
             namespace=checkpoint.normalize_namespace(self._context),
             value=checkpoint.normalize_content(self._context)
         )
 
     def _get_checkpoint(self):
+        if not self._request.checkpoint:
+            _logger.info('Checkpoint not specified, do not read it.')
+            return
+
         checkpoint = splunk_util.get_checkpoint()
         if checkpoint:
             self._context.update(checkpoint)

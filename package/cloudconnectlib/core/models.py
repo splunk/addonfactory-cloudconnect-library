@@ -186,6 +186,10 @@ class Processor(_Conditional):
     def pipeline(self):
         return self._pipeline
 
+    def should_skipped(self, context):
+        """Determine processor if should skip process"""
+        return self.passed(context)
+
 
 class IterationMode(_Conditional):
     def __init__(self, iteration_count, conditions):

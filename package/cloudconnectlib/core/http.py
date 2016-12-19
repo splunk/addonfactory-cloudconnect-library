@@ -124,7 +124,8 @@ class HTTPRequest(object):
             uri = self._prepare_url_func(url)
         except Exception:
             _logger.warning(
-                'Failed to encode url=%s: %s', url, traceback.format_exc()
+                'Failed to encode url=%s: %s, use original url directly',
+                url, traceback.format_exc()
             )
             uri = url
 

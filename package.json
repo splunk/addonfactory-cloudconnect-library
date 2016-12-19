@@ -22,7 +22,8 @@
   },
   "scripts": {
     "publish": "python setup.py sdist upload -r pypisolutionslocal",
-    "app": "python install_packages.py && mkdir -p ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow && cp -r ./package/* ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/"
+    "app": "python install_packages.py && mkdir -p ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow && cp -r ./package/* ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/",
+    "fortify": "/usr/bin/fortify-scanner.py"
   },
   "repository": {
     "type": "git",

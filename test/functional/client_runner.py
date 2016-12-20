@@ -1,6 +1,8 @@
 import os.path as op
+import threading
+import time
 
-from package.cloudconnectlib import CloudConnectClient
+from package.cloudconnectlib.client import CloudConnectClient
 
 context = {
     'host': 'ven01034.service-now.com',
@@ -14,5 +16,12 @@ context = {
 # test config file
 config_file = op.join(op.dirname(op.dirname(__file__)), 'data', 'test_2.json')
 
-client = CloudConnectClient(context, config_file)
-client.start()
+if __name__ == '__main__':
+    client = CloudConnectClient(context, config_file)
+
+    t = threading.Thread(target=client.start)
+    t.start()
+    
+    time.sleep(10)
+
+    client.stop()

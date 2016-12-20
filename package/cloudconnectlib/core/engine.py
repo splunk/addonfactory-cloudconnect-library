@@ -16,7 +16,6 @@ class CloudConnectEngine(object):
     def __init__(self):
         self._stopped = False
         self._running_job = None
-        self._running_thread = None
 
     @staticmethod
     def _set_logging(log_setting):
@@ -28,8 +27,6 @@ class CloudConnectEngine(object):
         """
         if not config:
             raise ValueError('Config must not be empty')
-
-        self._running_thread = threading.current_thread()
 
         context = context or {}
         global_setting = config.global_settings
@@ -68,11 +65,9 @@ class CloudConnectEngine(object):
         _logger.info('Stopping engine')
 
         if self._running_job:
-            self._running_job.stop()
-
-        if self._running_thread \
-                and self._running_thread != threading.current_thread():
-            self._running_thread.join()
+            _logger.info('Attempting to stop the running job.')
+            self._running_job.terminate()
+            _logger.info('Stopping job finished.')
 
         self._stopped = True
 
@@ -96,10 +91,15 @@ class Job(object):
         self._context = context
         self._checkpoint_mgr = checkpoint_mgr
         self._client = HTTPRequest(proxy)
-        self._stopped = False
+        self._stopped = True
+        self._should_stop = False
+
         self._request_iterated_count = 0
         self._iteration_mode = self._request.iteration_mode
         self._max_iteration_count = self._get_max_iteration_count()
+
+        self._running_thread = None
+        self._terminated = threading.Event()
 
     def _get_max_iteration_count(self):
         mode_max_count = self._iteration_mode.iteration_count
@@ -107,10 +107,24 @@ class Job(object):
         return min(default_max_count, mode_max_count) \
             if mode_max_count > 0 else default_max_count
 
-    def stop(self):
-        """Sets job stopped flag to True"""
+    def terminate(self, block=True, timeout=30):
+        """Terminate this job, the current thread will blocked util
+        the job is terminate finished if block is True """
+        if self.is_stopped():
+            _logger.info('Job already been stopped.')
+            return
+
+        if self._running_thread == threading.current_thread():
+            _logger.warning('Job cannot terminate itself.')
+            return
+
         _logger.info('Stopping job')
-        self._stopped = True
+        self._should_stop = True
+
+        if not block:
+            return
+        if not self._terminated.wait(timeout):
+            _logger.warning('Terminating job timeout.')
 
     def _set_context(self, key, value):
         self._context[key] = value
@@ -200,24 +214,29 @@ class Job(object):
         """Start job and exit util meet stop condition. """
         _logger.info('Start to process job')
 
+        self._stopped = False
         try:
+            self._running_thread = threading.current_thread()
             self._run()
         except Exception as e:
-            _logger.exception("engine encounter error")
+            _logger.exception('Encountered error while running job.')
             raise e
+        finally:
+            self._terminated.set()
+            self._stopped = True
+
+        _logger.info('Job processing finished')
 
     def _run(self):
-        _logger.info('Start to process request')
-
         options = self._request.options
         method = options.method
         authorizer = options.auth
         self._get_checkpoint()
 
         while 1:
-            if self.is_stopped():
-                _logger.info('Job has been stopped')
-                break
+            if self._should_stop:
+                _logger.info('Job should been stopped.')
+                return
 
             url = options.normalize_url(self._context)
             header = options.normalize_header(self._context)
@@ -245,8 +264,6 @@ class Job(object):
             if self._is_stoppable():
                 _logger.info('Stop condition reached, exit job now')
                 break
-
-        _logger.info('Job processing finished')
 
     def _send_request(self, url, method, header, body):
         """Do send request with a simple error handling strategy. Refer to

@@ -105,7 +105,7 @@ class Job(object):
         return min(default_max_count, mode_max_count) \
             if mode_max_count > 0 else default_max_count
 
-    def terminate(self, block=True):
+    def terminate(self, block=True, timeout=30):
         """Terminate this job, the current thread will blocked util
         the job is terminate finished if block is True """
         if self.is_stopped():
@@ -121,7 +121,7 @@ class Job(object):
 
         if not block:
             return
-        if not self._terminated.wait(timeout=30):
+        if not self._terminated.wait(timeout):
             _logger.warning('Terminating job timeout.')
 
     def _set_context(self, key, value):

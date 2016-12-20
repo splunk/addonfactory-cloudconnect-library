@@ -1,5 +1,5 @@
 import json
-import time
+import threading
 
 from . import defaults
 from .exceptions import HTTPError
@@ -65,11 +65,7 @@ class CloudConnectEngine(object):
 
         if self._running_job:
             _logger.info('Attempting to stop the running job.')
-            self._running_job.stop()
-
-            while not self._running_job.is_stopped():
-                time.sleep(0.1)
-
+            self._running_job.terminate()
             _logger.info('Stopping job finished.')
 
         self._stopped = True
@@ -93,12 +89,15 @@ class Job(object):
         self._request = request
         self._context = context
         self._client = HTTPRequest(proxy)
-        self._stopped = False
+        self._stopped = True
         self._should_stop = False
 
         self._request_iterated_count = 0
         self._iteration_mode = self._request.iteration_mode
         self._max_iteration_count = self._get_max_iteration_count()
+
+        self._running_thread = None
+        self._terminated = threading.Event()
 
     def _get_max_iteration_count(self):
         mode_max_count = self._iteration_mode.iteration_count
@@ -106,13 +105,22 @@ class Job(object):
         return min(default_max_count, mode_max_count) \
             if mode_max_count > 0 else default_max_count
 
-    def stop(self):
-        """Sets job stopped flag to True"""
+    def terminate(self, block=True):
+        """Terminate this job, the current thread will blocked util
+        the job is terminate finished if block is True """
         if self.is_stopped():
             _logger.info('Job already been stopped.')
             return
+
+        if self._running_thread == threading.current_thread():
+            _logger.warning('Job cannot terminate itself.')
+            return
+
         _logger.info('Stopping job')
         self._should_stop = True
+
+        if block:
+            self._terminated.wait()
 
     def _set_context(self, key, value):
         self._context[key] = value
@@ -192,17 +200,20 @@ class Job(object):
         """Start job and exit util meet stop condition. """
         _logger.info('Start to process job')
 
+        self._stopped = False
         try:
+            self._running_thread = threading.current_thread()
             self._run()
         except Exception as e:
             _logger.exception('Encountered error while running job.')
             raise e
         finally:
+            self._terminated.set()
             self._stopped = True
 
-    def _run(self):
-        _logger.info('Start to process request')
+        _logger.info('Job processing finished')
 
+    def _run(self):
         options = self._request.options
         method = options.method
         authorizer = options.auth
@@ -239,8 +250,6 @@ class Job(object):
             if self._is_stoppable():
                 _logger.info('Stop condition reached, exit job now')
                 break
-
-        _logger.info('Job processing finished')
 
     def _send_request(self, url, method, header, body):
         """Do send request with a simple error handling strategy. Refer to

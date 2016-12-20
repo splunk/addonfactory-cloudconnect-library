@@ -1,8 +1,8 @@
 [fortify]
 project_name = SPLUNK-APPS
 project_template = Splunk Apps Project Template
-pythonpath = package/bin:package/bin/framework
-include = package lea_loggrabber:c++
+pythonpath = package/cloudconnectlib
+include = package
 filetypes = *.js *.html *.xml *.py
 exclude = */boxsdk/*
           */enum/*
@@ -12,3 +12,12 @@ exclude = */boxsdk/*
           */six.py
           */socks.py
           */sockshandler.py
+          */jsonschema/*
+          */jinja2/*
+          */jsonpath-rw/*
+          */splunk-sdk/*
+          */sortedcontainers/*
+          */munch/*
+          */splunktaucclib/*
+          */solnlib/*
+          */functools32/*

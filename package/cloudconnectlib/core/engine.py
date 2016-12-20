@@ -119,8 +119,10 @@ class Job(object):
         _logger.info('Stopping job')
         self._should_stop = True
 
-        if block:
-            self._terminated.wait()
+        if not block:
+            return
+        if not self._terminated.wait(timeout=30):
+            _logger.warning('Terminating job timeout.')
 
     def _set_context(self, key, value):
         self._context[key] = value

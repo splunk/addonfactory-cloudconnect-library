@@ -1,0 +1,14 @@
+[fortify]
+project_name = SPLUNK-APPS
+project_template = Splunk Apps Project Template
+pythonpath = package/bin:package/bin/framework
+include = package lea_loggrabber:c++
+filetypes = *.js *.html *.xml *.py
+exclude = */boxsdk/*
+          */enum/*
+          */httplib2/*
+          */requests/*
+          */requests_toolbelt/*
+          */six.py
+          */socks.py
+          */sockshandler.py

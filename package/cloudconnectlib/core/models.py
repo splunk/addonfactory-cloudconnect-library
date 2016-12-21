@@ -137,8 +137,8 @@ class Task(_Function):
         output = self._output
 
         _logger.info(
-            'Executing task method: [%s], input: [%s], output: [%s]',
-            self.function, ','.join(args), output
+            'Executing task method: [%s], input size: [%s], output: [%s]',
+            self.function, len(args), output
         )
 
         if output is None:

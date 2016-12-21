@@ -3,7 +3,7 @@
         "name": "Splunk_TA_snow",
         "displayName": "AOB Test",
         "version": "1.0.0",
-        "uccVersion": "3.0.0",
+        "apiVersion": "3.0.0",
         "restRoot": "splunk_ta_snow"
     },
     "pages": {
@@ -41,7 +41,7 @@
                             "label": "Name",
                             "type": "text",
                             "required": true,
-                            "help": "Enter a unique name for each Crowdstrike falcon host account.",
+                            "help": "Enter a unique name for each Service Now falcon host account.",
                             "validators": [
                                 {
                                     "type": "string",
@@ -236,7 +236,7 @@
                             "field": "name",
                             "label": "Name",
                             "type": "text",
-                            "help": "Enter a unique name for each crowdstrike falcon host data input."
+                            "help": "Enter a unique name for each Service Now falcon host data input."
                         },
                         {
                             "field": "account",

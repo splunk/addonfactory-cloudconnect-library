@@ -1,17 +1,10 @@
 import logging
+
 from solnlib.pattern import Singleton
-
-
-def set_cc_logger(logger, logger_prefix=""):
-    CloudClientLogAdapter(logger, prefix=logger_prefix)
-
-
-def get_cc_logger():
-    return CloudClientLogAdapter()
+from ..splunktacollectorlib.common import log as stulog
 
 
 class CloudClientLogAdapter(logging.LoggerAdapter):
-
     __metaclass__ = Singleton
 
     def __init__(self, logger=None, extra=None, prefix=""):
@@ -24,3 +17,16 @@ class CloudClientLogAdapter(logging.LoggerAdapter):
 
     def set_level(self, val):
         self.logger.setLevel(val)
+
+
+_adapter = CloudClientLogAdapter(stulog.logger)
+
+
+def set_cc_logger(logger, logger_prefix=''):
+    global _adapter
+    _adapter.logger = logger
+    _adapter.cc_prefix = logger_prefix or ''
+
+
+def get_cc_logger():
+    return _adapter

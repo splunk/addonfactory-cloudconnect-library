@@ -3,11 +3,11 @@
         "name": "Splunk_TA_snow",
         "displayName": "AOB Test",
         "version": "1.0.0",
-        "uccVersion": "3.0.0",
+        "apiVersion": "3.0.0",
         "restRoot": "splunk_ta_snow"
     },
     "pages": {
-        "configuration":  {
+        "configuration": {
             "title": "Configurations",
             "description": "Configure your account, proxy and logging level.",
             "tabs": [
@@ -83,9 +83,18 @@
                             "options": {
                                 "disableSearch": true,
                                 "autoCompleteFields": [
-                                    {"label": "INFO", "value": "INFO"},
-                                    {"label": "DEBUG", "value": "DEBUG"},
-                                    {"label": "ERROR", "value": "ERROR"}
+                                    {
+                                        "label": "INFO",
+                                        "value": "INFO"
+                                    },
+                                    {
+                                        "label": "DEBUG",
+                                        "value": "DEBUG"
+                                    },
+                                    {
+                                        "label": "ERROR",
+                                        "value": "ERROR"
+                                    }
                                 ]
                             },
                             "defaultValue": "INFO"
@@ -108,9 +117,18 @@
                             "options": {
                                 "disableSearch": true,
                                 "autoCompleteFields": [
-                                    {"label": "http", "value": "http"},
-                                    {"label": "socks4", "value": "socks4"},
-                                    {"label": "socks5", "value": "socks5"}
+                                    {
+                                        "label": "http",
+                                        "value": "http"
+                                    },
+                                    {
+                                        "label": "socks4",
+                                        "value": "socks4"
+                                    },
+                                    {
+                                        "label": "socks5",
+                                        "value": "socks5"
+                                    }
                                 ]
                             },
                             "defaultValue": "http"
@@ -130,7 +148,11 @@
                             "label": "Port",
                             "type": "text"
                         },
-                        {"field": "proxy_username", "label": "Username", "type": "text"},
+                        {
+                            "field": "proxy_username",
+                            "label": "Username",
+                            "type": "text"
+                        },
                         {
                             "field": "proxy_password",
                             "label": "Password",
@@ -140,12 +162,11 @@
                     ],
                     "options": {
                         "saveValidator": "function(formData) { return (!formData.proxy_enabled || (!isNaN(Number(formData.proxy_port)) && Number(formData.proxy_port) < 65535 && Number(formData.proxy_port)) > 0) ? true : 'Input of Port should be in range of [0, 65535]'; }",
-                         "onLoad": "function(formData, formWidgetsIdDict) { var enabled = formData.proxy_enabled; $(formWidgetsIdDict['proxy_type']).hide(!enabled); }",
+                        "onLoad": "function(formData, formWidgetsIdDict) { var enabled = formData.proxy_enabled; $(formWidgetsIdDict['proxy_type']).hide(!enabled); }",
                         "onChange": "function(formData, changedField, formWidgetsIdDict) { if(changedField === 'proxy_enabled') { var enabled = formData.proxy_enabled; $(formWidgetsIdDict['proxy_type']).hide(!enabled); } }"
                     }
                 }
             ]
-
         },
         "inputs": {
             "title": "Inputs",
@@ -160,7 +181,6 @@
                         "field": "account",
                         "label": "Account"
                     },
-                   
                     {
                         "field": "interval",
                         "label": "Interval"
@@ -177,7 +197,7 @@
                         "field": "since_when",
                         "label": "Since When"
                     },
-                     {
+                    {
                         "field": "table_name",
                         "label": "Table Name"
                     },
@@ -187,7 +207,7 @@
                     }
                 ],
                 "moreInfo": [
-                     {
+                    {
                         "field": "name",
                         "label": "Name"
                     },
@@ -195,7 +215,6 @@
                         "field": "account",
                         "label": "Account"
                     },
-                   
                     {
                         "field": "interval",
                         "label": "Interval"
@@ -212,7 +231,7 @@
                         "field": "since_when",
                         "label": "Since When"
                     },
-                     {
+                    {
                         "field": "table_name",
                         "label": "Table Name"
                     },

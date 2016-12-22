@@ -1,36 +1,41 @@
 {
-  "devDependencies": {
-    "ext-grunt-basebuild": "0.1.1",
-    "ext-grunt-horde": "0.1.2",
-    "grunt": "^0.4.5",
-    "grunt-contrib-clean": "^0.6.0",
-    "grunt-contrib-compress": "^0.13.0",
-    "grunt-contrib-concat": "^0.5.1",
-    "grunt-contrib-copy": "^0.8.1",
-    "grunt-pattern-replace": "^1.0.1",
-    "grunt-shell": "^1.1.2",
-    "load-grunt-tasks": "^3.3.0",
-    "lodash": "^3.10.1",
-    "time-grunt": "^1.2.1"
-  },
-  "name": "app-cloud-connect",
-  "version": "1.0.0",
-  "main": "Gruntfile.js",
-  "directories": {
-    "example": "examples",
-    "test": "test"
-  },
-  "scripts": {
-    "publish": "python setup.py sdist upload -r pypisolutionslocal",
-    "app": "python install_packages.py && mkdir -p ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow && cp -r ./package/* ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/",
-    "fortify": "/usr/bin/fortify-scanner.py"
-  },
-  "repository": {
-    "type": "git",
-    "url": "ssh://git@git.splunk.com:7999/soln/app-cloud-connect.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+    "devDependencies": {
+        "ext-grunt-basebuild": "0.1.1",
+        "ext-grunt-horde": "0.1.2",
+        "grunt": "^0.4.5",
+        "grunt-contrib-clean": "^0.6.0",
+        "grunt-contrib-compress": "^0.13.0",
+        "grunt-contrib-concat": "^0.5.1",
+        "grunt-contrib-copy": "^0.8.1",
+        "grunt-pattern-replace": "^1.0.1",
+        "grunt-shell": "^1.1.2",
+        "load-grunt-tasks": "^3.3.0",
+        "lodash": "^3.10.1",
+        "time-grunt": "^1.2.1"
+    },
+    "name": "app-cloud-connect",
+    "version": "1.0.0",
+    "main": "Gruntfile.js",
+    "directories": {
+        "example": "examples",
+        "test": "test"
+    },
+    "scripts": {
+        "publish": "python setup.py sdist upload -r pypisolutionslocal",
+        "app": "python install_packages.py && mkdir -p ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow && cp -r ./package/* ./examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/",
+        "fortify": "/usr/bin/fortify-scanner.py",
+        "build": "PYTHONPATH=./package python setup.py sdist",
+        "test": "PYTHONPATH=./package python setup.py test",
+        "jtest": "PYTHONPATH=./package python setup.py jtest",
+        "cov": "PYTHONPATH=./package python setup.py cov",
+        "cov_html": "PYTHONPATH=./package python setup.py cov_html"
+    },
+    "repository": {
+        "type": "git",
+        "url": "ssh://git@git.splunk.com:7999/soln/app-cloud-connect.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": ""
 }

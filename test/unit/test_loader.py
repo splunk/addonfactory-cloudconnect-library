@@ -3,18 +3,20 @@ import os.path as op
 from os import listdir
 
 import pytest
-
 import common
+from package.cloudconnectlib.common.util import is_valid_port
+from package.cloudconnectlib.common.util import load_json_file
 from package.cloudconnectlib.configuration import get_loader_by_version
-from package.cloudconnectlib.core import ConfigException
-from package.cloudconnectlib.core.util import is_port
-from package.cloudconnectlib.core.util import load_json_file
 
 _config_file = op.join(common.DATA_DIR, 'test_1.json')
 
 
+def _schema_file_path_for(schema_file):
+    return op.join(common.CONFIGURATION_DIR, schema_file)
+
+
 def test_load_proxy():
-    loader = get_loader_by_version('1.0.0')
+    loader, _ = get_loader_by_version('1.0.0')
 
     bad_proxy = [{'enabled': 'BAD BOOL',
                   'host': 'host',
@@ -27,7 +29,7 @@ def test_load_proxy():
                   'port': 'BAD port'}
                  ]
     for bp in bad_proxy:
-        with pytest.raises(ConfigException):
+        with pytest.raises(ValueError):
             loader._load_proxy(bp, {})
 
     good_proxy = [{'enabled': 'True',
@@ -45,7 +47,7 @@ def test_load_proxy():
         proxy = loader._load_proxy(gp, {})
         assert proxy['enabled']
         assert proxy['host'] == 'host'
-        assert is_port(proxy['port'])
+        assert is_valid_port(proxy['port'])
 
     proxy_with_user = [{'enabled': 'True',
                         'host': 'host',
@@ -67,7 +69,7 @@ def test_load_proxy():
         proxy = loader._load_proxy(pwu, {})
         assert proxy['enabled']
         assert proxy['host'] == 'host'
-        assert is_port(proxy['port'])
+        assert is_valid_port(proxy['port'])
         assert proxy['username'] == 'admin'
         assert proxy['password'] == 'changeme'
 
@@ -78,9 +80,8 @@ def test_load_global_setting():
             'level': 'abc'
         }
     }
-    loader = get_loader_by_version('1.0.0')
+    loader, _ = get_loader_by_version('1.0.0')
     setting = loader._load_global_setting(setting_log_only, {})
-    import logging
     assert setting.logging.level == logging.INFO
     setting_log_only['logging']['level'] = 'INFO'
     setting = loader._load_global_setting(setting_log_only, {})
@@ -112,9 +113,11 @@ def test_load_global_setting():
 
 
 def test_load_config():
-    loader = get_loader_by_version('1.0.0')
+    loader, schema_file = get_loader_by_version('1.0.0')
     conf = load_json_file(_config_file)
-    config = loader.load(conf, {
+    schema_file = _schema_file_path_for(schema_file)
+
+    config = loader.load(conf, schema_file, {
         'proxy_port': '1024',
         'proxy_enabled': '0',
         'proxy_username': 'admin',
@@ -122,7 +125,7 @@ def test_load_config():
         'proxy_type': 'http',
         'proxy_rdns': ''
     })
-    assert config.meta.version == '1.0.0'
+    assert config.meta.apiVersion == '1.0.0'
     assert config.global_settings.logging.level == logging.INFO
     assert config.global_settings.proxy.enabled is False
     assert config.global_settings.proxy.port == '1024'
@@ -133,8 +136,12 @@ def test_load_config():
 
 
 def test_load_examples():
-    files = [f for f in listdir(common.EXAMPLE_DIR) if op.isfile(op.join(common.EXAMPLE_DIR, f))]
-    loader = get_loader_by_version('1.0.0')
+    files = [f for f in listdir(common.EXAMPLE_DIR) if
+             op.isfile(op.join(common.EXAMPLE_DIR, f)) and f.endswith('.json')]
+
+    loader, schema_file = get_loader_by_version('1.0.0')
+    schema_file = _schema_file_path_for(schema_file)
+
     ctx = {
         'proxy_port': '1024',
         'proxy_enabled': '0',
@@ -145,4 +152,4 @@ def test_load_examples():
     }
 
     for f in files:
-        loader.load(load_json_file(op.join(common.EXAMPLE_DIR, f)), ctx)
+        loader.load(load_json_file(op.join(common.EXAMPLE_DIR, f)), schema_file, ctx)

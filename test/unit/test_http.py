@@ -9,7 +9,7 @@ def test_make_prepare_url_func():
     url1 = 'https://jira.splunk.com/browse/ADDON+12156'
 
     rurl1 = prepare_func(url1)
-    assert url1 == 'https://jira.splunk.com/browse/ADDON+12156'
+    assert rurl1 == 'https://jira.splunk.com/browse/ADDON+12156'
 
     url2 = 'https://jira.splunk.com/browse/abc%26xyz%3D123'
     rurl2 = prepare_func(url2)

@@ -129,7 +129,7 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
     # monitor files to reboot
     try:
         monitor = fm.FileMonitor(_handle_file_changes(loader),
-                              _get_conf_files(settings))
+                                 _get_conf_files(settings))
         loader.add_timer(monitor.check_changes, time.time(), 10)
     except Exception:
         stulog.logger.exception("Fail to add files for monitoring")
@@ -140,7 +140,6 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
 
     tconfig = tc.create_ta_config(settings, config_cls or tc.TaConfig,
                                   log_suffix, single_instance=single_instance)
-    #stulog.set_log_level(tconfig.get_log_level())
     task_configs = tconfig.get_task_configs()
 
     if not task_configs:

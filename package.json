@@ -28,7 +28,8 @@
         "test": "PYTHONPATH=./package python setup.py test",
         "jtest": "PYTHONPATH=./package python setup.py jtest",
         "cov": "PYTHONPATH=./package python setup.py cov",
-        "cov_html": "PYTHONPATH=./package python setup.py cov_html"
+        "cov_html": "PYTHONPATH=./package python setup.py cov_html",
+        "alltest": "npm run test; npm run jtest; npm run cov_html"
     },
     "repository": {
         "type": "git",

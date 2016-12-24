@@ -1,7 +1,7 @@
 import os.path as op
 
-from package.cloudconnectlib.common.log import set_cc_logger
-from package.cloudconnectlib.splunktacollectorlib.common import log as stulog
+from cloudconnectlib.common.log import set_cc_logger
+from cloudconnectlib.splunktacollectorlib.common import log as stulog
 
 # FIXME
 set_cc_logger(stulog.logger, '')

@@ -10,11 +10,19 @@ _logger = get_cc_logger()
 class _Token(object):
     """Token class wraps a template expression"""
 
-    def __init__(self, template_expr):
-        self._render = compile_template(template_expr)
+    def __init__(self, source):
+        """Constructs _Token from source. A rendered template
+        will be created if source is string type because Jinja
+        template must be a string."""
+        self._source = source
+        self._value_for = compile_template(source) \
+            if isinstance(source, basestring) else None
 
-    def value(self, variables):
-        return self._render(variables)
+    def render(self, variables):
+        """Render value with variables if source is a string.
+        Otherwise return source directly."""
+        return self._value_for(variables) \
+            if self._value_for else self._source
 
 
 class _DictToken(object):
@@ -24,8 +32,8 @@ class _DictToken(object):
         self._tokens = {k: _Token(v)
                         for k, v in (template_expr or {}).iteritems()}
 
-    def value(self, variables):
-        return {k: v.value(variables) for k, v in self._tokens.iteritems()}
+    def render(self, variables):
+        return {k: v.render(variables) for k, v in self._tokens.iteritems()}
 
 
 class BaseAuth(object):
@@ -53,8 +61,8 @@ class BasicAuthorization(BaseAuth):
         self._password = _Token(password)
 
     def __call__(self, headers, context):
-        username = self._username.value(context)
-        password = self._password.value(context)
+        username = self._username.render(context)
+        password = self._password.render(context)
         headers['Authorization'] = 'Basic %s' % base64.encodestring(
             username + ':' + password
         ).strip()
@@ -89,13 +97,18 @@ class Options(object):
         return self._body
 
     def normalize_url(self, context):
-        return self._url.value(context)
+        """Normalize url"""
+        return self._url.render(context)
 
     def normalize_header(self, context):
-        return self.header.value(context)
+        """Normalize headers which must be a dict which keys and values are
+        string."""
+        header = self.header.render(context)
+        return {k: str(v) for k, v in header.iteritems()}
 
     def normalize_body(self, context):
-        return self.body.value(context)
+        """Normalize body"""
+        return self.body.render(context)
 
 
 class _Function(object):
@@ -112,7 +125,7 @@ class _Function(object):
         Get rendered input values.
         """
         for arg in self._inputs:
-            yield arg.value(context)
+            yield arg.render(context)
 
     @property
     def function(self):
@@ -224,7 +237,7 @@ class Checkpoint(object):
 
     def normalize_namespace(self, ctx):
         """Normalize namespace with context used to render template."""
-        return [token.value(ctx) for token in self._namespace]
+        return [token.render(ctx) for token in self._namespace]
 
     @property
     def content(self):
@@ -232,4 +245,4 @@ class Checkpoint(object):
 
     def normalize_content(self, ctx):
         """Normalize checkpoint with context used to render template."""
-        return self._content.value(ctx)
+        return self._content.render(ctx)

@@ -6,15 +6,15 @@ import ast
 import os.path as op
 import re
 
-import pytest
 from setuptools import setup, find_packages, Command
+
+import pytest
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
 _UNIT_TEST_DIR = op.sep.join([op.dirname(op.abspath(__file__)), 'test', 'unit'])
-_SOURCE_DIR = 'package.cloudconnectlib'
 
-with open(op.join(*_SOURCE_DIR.split('.') + ['__init__.py']), 'rb') as f:
+with open(op.join('package', 'cloudconnectlib', '__init__.py'), 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
 
@@ -65,9 +65,9 @@ class CoverageCommand(Command):
 
     def run(self):
         pytest.main(['-v',
-                     '--cov=%s.configuration' % _SOURCE_DIR,
-                     '--cov=%s.core' % _SOURCE_DIR,
-                     '--cov=%s.common' % _SOURCE_DIR,
+                     '--cov=cloudconnectlib.configuration',
+                     '--cov=cloudconnectlib.core',
+                     '--cov=cloudconnectlib.common',
                      _UNIT_TEST_DIR])
 
 
@@ -84,9 +84,9 @@ class CoverageHtmlCommand(Command):
 
     def run(self):
         pytest.main(['-v',
-                     '--cov=%s.configuration' % _SOURCE_DIR,
-                     '--cov=%s.core' % _SOURCE_DIR,
-                     '--cov=%s.common' % _SOURCE_DIR,
+                     '--cov=cloudconnectlib.configuration',
+                     '--cov=cloudconnectlib.core',
+                     '--cov=cloudconnectlib.common',
                      '--cov-report=html',
                      _UNIT_TEST_DIR])
 

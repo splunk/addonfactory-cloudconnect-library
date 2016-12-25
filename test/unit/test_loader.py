@@ -10,7 +10,7 @@ from cloudconnectlib.configuration import get_loader_by_version
 from cloudconnectlib.configuration.loader import CloudConnectConfigLoaderV1
 from cloudconnectlib.core.exceptions import ConfigException
 
-_config_file = op.join(common.DATA_DIR, 'test_1.json')
+_config_file = op.join(common.TEST_DATA_DIR, 'test_1.json')
 
 
 def _schema_file_path_for(schema_file):

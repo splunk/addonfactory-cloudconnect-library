@@ -139,16 +139,15 @@ def json_not_empty(candidate, json_path_expr=None):
     return not json_empty(candidate, json_path_expr)
 
 
-def alias(value):
-    """Alias a variable to another which should be
-    specified in `output`"""
+def set_var(value):
+    """Set a variable which name should be specified in `output` with value"""
     return value
 
 
 _EXT_FUNCTIONS = {
-    'alias': alias,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
+    'set_var': set_var,
     'splunk_xml': splunk_xml,
     'std_output': std_output,
     'json_path': json_path,

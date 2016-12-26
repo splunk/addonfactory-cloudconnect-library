@@ -14,7 +14,7 @@ def compile_template(template):
         match = re.match(PATTERN, _origin_template)
         if match:
             context_var = context.get(match.groups()[0])
-            return context_var if context_var else ""
+            return context_var if context_var else ''
         return _template.render(context)
 
     return translate_internal

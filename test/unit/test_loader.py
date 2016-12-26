@@ -2,13 +2,15 @@ import logging
 import os.path as op
 from os import listdir
 
-import pytest
 import common
-from package.cloudconnectlib.common.util import is_valid_port
-from package.cloudconnectlib.common.util import load_json_file
-from package.cloudconnectlib.configuration import get_loader_by_version
+import pytest
+from cloudconnectlib.common.util import is_valid_port
+from cloudconnectlib.common.util import load_json_file
+from cloudconnectlib.configuration import get_loader_by_version
+from cloudconnectlib.configuration.loader import CloudConnectConfigLoaderV1
+from cloudconnectlib.core.exceptions import ConfigException
 
-_config_file = op.join(common.DATA_DIR, 'test_1.json')
+_config_file = op.join(common.TEST_DATA_DIR, 'test_1.json')
 
 
 def _schema_file_path_for(schema_file):
@@ -153,3 +155,16 @@ def test_load_examples():
 
     for f in files:
         loader.load(load_json_file(op.join(common.EXAMPLE_DIR, f)), schema_file, ctx)
+
+
+def test_get_loader_by_version():
+    loader, schema = get_loader_by_version('1.0.0')
+
+    assert schema == 'schema_1_0_0.json'
+    assert type(loader) == CloudConnectConfigLoaderV1
+
+    bad_version = ['1.0', '2.0', '3.0', '1.0+']
+
+    for bv in bad_version:
+        with pytest.raises(ConfigException):
+            get_loader_by_version(bv)

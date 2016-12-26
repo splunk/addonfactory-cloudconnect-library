@@ -14,7 +14,7 @@ def _json_file(json_file):
 
 
 def _load_json_under_data(json_file):
-    return _json_file(op.join(common.DATA_DIR, json_file))
+    return _json_file(op.join(common.TEST_DATA_DIR, json_file))
 
 
 def _load_schema_from_file():

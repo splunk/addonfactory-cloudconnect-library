@@ -1,4 +1,4 @@
-from package.cloudconnectlib.core.ext import (
+from cloudconnectlib.core.ext import (
     lookup_method, regex_match, regex_not_match, std_output,
     splunk_xml, json_path
 )

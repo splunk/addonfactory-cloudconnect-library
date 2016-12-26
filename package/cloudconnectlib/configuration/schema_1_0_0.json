@@ -89,8 +89,7 @@
                             "method"
                         ],
                         "additionalProperties": false
-                    },
-                    "minItems": 1
+                    }
                 }
             },
             "additionalProperties": false
@@ -108,40 +107,11 @@
             ],
             "additionalProperties": false
         },
-        "Options": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string"
-                },
-                "method": {
-                    "type": "string",
-                    "enum": [
-                        "GET",
-                        "POST"
-                    ]
-                },
-                "headers": {
-                    "type": "object"
-                },
-                "auth": {
-                    "$ref": "#/definitions/Authentication"
-                },
-                "body": {
-                    "type": "object"
-                }
-            },
-            "required": [
-                "url",
-                "method",
-                "headers"
-            ],
-            "additionalProperties": false
-        },
         "Proxy": {
             "type": "object",
             "properties": {
                 "enabled": {
+                    "default": false,
                     "oneOf": [
                         {
                             "type": "string"
@@ -185,7 +155,6 @@
                 }
             },
             "required": [
-                "enabled",
                 "host",
                 "port"
             ],
@@ -194,8 +163,34 @@
         "Request": {
             "type": "object",
             "properties": {
-                "options": {
-                    "$ref": "#/definitions/Options"
+                "request": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        },
+                        "method": {
+                            "type": "string",
+                            "enum": [
+                                "GET",
+                                "POST"
+                            ],
+                            "default": "GET"
+                        },
+                        "headers": {
+                            "type": "object"
+                        },
+                        "auth": {
+                            "$ref": "#/definitions/Authentication"
+                        },
+                        "body": {
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ],
+                    "additionalProperties": false
                 },
                 "pre_process": {
                     "type": "object",
@@ -311,8 +306,7 @@
                 }
             },
             "required": [
-                "options",
-                "pre_process",
+                "request",
                 "post_process",
                 "iteration_mode"
             ],

@@ -12,7 +12,7 @@ from ..common.util import (
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup_method
 from ..core.models import (
-    BasicAuthorization, Options, Processor,
+    BasicAuthorization, Request, Processor,
     Condition, Task, Checkpoint, IterationMode
 )
 from ..core.template import compile_template
@@ -146,11 +146,13 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         return _AUTH_TYPES[auth_type](candidate['options'])
 
     def _load_options(self, options):
-        return Options(auth=self._load_authorization(options.get('auth')),
-                       url=options['url'],
-                       method=options['method'],
-                       header=options.get('headers', {}),
-                       body=options.get('body', {}))
+        return Request(
+            auth=self._load_authorization(options.get('auth')),
+            url=options['url'],
+            method=options['method'],
+            header=options.get('headers', {}),
+            body=options.get('body', {})
+        )
 
     @staticmethod
     def _validate_method(method):
@@ -203,14 +205,15 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         )
 
     def _load_request(self, request):
-        options = self._load_options(request['options'])
-        pre_process = self._load_processor(request['pre_process'])
+        options = self._load_options(request['request'])
+
+        pre_process = self._load_processor(request.get('pre_process', {}))
         post_process = self._load_processor(request['post_process'])
         checkpoint = self._load_checkpoint(request.get('checkpoint'))
         iteration_mode = self._load_iteration_mode(request['iteration_mode'])
 
         return munchify({
-            'options': options,
+            'request': options,
             'pre_process': pre_process,
             'post_process': post_process,
             'checkpoint': checkpoint,

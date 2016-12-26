@@ -1,5 +1,6 @@
 import json
 import re
+
 from .exceptions import FuncException
 from ..common import util, log
 
@@ -102,7 +103,7 @@ def json_not_empty(candidate, json_path_expr=None):
     :param candidate: target to extract
     :return: `True` if the result JSON is not `{}` or `[]` or `None`
     """
-    return not json_empty(candidate, json_path_expr)
+    return not json_empty(json_path_expr, candidate)
 
 
 _EXT_FUNCTIONS = {

@@ -68,7 +68,7 @@ class BasicAuthorization(BaseAuth):
         ).strip()
 
 
-class Options(object):
+class Request(object):
     def __init__(self, url, method, header=None, auth=None, body=None):
         self._header = _DictToken(header)
         self._url = _Token(url)

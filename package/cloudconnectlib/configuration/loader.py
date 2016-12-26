@@ -149,7 +149,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         return Request(
             auth=self._load_authorization(options.get('auth')),
             url=options['url'],
-            method=options['method'],
+            method=options.get('method', 'GET'),
             header=options.get('headers', {}),
             body=options.get('body', {})
         )

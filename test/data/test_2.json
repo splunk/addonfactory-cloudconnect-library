@@ -57,6 +57,13 @@
                     },
                     {
                         "input": [
+                            "{{__response__.body}}"
+                        ],
+                        "method": "alias",
+                        "output": "content"
+                    },
+                    {
+                        "input": [
                             "$.result[*]",
                             "{{__response__.body}}"
                         ],

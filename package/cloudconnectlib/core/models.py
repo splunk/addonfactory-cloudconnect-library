@@ -21,8 +21,8 @@ class _Token(object):
     def render(self, variables):
         """Render value with variables if source is a string.
         Otherwise return source directly."""
-        return self._value_for(variables) \
-            if self._value_for else self._source
+        return self._source if self._value_for is None \
+            else self._value_for(variables)
 
 
 class _DictToken(object):

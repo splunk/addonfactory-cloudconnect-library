@@ -41,7 +41,11 @@ def json_path(json_path_expr, candidate):
     if not isinstance(candidate, dict):
         if not isinstance(candidate, basestring):
             raise TypeError('candidate expected to be dict or JSON string')
-        candidate = json.loads(candidate)
+        try:
+            candidate = json.loads(candidate)
+        except ValueError:
+            _logger.exception('Cannot load JSON from: %s', candidate)
+            raise ValueError('Invalid JSON string: %s' % candidate)
 
     expression = parse(json_path_expr)
     results = [match.value for match in expression.find(candidate)]
@@ -90,6 +94,7 @@ def std_output(candidates):
             raise FuncException("Fail to output data to stdout. The Event "
                                 "writer has stopped or encountered exception")
 
+    _logger.debug('Writing events to stdout finished.')
     return True
 
 
@@ -101,16 +106,27 @@ def json_empty(json_path_expr, candidate):
     :return: `True` if the result JSON is `{}` or `[]` or `None`
     """
     if not candidate:
+        _logger.debug(
+            'JSON to check is empty, treating it as empty: %s',
+            candidate)
         return True
+
     if json_path_expr:
         candidate = json_path(json_path_expr, candidate)
     if not candidate:
         return True
+
     if isinstance(candidate, (dict, list, tuple)):
         return len(candidate) == 0
     if not isinstance(candidate, basestring):
         raise TypeError('unexpected candidate %s' % str(candidate))
-    return len(json.loads(candidate)) == 0
+
+    try:
+        return len(json.loads(candidate)) == 0
+    except ValueError:
+        _logger.warning(
+            'Cannot load JSON from string, treating is as not empty')
+        return False
 
 
 def json_not_empty(candidate, json_path_expr=None):

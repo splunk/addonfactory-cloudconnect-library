@@ -18,6 +18,7 @@ DARWIN_CERT_PATH = '/usr/local/etc/openssl/cert.pem'
 HTTPLIB2_CA_CERT_FILE_NAME = 'cacerts.txt'
 
 TEMP_CERT_FILE_PATH = None
+TEMP_CERT_FILE_DIR = None
 
 
 def get():
@@ -110,4 +111,7 @@ def _do_safe_remove(file_path):
 
 def _generate_temp_cert_file_name():
     file_name = TEMP_CERT_FILE_NAME.format(os.getpid())
-    return os.path.join(tempfile.gettempdir(), file_name)
+    global TEMP_CERT_FILE_DIR
+    if not TEMP_CERT_FILE_DIR:
+        TEMP_CERT_FILE_DIR = tempfile.gettempdir()
+    return os.path.join(TEMP_CERT_FILE_DIR, file_name)

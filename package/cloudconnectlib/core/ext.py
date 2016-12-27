@@ -125,7 +125,7 @@ def json_empty(json_path_expr, candidate):
         return len(json.loads(candidate)) == 0
     except ValueError:
         _logger.warning(
-            'Cannot load JSON from string, treating is as not empty')
+            'Cannot load JSON from string, treating it as not empty')
         return False
 
 
@@ -136,7 +136,7 @@ def json_not_empty(candidate, json_path_expr=None):
     :param candidate: target to extract
     :return: `True` if the result JSON is not `{}` or `[]` or `None`
     """
-    return not json_empty(candidate, json_path_expr)
+    return not json_empty(json_path_expr, candidate)
 
 
 def set_var(value):

@@ -20,7 +20,7 @@
     },
     "requests": [
         {
-            "options": {
+            "request": {
                 "url": "https://{{host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
                 "method": "GET",
                 "auth": {
@@ -90,20 +90,12 @@
                 "stop_conditions": [
                     {
                         "input": [
-                            "{{content}}",
-                            "$.result[*]"
+                            "$.result[*]",
+                            "{{content}}"
                         ],
                         "method": "json_empty"
                     }
                 ]
-            },
-            "checkpoint": {
-                "namespace": [
-                    "{{table_name}}"
-                ],
-                "content": {
-                    "since_when": "{{since_when}}"
-                }
             }
         }
     ]

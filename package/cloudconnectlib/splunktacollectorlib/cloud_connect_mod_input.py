@@ -33,7 +33,7 @@ def _load_options_from_inputs_spec(stanza_name):
 def _find_ucc_global_config_json(mod_input_abspath, ucc_config_filename):
     """Find UCC config file from all possible directories"""
     candidates = ['local', 'default', 'bin',
-                  op.join('appserver', 'static', 'build')]
+                  op.join('appserver', 'static', 'js', 'build')]
     app_root = op.dirname(op.dirname(mod_input_abspath))
 
     for candidate in candidates:

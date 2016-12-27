@@ -35,7 +35,7 @@
     },
     "requests": [
         {
-            "options": {
+            "request": {
                 "url": "http://{{okta_url}}?limit={{limit}}&filter=published gt \"{{start_time}}\"",
                 "method": "GET",
                 "headers": {

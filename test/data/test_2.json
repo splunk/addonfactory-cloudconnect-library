@@ -40,10 +40,10 @@
                 "skip_conditions": [
                     {
                         "input": [
-                            "{{__response__.body}}",
-                            "$.result[*]"
+                            "$.result[*]",
+                            "{{__response__.body}}"
                         ],
-                        "method": "json_not_empty"
+                        "method": "json_empty"
                     }
                 ],
                 "pipeline": [

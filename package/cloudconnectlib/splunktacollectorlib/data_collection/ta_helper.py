@@ -50,9 +50,9 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
     global_config = GlobalConfig(
         server_uri, sessionkey, schema
     )
-    inputs = global_config.inputs(name=input_type)
-    configs = global_config.configs()
-    settings = global_config.settings()
+    inputs = global_config.inputs.load(input_type=input_type)
+    configs = global_config.configs.load()
+    settings = global_config.settings.load()
     return inputs, configs, settings
 
 

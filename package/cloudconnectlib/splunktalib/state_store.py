@@ -1,17 +1,24 @@
-import os.path as op
-import os
 import json
+import os
+import os.path as op
 import time
+
 from ..splunktalib import kv_client as kvc
 from ..splunktalib.common import util
 
 
-def get_state_store(meta_configs, appname, collection_name="talib_states",
-                    use_kv_store=False):
+def get_state_store(meta_configs,
+                    appname,
+                    collection_name="talib_states",
+                    use_kv_store=False,
+                    use_cache_file=True,
+                    max_cache_seconds=5):
+    # FIXME refactor this
     if util.is_true(use_kv_store):
         return StateStore(meta_configs, appname, collection_name)
-    else:
-        return FileStateStore(meta_configs, appname)
+    if util.is_true(use_cache_file):
+        return CachedFileStateStore(meta_configs, appname, max_cache_seconds)
+    return FileStateStore(meta_configs, appname)
 
 
 class BaseStateStore(object):

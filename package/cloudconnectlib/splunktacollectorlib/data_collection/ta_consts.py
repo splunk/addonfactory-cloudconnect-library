@@ -27,6 +27,7 @@ time_fmt = "%Y-%m-%dT%H:%M:%S"
 utc_time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 use_kv_store = "use_kv_store"
+use_cache_file = "use_cache_file"
 name = "name"
 config = "config"
 division = "division"

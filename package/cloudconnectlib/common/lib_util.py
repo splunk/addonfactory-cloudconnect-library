@@ -2,14 +2,14 @@ import os
 import platform
 import sys
 
-from __main__ import __file__
+import __main__
 
 from ..splunktacollectorlib.common import log as stulog
 
 
 def get_main_file():
     """Return the running mod input file"""
-    return __file__
+    return __main__.__file__
 
 
 def register_module(new_path):

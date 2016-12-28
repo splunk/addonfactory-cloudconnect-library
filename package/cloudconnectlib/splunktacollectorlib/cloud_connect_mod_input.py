@@ -55,7 +55,7 @@ def run(single_instance=False):
     mod_input_file = get_main_file()
 
     script_name = os.path.basename(mod_input_file)
-    if script_name.endswith('.py'):
+    if script_name.lower().endswith('.py'):
         script_name = script_name[:-3]
 
     mod_input_abspath = op.abspath(mod_input_file)

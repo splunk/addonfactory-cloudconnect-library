@@ -53,7 +53,10 @@ def _get_cloud_connect_config_json(mod_input_abspath, script_name):
 
 def run(single_instance=False):
     mod_input_file = get_main_file()
-    script_name = os.path.basename(mod_input_file).rstrip('.py')
+
+    script_name = os.path.basename(mod_input_file)
+    if script_name.endswith('.py'):
+        script_name = script_name[:-3]
 
     mod_input_abspath = op.abspath(mod_input_file)
     cc_json_file = _get_cloud_connect_config_json(

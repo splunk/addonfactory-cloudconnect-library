@@ -90,7 +90,7 @@ class HTTPRequest(object):
                 uri, body=body, method=method, headers=headers
             )
         except SSLHandshakeError:
-            _logger.warn(
+            _logger.warning(
                 "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verification failed. "
                 "The certificate of the https server [%s] is not trusted, "
                 "this add-on will proceed to connect with this certificate. "

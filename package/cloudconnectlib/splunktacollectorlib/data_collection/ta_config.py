@@ -1,4 +1,3 @@
-import copy
 import os.path as op
 import socket
 
@@ -72,7 +71,7 @@ class TaConfig(object):
             task_config = {}
             task_config.update(input)
 
-            task_config["__configs__"] = copy.deepcopy(configs)
+            task_config["__configs__"] = configs
             task_config["__settings__"] = \
                 {item[c.name]: item for item in global_settings["settings"]}
 

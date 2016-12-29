@@ -1,5 +1,6 @@
 import json
 import re
+import traceback
 
 from jsonpath_rw import parse
 from .exceptions import FuncException
@@ -9,15 +10,24 @@ from ..common import util, log
 _logger = log.get_cc_logger()
 
 
-def regex_match(pattern, candidate):
+def regex_match(pattern, source, flags=0):
     """
     Determine a string match a regex pattern.
 
-    :param pattern: regex expression
-    :param candidate: candidate to match regex
+    :param pattern: regex pattern
+    :param source: candidate to match regex
+    :param flags: flags for regex match
     :return: `True` if candidate match pattern else `False`
     """
-    return re.match(pattern, candidate) is not None
+    try:
+        return re.match(pattern, source, flags) is not None
+    except (ValueError, TypeError, re.error):
+        _logger.warning(
+            'Unable to match source with pattern=%s, cause=%s',
+            pattern,
+            traceback.format_exc()
+        )
+        return False
 
 
 def regex_not_match(pattern, candidate):
@@ -31,25 +41,36 @@ def regex_not_match(pattern, candidate):
     return not regex_match(pattern, candidate)
 
 
-def json_path(json_path_expr, candidate):
-    """
-    Extract value from string and jsonpath expression with jsonpath.
-    :param json_path_expr: jsonpath expression
-    :param candidate: string to extract value
+def json_path(source, json_path_expr):
+    """ Extract value from string with JSONPATH expression.
+    :param json_path_expr: JSONPATH expression
+    :param source: string to extract value
     :return: A `list` contains all values extracted
     """
-    if not isinstance(candidate, dict):
-        if not isinstance(candidate, basestring):
-            raise TypeError('candidate expected to be dict or JSON string')
+    if isinstance(source, basestring):
+        _logger.debug(
+            'source expected is a JSON, not %s. Attempt to'
+            ' convert it to JSON',
+            type(source)
+        )
         try:
-            candidate = json.loads(candidate)
+            source = json.loads(source)
         except ValueError:
-            _logger.exception('Cannot load JSON from: %s', candidate)
-            raise ValueError('Invalid JSON string: %s' % candidate)
+            _logger.warning('Unable to load JSON from source.'
+                            'Attempt to apply JSONPATH on source directly.')
 
-    expression = parse(json_path_expr)
-    results = [match.value for match in expression.find(candidate)]
-    return results[0] if len(results) == 1 else results
+    try:
+        expression = parse(json_path_expr)
+        results = [match.value for match in expression.find(source)]
+        return results[0] if len(results) == 1 else results
+    except:
+        _logger.warning(
+            'Unable to apply JSONPATH expression "%s" on source,'
+            ' cause=%s',
+            json_path_expr,
+            traceback.format_exc()
+        )
+    return []
 
 
 def splunk_xml(candidates, time=None, index=None, host=None, source=None,
@@ -72,71 +93,83 @@ def splunk_xml(candidates, time=None, index=None, host=None, source=None,
         try:
             time = float(time)
         except ValueError:
-            raise ValueError('"time" must be float: %s' % time)
-    return util.format_events(candidates, time=time, index=index, host=host,
-                              source=source, sourcetype=sourcetype)
+            _logger.warning(
+                '"time" %s is expected to be a float, set "time" to None',
+                time
+            )
+            time = None
+
+    return util.format_events(
+        candidates,
+        time=time,
+        index=index,
+        host=host,
+        source=source,
+        sourcetype=sourcetype
+    )
 
 
 def std_output(candidates):
-    """
-    Output a string to stdout.
+    """ Output a string to stdout.
     :param candidates: List of string to output to stdout or a single string.
     """
     if isinstance(candidates, basestring):
         candidates = [candidates]
+
     all_str = True
     for candidate in candidates:
         if all_str and not isinstance(candidate, basestring):
             all_str = False
-            _logger.warning("The type of data needs to print is {} rather "
-                            "than basestring".format(type(candidate)))
+            _logger.warning(
+                'The type of data needs to print is "%s" rather than'
+                ' basestring',
+                type(candidate)
+            )
         if not PipeManager().write_events(candidate):
-            raise FuncException("Fail to output data to stdout. The Event "
-                                "writer has stopped or encountered exception")
+            raise FuncException('Fail to output data to stdout. The Event'
+                                ' writer has stopped or encountered exception')
 
     _logger.debug('Writing events to stdout finished.')
     return True
 
 
-def json_empty(json_path_expr, candidate):
+def json_empty(source, json_path_expr=None):
     """
     Check whether a JSON is empty.
     :param json_path_expr: A optional jsonpath expression
-    :param candidate: target to extract
+    :param source: target to extract
     :return: `True` if the result JSON is `{}` or `[]` or `None`
     """
-    if not candidate:
+    if not source:
         _logger.debug(
             'JSON to check is empty, treating it as empty: %s',
-            candidate)
+            source)
         return True
 
     if json_path_expr:
-        candidate = json_path(json_path_expr, candidate)
-    if not candidate:
+        source = json_path(json_path_expr, source)
+    if not source:
         return True
 
-    if isinstance(candidate, (dict, list, tuple)):
-        return len(candidate) == 0
-    if not isinstance(candidate, basestring):
-        raise TypeError('unexpected candidate %s' % str(candidate))
+    if isinstance(source, (dict, list, tuple)):
+        return len(source) == 0
 
     try:
-        return len(json.loads(candidate)) == 0
+        return len(json.loads(source)) == 0
     except ValueError:
         _logger.warning(
             'Cannot load JSON from string, treating it as not empty')
         return False
 
 
-def json_not_empty(candidate, json_path_expr=None):
+def json_not_empty(source, json_path_expr=None):
     """Check if a JSON object is not empty. A optional jsonpath expression
     will be used to extract JSON from candidate.
     :param json_path_expr: A optional jsonpath expression
-    :param candidate: target to extract
+    :param source: target to extract
     :return: `True` if the result JSON is not `{}` or `[]` or `None`
     """
-    return not json_empty(json_path_expr, candidate)
+    return not json_empty(source, json_path_expr)
 
 
 def set_var(value):

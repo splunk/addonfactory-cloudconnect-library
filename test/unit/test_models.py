@@ -1,5 +1,5 @@
 import pytest
-from cloudconnectlib.core.models import _Token, _DictToken, Options
+from cloudconnectlib.core.models import _Token, _DictToken, Request
 from jinja2 import TemplateSyntaxError
 
 
@@ -50,7 +50,7 @@ def test_dict_token():
     assert dtv['int'] == 124
 
 
-def test_options():
+def test_request():
     header = {
         'token1': 124,
         'token2': '{{value1}}'
@@ -59,7 +59,7 @@ def test_options():
         'params1': 123,
         'params2': '{{value2}}'
     }
-    option = Options('url_test', 'GET',
+    option = Request('url_test', 'GET',
                      header=header, auth=None,
                      body=body)
 

@@ -20,7 +20,7 @@
     },
     "requests": [
         {
-            "options": {
+            "request": {
                 "url": "https://{{host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
                 "method": "GET",
                 "auth": {
@@ -40,17 +40,24 @@
                 "skip_conditions": [
                     {
                         "input": [
-                            "{{__response__.body}}",
-                            "$.result[*]"
+                            "$.result[*]",
+                            "{{__response__.body}}"
                         ],
-                        "method": "json_not_empty"
+                        "method": "json_empty"
                     }
                 ],
                 "pipeline": [
                     {
                         "input": [
-                            "$.result[-1].sys_updated_on",
                             "{{__response__.body}}"
+                        ],
+                        "method": "set_var",
+                        "output": "content"
+                    },
+                    {
+                        "input": [
+                            "$.result[-1].sys_updated_on",
+                            "{{content}}"
                         ],
                         "method": "json_path",
                         "output": "since_when"
@@ -58,7 +65,7 @@
                     {
                         "input": [
                             "$.result[*]",
-                            "{{__response__.body}}"
+                            "{{content}}"
                         ],
                         "method": "json_path",
                         "output": "result"
@@ -83,20 +90,12 @@
                 "stop_conditions": [
                     {
                         "input": [
-                            "{{__response__.body}}",
-                            "$.result[*]"
+                            "$.result[*]",
+                            "{{content}}"
                         ],
                         "method": "json_empty"
                     }
                 ]
-            },
-            "checkpoint": {
-                "namespace": [
-                    "{{table_name}}"
-                ],
-                "content": {
-                    "since_when": "{{since_when}}"
-                }
             }
         }
     ]

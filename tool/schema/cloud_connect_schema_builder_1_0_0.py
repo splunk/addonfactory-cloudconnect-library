@@ -33,8 +33,8 @@ class Authentication(Document):
 class Options(Document):
     # required
     url = StringField(required=True)
-    method = StringField(enum=_HTTP_METHODS, required=True)
-    headers = DictField(required=True)
+    method = StringField(enum=_HTTP_METHODS, default='GET')
+    headers = DictField()
 
     # optional
     auth = DocumentField(Authentication, as_ref=True)
@@ -57,8 +57,7 @@ class Condition(Function):
 class IterationMode(Document):
     iteration_count = OneOfField(
         fields=[StringField(pattern='^[-+]?[1-9]\d*$'), IntField()])
-    stop_conditions = ArrayField(DocumentField(Condition),
-                                 min_items=1)
+    stop_conditions = ArrayField(DocumentField(Condition))
 
 
 class Processor(Document):
@@ -70,8 +69,8 @@ class Request(Document):
     """
     Represents config scheme for single request.
     """
-    options = DocumentField(Options, as_ref=True, required=True)
-    pre_process = DocumentField(Processor, required=True)
+    request = DocumentField(Options, required=True)
+    pre_process = DocumentField(Processor)
     post_process = DocumentField(Processor, required=True)
     iteration_mode = DocumentField(IterationMode, as_ref=True, required=True)
     checkpoint = DocumentField(Checkpoint, as_ref=True)
@@ -83,7 +82,7 @@ class Proxy(Document):
     """
     # 'enabled' can be string or int or boolean
     enabled = OneOfField(fields=[StringField(), BooleanField(), IntField()],
-                         required=True)
+                         default=False)
 
     host = StringField(required=True)
     port = OneOfField(fields=[StringField(), IntField(minimum=1,
@@ -151,4 +150,4 @@ if __name__ == '__main__':
                           'package', 'cloudconnectlib', 'configuration', 'schema_1_0_0.json')
     schema_as_json = build_schema(True)
     with open(schema_file, 'w') as f:
-        f.write(json.dumps(schema_as_json, indent=2))
+        f.write(json.dumps(schema_as_json, indent=4))

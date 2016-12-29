@@ -69,8 +69,7 @@ class HTTPRequest(object):
     }
 
     def __init__(self, proxy=None):
-        """
-        Constructs a `HTTPRequest` with a optional proxy setting.
+        """Constructs a `HTTPRequest` with a optional proxy setting.
         :param proxy: A optional `Proxy` object contains proxy related
          settings.
         """
@@ -79,6 +78,8 @@ class HTTPRequest(object):
         self._prepare_url_func = _make_prepare_url_func()
 
     def _send_request(self, uri, method, headers=None, body=None):
+        """Do send request to target URL and validate SSL cert by default.
+        If validation failed, disable it and try again."""
         if self._connection is None:
             self._connection = self._build_http_connection(
                 proxy_info=self._proxy_info,
@@ -86,9 +87,10 @@ class HTTPRequest(object):
 
         try:
             return self._connection.request(
-                uri, body=body, method=method, headers=headers)
+                uri, body=body, method=method, headers=headers
+            )
         except SSLHandshakeError:
-            _logger.warn(
+            _logger.warning(
                 "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verification failed. "
                 "The certificate of the https server [%s] is not trusted, "
                 "this add-on will proceed to connect with this certificate. "
@@ -100,9 +102,11 @@ class HTTPRequest(object):
 
             self._connection = self._build_http_connection(
                 proxy_info=self._proxy_info,
-                disable_ssl_cert_validation=True)
+                disable_ssl_cert_validation=True
+            )
             return self._connection.request(
-                uri, body=body, method=method, headers=headers)
+                uri, body=body, method=method, headers=headers
+            )
 
     def request(self, url, method='GET', headers=None, body=None):
         """
@@ -161,9 +165,10 @@ class HTTPRequest(object):
             proxy_info=None,
             timeout=defaults.timeout,
             disable_ssl_cert_validation=defaults.disable_ssl_cert_validation):
-        return Http(proxy_info=proxy_info,
-                    timeout=timeout,
-                    disable_ssl_certificate_validation=disable_ssl_cert_validation)
+        return Http(
+            proxy_info=proxy_info,
+            timeout=timeout,
+            disable_ssl_certificate_validation=disable_ssl_cert_validation)
 
     @staticmethod
     def _is_need_retry(status, retried, maximum_retries):
@@ -177,7 +182,7 @@ class HTTPRequest(object):
 
         for i in xrange(retries + 1):
             try:
-                response, content = self._connection.request(
+                response, content = self._send_request(
                     uri, body=body, method=method, headers=headers
                 )
             except Exception as err:

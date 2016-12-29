@@ -228,9 +228,9 @@ class Job(object):
         _logger.info('Job processing finished')
 
     def _run(self):
-        options = self._request.options
-        method = options.method
-        authorizer = options.auth
+        request = self._request.request
+        method = request.method
+        authorizer = request.auth
         self._get_checkpoint()
 
         while 1:
@@ -238,9 +238,9 @@ class Job(object):
                 _logger.info('Job should been stopped.')
                 return
 
-            url = options.normalize_url(self._context)
-            header = options.normalize_header(self._context)
-            body = options.normalize_body(self._context)
+            url = request.normalize_url(self._context)
+            header = request.normalize_header(self._context)
+            body = request.normalize_body(self._context)
             rb = json.dumps(body) if body else None
 
             if authorizer:

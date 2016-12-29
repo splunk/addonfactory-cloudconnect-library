@@ -69,11 +69,11 @@ class TaConfig(object):
         for input in inputs:
             task_config = dict()
             task_config.update(input)
-            task_config["__configs__"] = configs
+            task_config[c.configs] = configs
             settings = dict()
             for setting in global_settings["settings"]:
                 settings.update(setting)
-            task_config["__settings__"] = settings
+            task_config[c.settings] = settings
             if self.is_single_instance():
                 collection_interval = "collection_interval"
                 task_config[c.interval] = task_config.get(collection_interval)

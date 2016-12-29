@@ -28,6 +28,8 @@ utc_time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 use_kv_store = "use_kv_store"
 use_cache_file = "use_cache_file"
+max_cache_seconds = "max_cache_seconds"
+
 name = "name"
 config = "config"
 division = "division"

@@ -10,16 +10,33 @@ from ...splunktalib.common.util import is_true
 class TACheckPointMgr(object):
     SEPARATOR = "_" * 3
 
+    # FIXME We'd better move all default values together
+    _DEFAULT_MAX_CACHE_SECONDS = 5
+
     def __init__(self, meta_config, task_config):
         self._task_config = task_config
-        use_kv_store = self._use_kv_store()
-        use_cache_file = self._use_cache_file() if not use_kv_store else False
+        self._store = self._create_state_store(
+            meta_config, task_config[c.appname]
+        )
 
-        self._store = ss.get_state_store(
+    def _create_state_store(self, meta_config, app_name):
+        if self._use_kv_store():
+            stulog.logger.debug("Creating KV state store.")
+            return ss.get_state_store(meta_config, app_name, use_kv_store=True)
+
+        use_cache_file = self._use_cache_file()
+        max_cache_seconds = \
+            self._get_max_cache_seconds() if use_cache_file else None
+
+        stulog.logger.debug("Creating file state store, "
+                            "use_cache_file=%s, max_cache_seconds=%s",
+                            use_cache_file, max_cache_seconds)
+
+        return ss.get_state_store(
             meta_config,
-            task_config[c.appname],
-            use_kv_store=use_kv_store,
-            use_cache_file=use_cache_file
+            app_name,
+            use_cache_file=use_cache_file,
+            max_cache_seconds=max_cache_seconds
         )
 
     def _use_kv_store(self):
@@ -39,6 +56,21 @@ class TACheckPointMgr(object):
                 self._task_config[c.stanza_name]
             )
         return use_cache_file
+
+    def _get_max_cache_seconds(self):
+        default = self._DEFAULT_MAX_CACHE_SECONDS
+        seconds = self._task_config.get(
+            c.max_cache_seconds, default
+        )
+        try:
+            return int(seconds)
+        except ValueError:
+            stulog.logger.warning(
+                "The max_cache_seconds '%s' is not a valid integer,"
+                " so set this variable to default value %s",
+                seconds, default
+            )
+        return default
 
     def get_ckpt_key(self, namespaces=None):
         return self._key_formatter(namespaces)

@@ -62,7 +62,7 @@
                     "oneOf": [
                         {
                             "type": "string",
-                            "pattern": "^([+-]?[1-9]\\d*|0)$"
+                            "pattern": "^[+-]?[1-9]\\d*|0$"
                         },
                         {
                             "type": "integer"

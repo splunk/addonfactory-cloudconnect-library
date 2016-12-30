@@ -147,7 +147,7 @@ def json_empty(source, json_path_expr=None):
         return True
 
     if json_path_expr:
-        source = json_path(json_path_expr, source)
+        source = json_path(source, json_path_expr)
     if not source:
         return True
 

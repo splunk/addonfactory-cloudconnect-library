@@ -119,6 +119,9 @@ def test_json_empty():
     for case in not_empty_cases:
         assert json_not_empty(case)
         assert not json_empty(case)
+        assert not json_empty(case, '$')
+        assert not json_empty(case, '')
+        assert not json_empty(case, None)
 
     invalid_cases = ['$$!@#', 'hahahha   ksk32', '{{}}}', '=---==', '\\=---']
     for case in invalid_cases:

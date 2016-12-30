@@ -8,8 +8,6 @@ import re
 
 from setuptools import setup, find_packages, Command
 
-import pytest
-
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
 _UNIT_TEST_DIR = op.sep.join([op.dirname(op.abspath(__file__)), 'test', 'unit'])
@@ -34,6 +32,7 @@ class TestCommand(Command):
         pass
 
     def run(self):
+        import pytest
         pytest.main(['-v', _UNIT_TEST_DIR])
 
 
@@ -49,6 +48,7 @@ class JTestCommand(Command):
         pass
 
     def run(self):
+        import pytest
         pytest.main(['-v', '--junitxml=junit_report.xml', _UNIT_TEST_DIR])
 
 
@@ -64,6 +64,7 @@ class CoverageCommand(Command):
         pass
 
     def run(self):
+        import pytest
         pytest.main(['-v',
                      '--cov=cloudconnectlib.configuration',
                      '--cov=cloudconnectlib.core',
@@ -83,6 +84,7 @@ class CoverageHtmlCommand(Command):
         pass
 
     def run(self):
+        import pytest
         pytest.main(['-v',
                      '--cov=cloudconnectlib.configuration',
                      '--cov=cloudconnectlib.core',

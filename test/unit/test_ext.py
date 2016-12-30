@@ -1,6 +1,13 @@
 from cloudconnectlib.core.ext import (
-    lookup_method, regex_match, regex_not_match, std_output,
-    splunk_xml, json_path
+    lookup_method,
+    regex_match,
+    regex_not_match,
+    std_output,
+    splunk_xml,
+    json_path,
+    json_empty,
+    json_not_empty,
+    set_var,
 )
 
 
@@ -31,12 +38,43 @@ def test_splunk_xml():
 
 
 def test_jsonpath():
-    r = json_path('foo[*].baz', {'foo': [{'baz': 1}, {'baz': 2}]})
-    assert r[0] == 1
-    assert r[1] == 2
-    rr = json_path('a.*.b.`parent`.c', {'a': {'x': {'b': 1, 'c': 'number one'}, 'y': {'b': 2, 'c': 'number two'}}})
-    assert rr[0] == 'number two'
-    assert rr[1] == 'number one'
+    test_cases = [
+        (
+            {'foo': [{'baz': 1}, {'baz': 2}]},
+            'foo[*].baz',
+            2,
+            [1, 2]
+        ),
+        (
+            '{"foo": [{"baz": 1}, {"baz": 2}]}',
+            'foo[*].baz',
+            2,
+            [1, 2]
+        ),
+        (
+            [{'baz': 1}, {'baz': 2}],
+            '[*].baz',
+            2,
+            [1, 2]
+        ),
+        (
+            {'a': {'x': {'b': 1, 'c': 'number one'}, 'y': {'b': 2, 'c': 'number two'}}},
+            'a.*.b.`parent`.c',
+            2,
+            ['number two', 'number one']
+        ),
+        (
+            'abcedfghijkl$%^&#@$',
+            '$',
+            19,
+            'abcedfghijkl$%^&#@$'
+        )
+    ]
+
+    for source, expr, result_size, result in test_cases:
+        r = json_path(source, expr)
+        assert len(r) == result_size
+        assert r == result
 
 
 def test_std_output():
@@ -71,8 +109,28 @@ def test_std_output():
     assert mock_stdout.read() == 'abcdefghijkl1234!@#$%^\n'
 
 
+def test_json_empty():
+    empty_cases = ['{}', {}, '[]', [], '']
+    for case in empty_cases:
+        assert json_empty(case)
+        assert not json_not_empty(case)
+
+    not_empty_cases = ['{"k": 1}', {'abc': True}, '{"k": true}']
+    for case in not_empty_cases:
+        assert json_not_empty(case)
+        assert not json_empty(case)
+
+    invalid_cases = ['$$!@#', 'hahahha   ksk32', '{{}}}', '=---==', '\\=---']
+    for case in invalid_cases:
+        assert not json_empty(case)
+
+
 def test_lookup():
     f = lookup_method('json_path')
-    r = f('foo[*].baz', {'foo': [{'baz': 1}, {'baz': 2}]})
-    assert r[0] == 1
-    assert r[1] == 2
+    assert f == json_path
+    f = lookup_method('json_not_empty')
+    assert f == json_not_empty
+    f = lookup_method('json_empty')
+    assert f == json_empty
+    f = lookup_method('set_var')
+    assert f == set_var

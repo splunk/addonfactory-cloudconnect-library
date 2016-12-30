@@ -135,8 +135,7 @@ def std_output(candidates):
 
 
 def json_empty(source, json_path_expr=None):
-    """
-    Check whether a JSON is empty.
+    """Check whether a JSON is empty.
     :param json_path_expr: A optional jsonpath expression
     :param source: target to extract
     :return: `True` if the result JSON is `{}` or `[]` or `None`
@@ -164,7 +163,7 @@ def json_empty(source, json_path_expr=None):
 
 
 def json_not_empty(source, json_path_expr=None):
-    """Check if a JSON object is not empty. A optional jsonpath expression
+    """Check if a JSON object is not empty.
     will be used to extract JSON from candidate.
     :param json_path_expr: A optional jsonpath expression
     :param source: target to extract

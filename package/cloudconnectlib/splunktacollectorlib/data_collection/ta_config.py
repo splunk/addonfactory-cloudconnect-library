@@ -1,10 +1,11 @@
-import socket
-import ta_consts as c
 import os.path as op
-from ...splunktalib import splunk_cluster as sc
+import socket
+
+import ta_consts as c
 import ta_helper as th
 from ..common import log as stulog
 from ...splunktalib import modinput as modinput
+from ...splunktalib import splunk_cluster as sc
 from ...splunktalib.common import util
 
 
@@ -57,35 +58,36 @@ class TaConfig(object):
 
     def _load_task_configs(self):
         inputs, configs, global_settings = th.get_all_conf_contents(
-            self._meta_config["server_uri"],
-            self._meta_config["session_key"],
+            self._meta_config[c.server_uri],
+            self._meta_config[c.session_key],
             self._client_schema, self._input_type)
         if self._input_type:
             inputs = inputs.get(self._input_type)
         if not self._single_instance:
             inputs = [input for input in inputs if
-                      input["name"] == self._stanza_name]
+                      input[c.name] == self._stanza_name]
         all_task_configs = []
         for input in inputs:
-            task_config = dict()
+            task_config = {}
             task_config.update(input)
+
             task_config["__configs__"] = configs
-            settings = dict()
-            for setting in global_settings["settings"]:
-                settings.update(setting)
-            task_config["__settings__"] = settings
+            task_config["__settings__"] = \
+                {item[c.name]: item for item in global_settings["settings"]}
+
             if self.is_single_instance():
                 collection_interval = "collection_interval"
                 task_config[c.interval] = task_config.get(collection_interval)
             task_config[c.interval] = int(task_config[c.interval])
             if task_config[c.interval] <= 0:
-                raise ValueError("The interval value {} is invalid. It "
-                                    "should be a positive integer"
-                                    .format(task_config[c.interval]))
+                raise ValueError(
+                    "The interval value {} is invalid."
+                    " It should be a positive integer".format(
+                        task_config[c.interval]))
             if self._server_info.is_search_head():
                 task_config[c.use_kv_store] = True
             task_config[c.appname] = TaConfig._appname
-            task_config[c.stanza_name] = task_config["name"]
+            task_config[c.stanza_name] = task_config[c.name]
             all_task_configs.append(task_config)
         self._task_configs = all_task_configs
 

@@ -186,7 +186,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
             iteration_count = int(count)
         except ValueError:
             raise ValueError(
-                'Iteration mode "iteration_count" must be an integer: %s' % count)
+                '"iteration_count" must be an integer: %s' % count)
 
         stop_conditions = self._parse_conditions(
             iteration_mode['stop_conditions'])

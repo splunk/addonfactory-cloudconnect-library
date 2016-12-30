@@ -12,7 +12,7 @@ _logger = log.get_cc_logger()
 
 def regex_match(pattern, source, flags=0):
     """
-    Determine a string match a regex pattern.
+    Determine whether a string is match a regex pattern.
 
     :param pattern: regex pattern
     :param source: candidate to match regex
@@ -30,15 +30,16 @@ def regex_match(pattern, source, flags=0):
         return False
 
 
-def regex_not_match(pattern, candidate):
+def regex_not_match(pattern, source, flags=0):
     """
-    Determine a string not match a regex pattern.
+    Determine whether a string is not match a regex pattern.
 
     :param pattern: regex expression
-    :param candidate: candidate to match regex
+    :param source: candidate to match regex
+    :param flags: flags for regex match
     :return: `True` if candidate not match pattern else `False`
     """
-    return not regex_match(pattern, candidate)
+    return not regex_match(pattern, source, flags)
 
 
 def json_path(source, json_path_expr):

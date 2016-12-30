@@ -181,7 +181,7 @@ class Job(object):
 
     def _get_checkpoint(self):
         checkpoint = self._request.checkpoint
-        if not self._request.checkpoint:
+        if not checkpoint:
             _logger.info('Checkpoint not specified, do not read it.')
             return
 

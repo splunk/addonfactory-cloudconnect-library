@@ -12,6 +12,7 @@ class TACheckPointMgr(object):
 
     # FIXME We'd better move all default values together
     _DEFAULT_MAX_CACHE_SECONDS = 5
+    _MAXIMUM_MAX_CACHE_SECONDS = 3600
 
     def __init__(self, meta_config, task_config):
         self._task_config = task_config
@@ -40,6 +41,7 @@ class TACheckPointMgr(object):
         )
 
     def _use_kv_store(self):
+        # TODO Move the default value outside code
         use_kv_store = is_true(self._task_config.get(c.use_kv_store, False))
         if use_kv_store:
             stulog.logger.info(
@@ -49,6 +51,7 @@ class TACheckPointMgr(object):
         return use_kv_store
 
     def _use_cache_file(self):
+        # TODO Move the default value outside code
         use_cache_file = is_true(self._task_config.get(c.use_cache_file, True))
         if use_cache_file:
             stulog.logger.info(
@@ -63,13 +66,25 @@ class TACheckPointMgr(object):
             c.max_cache_seconds, default
         )
         try:
-            return int(seconds)
+            seconds = int(seconds)
         except ValueError:
             stulog.logger.warning(
                 "The max_cache_seconds '%s' is not a valid integer,"
                 " so set this variable to default value %s",
                 seconds, default
             )
+        else:
+            maximum = self._MAXIMUM_MAX_CACHE_SECONDS
+            if not (1 <= seconds <= maximum):
+                # for seconds>3600 set it to 3600. for seconds <=0 set it to default.
+                adjusted = max(min(seconds, maximum), default)
+                stulog.logger.warning(
+                    "The max_cache_seconds (%s) is expected in range[1,%s],"
+                    " set it to %s",
+                    seconds, maximum, adjusted
+                )
+                seconds = adjusted
+            return seconds
         return default
 
     def get_ckpt_key(self, namespaces=None):

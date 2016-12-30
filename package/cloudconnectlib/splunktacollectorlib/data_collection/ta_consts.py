@@ -27,9 +27,9 @@ time_fmt = "%Y-%m-%dT%H:%M:%S"
 utc_time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # system setting keys
-use_kv_store = "__use_kv_store__"
-use_cache_file = "__use_cache_file__"
-max_cache_seconds = "__max_cache_seconds__"
+use_kv_store = "builtin_system_use_kv_store"
+use_cache_file = "builtin_system_use_cache_file"
+max_cache_seconds = "builtin_system_max_cache_seconds"
 settings = "__settings__"
 configs = "__configs__"
 

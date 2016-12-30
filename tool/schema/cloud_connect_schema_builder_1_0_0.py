@@ -56,7 +56,7 @@ class Condition(Function):
 
 class IterationMode(Document):
     iteration_count = OneOfField(
-        fields=[StringField(pattern='^[-+]?[1-9]\d*$'), IntField()])
+        fields=[StringField(pattern='^[+-]?[1-9]\d*|0$'), IntField()])
     stop_conditions = ArrayField(DocumentField(Condition))
 
 

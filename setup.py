@@ -91,9 +91,6 @@ class CoverageHtmlCommand(Command):
                      _UNIT_TEST_DIR])
 
 
-with open('requirements.txt') as f:
-    install_requires = f.read().splitlines()
-
 setup(
     name='cloudconnectlib',
     description='APP Cloud Connect',
@@ -110,7 +107,18 @@ setup(
     package_data={
         '': ['LICENSE']
     },
-    install_requires=install_requires,
+    install_requires=[
+        "jsonschema==2.5.1",
+        "jinja2==2.8",
+        "jsonpath-rw==1.4.0",
+        "httplib2==0.9.2",
+        "splunk-sdk==1.6.0",
+        "sortedcontainers==1.5.2",
+        "munch==2.0.4",
+        "splunktaucclib==3.0.0",
+        "solnlib>=1.0.16-dev",
+        "functools32==3.2.3-2",
+    ],
 
     cmdclass={
         'test': TestCommand,

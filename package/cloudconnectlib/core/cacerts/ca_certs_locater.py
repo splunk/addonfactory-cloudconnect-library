@@ -111,7 +111,14 @@ def _do_safe_remove(file_path):
 def _get_temp_cert_file_dir():
     import __main__
     app_root = op.dirname(op.dirname(op.abspath(__main__.__file__)))
-    for candidate in ['local', 'default']:
+
+    temp_dir = op.join(app_root, 'temp_certs')
+    if not op.isdir(temp_dir):
+        try:
+            os.mkdir(temp_dir)
+        except:
+            pass
+    for candidate in ['temp_certs', 'local', 'default']:
         dir_path = op.join(app_root, candidate)
         if op.isdir(dir_path):
             return dir_path

@@ -57,7 +57,8 @@ class CloudConnectClient(object):
 
         self._engine = CloudConnectEngine()
         self._engine.start(
-            context=copy.deepcopy(self._context), config=self._config,
+            context=copy.deepcopy(self._context),
+            config=self._config,
             checkpoint_mgr=self._checkpoint_mgr
         )
 

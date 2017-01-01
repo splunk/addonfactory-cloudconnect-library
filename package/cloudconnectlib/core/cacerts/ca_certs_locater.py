@@ -7,9 +7,9 @@ certificates are not included.
 
 import atexit
 import os
+import os.path as op
 import ssl
 import sys
-import tempfile
 
 TEMP_CERT_FILE_NAME = 'httplib2_merged_certificates_{}.crt'
 LINUX_CERT_PATH_1 = '/etc/pki/tls/certs/ca-bundle.crt'  # RedHat
@@ -108,6 +108,23 @@ def _do_safe_remove(file_path):
             pass
 
 
+def _get_temp_cert_file_dir():
+    import __main__
+    app_root = op.dirname(op.dirname(op.abspath(__main__.__file__)))
+
+    temp_dir = op.join(app_root, 'temp_certs')
+    if not op.isdir(temp_dir):
+        try:
+            os.mkdir(temp_dir)
+        except:
+            pass
+    for candidate in ['temp_certs', 'local', 'default']:
+        dir_path = op.join(app_root, candidate)
+        if op.isdir(dir_path):
+            return dir_path
+    return app_root
+
+
 def _generate_temp_cert_file_name():
     file_name = TEMP_CERT_FILE_NAME.format(os.getpid())
-    return os.path.join(tempfile.gettempdir(), file_name)
+    return os.path.join(_get_temp_cert_file_dir(), file_name)

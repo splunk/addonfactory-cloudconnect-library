@@ -26,7 +26,13 @@ batch_size = 'batch_size'
 time_fmt = "%Y-%m-%dT%H:%M:%S"
 utc_time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
-use_kv_store = "use_kv_store"
+# system setting keys
+use_kv_store = "builtin_system_use_kv_store"
+use_cache_file = "builtin_system_use_cache_file"
+max_cache_seconds = "builtin_system_max_cache_seconds"
+settings = "__settings__"
+configs = "__configs__"
+
 name = "name"
 config = "config"
 division = "division"

@@ -1,10 +1,11 @@
 #!/usr/bin/python
-import time
 import threading
+import time
+from collections import namedtuple
+
 import ta_consts as c
 from ..common import log as stulog
 from ...splunktalib.common import util as scu
-from collections import namedtuple
 
 evt_fmt = ("<stream><event><host>{0}</host>"
            "<source><![CDATA[{1}]]></source>"
@@ -115,11 +116,13 @@ class TADataCollector(object):
             return
         with self._lock:
             checkpoint_key = self._get_ckpt_key()
-            stulog.logger.info("{} Start indexing data for checkpoint_key={"
-                               "}".format(self._p, checkpoint_key))
-            try:
+            stulog.logger.info(
+                "%s Start indexing data for checkpoint_key=%s",
+                self._p, checkpoint_key)
 
+            try:
                 self._do_safe_index()
+                self._checkpoint_manager.close()
             except Exception:
                 stulog.logger.exception("{} Failed to index data"
                                         .format(self._p))
@@ -127,7 +130,6 @@ class TADataCollector(object):
                                .format(self._p, checkpoint_key))
             if not self._ta_config.is_single_instance():
                 self._data_loader.tear_down()
-
 
     def _write_events(self, ckpt, events):
         evts = self._build_event(events)

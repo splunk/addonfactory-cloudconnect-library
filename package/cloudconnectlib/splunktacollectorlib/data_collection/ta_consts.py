@@ -30,6 +30,8 @@ utc_time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 use_kv_store = "builtin_system_use_kv_store"
 use_cache_file = "builtin_system_use_cache_file"
 max_cache_seconds = "builtin_system_max_cache_seconds"
+collection_name = "builtin_system_collection_name"
+
 settings = "__settings__"
 configs = "__configs__"
 
@@ -39,3 +41,4 @@ division = "division"
 stanza_name = "stanza_name"
 divide_key = "_divide_key"
 divide_endpoint = "_divide_endpoint"
+mod_input_name = 'mod_input_name'

@@ -206,7 +206,6 @@ def main(collector_cls, schema_file_path, log_suffix="modinput",
     assert collector_cls, "ucc modinput collector is None."
     assert schema_file_path, "ucc modinput schema file is None"
 
-    stulog.reset_logger(log_suffix)
     settings = ld(schema_file_path)
     ta_short_name = settings["meta"]["name"].lower()
     ta_desc = settings["meta"]["displayName"].lower()
@@ -223,7 +222,6 @@ def main(collector_cls, schema_file_path, log_suffix="modinput",
         else:
             usage()
     else:
-        stulog.logger.info("Start {} task".format(ta_short_name))
         try:
             run(collector_cls, settings, checkpoint_cls=checkpoint_cls,
                 config_cls=configer_cls, log_suffix=log_suffix,

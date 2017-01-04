@@ -52,7 +52,7 @@ class TACheckPointMgr(object):
         if not collection:
             input_name = self._task_config[c.mod_input_name]
             stulog.logger.info(
-                'Collection name="%s" is invalid, set it to "%s"',
+                'Collection name="%s" is empty, set it to "%s"',
                 collection, input_name
             )
             collection = input_name

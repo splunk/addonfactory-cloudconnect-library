@@ -30,7 +30,7 @@ utc_time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 use_kv_store = "builtin_system_use_kv_store"
 use_cache_file = "builtin_system_use_cache_file"
 max_cache_seconds = "builtin_system_max_cache_seconds"
-collection_name = "builtin_system_collection_name"
+collection_name = "builtin_system_kvstore_collection_name"
 
 settings = "__settings__"
 configs = "__configs__"

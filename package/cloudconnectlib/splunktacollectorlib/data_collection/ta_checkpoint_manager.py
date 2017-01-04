@@ -1,4 +1,5 @@
 import json
+import re
 
 from . import ta_consts as c
 from . import ta_helper as th
@@ -46,16 +47,16 @@ class TACheckPointMgr(object):
         )
 
     def _get_collection_name(self):
-        collection = self._task_config.get(c.collection_name)
+        collection = self._task_config.get(c.collection_name, '').strip()
 
-        if not collection or not collection.strip():
+        if not collection:
             input_name = self._task_config[c.mod_input_name]
             stulog.logger.info(
                 'Collection name="%s" is invalid, set it to "%s"',
                 collection, input_name
             )
-            return input_name
-        return collection.strip()
+            collection = input_name
+        return re.sub(r'[^\w]+', '_', collection)
 
     def _use_kv_store(self):
         # TODO Move the default value outside code

@@ -1,27 +1,91 @@
 import json
+
 from . import ta_consts as c
-from ...splunktalib import state_store as ss
-from ..common import log as stulog
 from . import ta_helper as th
+from ..common import log as stulog
+from ...splunktalib import state_store as ss
+from ...splunktalib.common.util import is_true
 
 
 class TACheckPointMgr(object):
     SEPARATOR = "_" * 3
 
+    # FIXME We'd better move all default values together
+    _DEFAULT_MAX_CACHE_SECONDS = 5
+    _MAXIMUM_MAX_CACHE_SECONDS = 3600
+
     def __init__(self, meta_config, task_config):
         self._task_config = task_config
-        self._store = ss.get_state_store(
+        self._store = self._create_state_store(
+            meta_config, task_config[c.appname]
+        )
+
+    def _create_state_store(self, meta_config, app_name):
+        if self._use_kv_store():
+            stulog.logger.debug("Creating KV state store.")
+            return ss.get_state_store(meta_config, app_name, use_kv_store=True)
+
+        use_cache_file = self._use_cache_file()
+        max_cache_seconds = \
+            self._get_max_cache_seconds() if use_cache_file else None
+
+        stulog.logger.debug("Creating file state store, "
+                            "use_cache_file=%s, max_cache_seconds=%s",
+                            use_cache_file, max_cache_seconds)
+
+        return ss.get_state_store(
             meta_config,
-            task_config[c.appname],
-            use_kv_store=self._use_kv_store())
+            app_name,
+            use_cache_file=use_cache_file,
+            max_cache_seconds=max_cache_seconds
+        )
 
     def _use_kv_store(self):
-        use_kv_store = self._task_config.get(
-            c.use_kv_store, False)
+        # TODO Move the default value outside code
+        use_kv_store = is_true(self._task_config.get(c.use_kv_store, False))
         if use_kv_store:
-            stulog.logger.info("Stanza={} Using KV store for checkpoint"
-                               .format(self._task_config[c.stanza_name]))
+            stulog.logger.info(
+                "Stanza=%s Using KV store for checkpoint",
+                self._task_config[c.stanza_name]
+            )
         return use_kv_store
+
+    def _use_cache_file(self):
+        # TODO Move the default value outside code
+        use_cache_file = is_true(self._task_config.get(c.use_cache_file, True))
+        if use_cache_file:
+            stulog.logger.info(
+                "Stanza=%s using cached file store to create checkpoint",
+                self._task_config[c.stanza_name]
+            )
+        return use_cache_file
+
+    def _get_max_cache_seconds(self):
+        default = self._DEFAULT_MAX_CACHE_SECONDS
+        seconds = self._task_config.get(
+            c.max_cache_seconds, default
+        )
+        try:
+            seconds = int(seconds)
+        except ValueError:
+            stulog.logger.warning(
+                "The max_cache_seconds '%s' is not a valid integer,"
+                " so set this variable to default value %s",
+                seconds, default
+            )
+        else:
+            maximum = self._MAXIMUM_MAX_CACHE_SECONDS
+            if not (1 <= seconds <= maximum):
+                # for seconds>3600 set it to 3600. for seconds <=0 set it to default.
+                adjusted = max(min(seconds, maximum), default)
+                stulog.logger.warning(
+                    "The max_cache_seconds (%s) is expected in range[1,%s],"
+                    " set it to %s",
+                    seconds, maximum, adjusted
+                )
+                seconds = adjusted
+            return seconds
+        return default
 
     def get_ckpt_key(self, namespaces=None):
         return self._key_formatter(namespaces)
@@ -57,3 +121,10 @@ class TACheckPointMgr(object):
         hashed_file = th.format_name_for_file(key_str)
         stulog.logger.info('raw file=%s hashed file=%s', key_str, hashed_file)
         return hashed_file, namespaces
+
+    def close(self, key=None):
+        try:
+            self._store.close(key)
+            stulog.logger.info('Closed state store successfully. key=%s', key)
+        except Exception:
+            stulog.logger.exception('Error closing state store. key=%s', key)

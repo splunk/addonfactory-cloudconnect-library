@@ -32,7 +32,9 @@ class TestCommand(Command):
         pass
 
     def run(self):
+        # Do the import here cause we need to make sure pytest exist
         import pytest
+
         pytest.main(['-v', _UNIT_TEST_DIR])
 
 
@@ -49,6 +51,7 @@ class JTestCommand(Command):
 
     def run(self):
         import pytest
+
         pytest.main(['-v', '--junitxml=junit_report.xml', _UNIT_TEST_DIR])
 
 
@@ -65,6 +68,7 @@ class CoverageCommand(Command):
 
     def run(self):
         import pytest
+
         pytest.main(['-v',
                      '--cov=cloudconnectlib.configuration',
                      '--cov=cloudconnectlib.core',
@@ -85,6 +89,7 @@ class CoverageHtmlCommand(Command):
 
     def run(self):
         import pytest
+
         pytest.main(['-v',
                      '--cov=cloudconnectlib.configuration',
                      '--cov=cloudconnectlib.core',
@@ -92,9 +97,6 @@ class CoverageHtmlCommand(Command):
                      '--cov-report=html',
                      _UNIT_TEST_DIR])
 
-
-with open('requirements.txt') as f:
-    install_requires = f.read().splitlines()
 
 setup(
     name='cloudconnectlib',
@@ -110,9 +112,21 @@ setup(
     package_dir={'': 'package'},
 
     package_data={
-        '': ['LICENSE']
+        'cloudconnectlib.configuration': ['*.*'],
+        'cloudconnectlib.splunktalib': ['setting.conf']
     },
-    install_requires=install_requires,
+    install_requires=[
+        "jsonschema==2.5.1",
+        "jinja2==2.8",
+        "jsonpath-rw==1.4.0",
+        "httplib2==0.9.2",
+        "splunk-sdk==1.6.0",
+        "sortedcontainers==1.5.2",
+        "munch==2.0.4",
+        "splunktaucclib==3.0.0",
+        "solnlib>=1.0.16-dev",
+        "functools32==3.2.3-2",
+    ],
 
     cmdclass={
         'test': TestCommand,

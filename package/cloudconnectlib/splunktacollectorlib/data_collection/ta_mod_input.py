@@ -5,21 +5,21 @@ This is the main entry point for My TA
 """
 
 import os.path as op
-import sys
 import platform
+import sys
 import time
-from ...splunktalib import modinput
-from ...splunktalib.common import util as utils
-from ..common import log as stulog
-from . import ta_data_loader as dl
-from . import ta_config as tc
-from . import ta_checkpoint_manager as cpmgr
-from ...splunktalib import orphan_process_monitor as opm
 
-from ...splunktalib import file_monitor as fm
-from ..common import load_schema_file as ld
+from . import ta_checkpoint_manager as cpmgr
+from . import ta_config as tc
 from . import ta_data_client as tdc
-from ..mod_helper import get_main_file
+from . import ta_data_loader as dl
+from ..common import load_schema_file as ld
+from ..common import log as stulog
+from ...common.lib_util import get_main_file
+from ...splunktalib import file_monitor as fm
+from ...splunktalib import modinput
+from ...splunktalib import orphan_process_monitor as opm
+from ...splunktalib.common import util as utils
 
 utils.remove_http_proxy_env_vars()
 

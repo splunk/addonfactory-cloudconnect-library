@@ -3,8 +3,8 @@ import os
 import os.path as op
 
 from .data_collection import ta_mod_input as ta_input
-from .mod_helper import get_main_file
 from .ta_cloud_connect_client import TACloudConnectClient as CollectorCls
+from ..common.lib_util import get_main_file
 
 
 def _load_options_from_inputs_spec(stanza_name):

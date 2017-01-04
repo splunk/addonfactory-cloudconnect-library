@@ -70,11 +70,9 @@ class TaConfig(object):
         for input in inputs:
             task_config = {}
             task_config.update(input)
-
-            task_config["__configs__"] = configs
-            task_config["__settings__"] = \
+            task_config[c.configs] = configs
+            task_config[c.settings] = \
                 {item[c.name]: item for item in global_settings["settings"]}
-
             if self.is_single_instance():
                 collection_interval = "collection_interval"
                 task_config[c.interval] = task_config.get(collection_interval)
@@ -103,6 +101,6 @@ def create_ta_config(settings, config_cls=TaConfig, log_suffix=None,
     stanza_name = None
     input_type = None
     if configs and "://" in configs[0].get("name", ""):
-        input_type, stanza_name = configs[0].get("name").split("://",1)
+        input_type, stanza_name = configs[0].get("name").split("://", 1)
     return config_cls(meta_config, settings, log_suffix, stanza_name,
                       input_type, single_instance=single_instance)

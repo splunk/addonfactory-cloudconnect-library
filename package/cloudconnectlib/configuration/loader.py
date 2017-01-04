@@ -27,7 +27,6 @@ _AUTH_TYPES = {
 _LOGGING_LEVELS = {
     'DEBUG': logging.DEBUG,
     'INFO': logging.INFO,
-    'WARN': logging.WARN,
     'WARNING': logging.WARNING,
     'ERROR': logging.ERROR,
     'FATAL': logging.FATAL,
@@ -111,21 +110,27 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
         return proxy
 
+    @staticmethod
+    def _get_log_level(level_name):
+        for k, v in _LOGGING_LEVELS.iteritems():
+            if k.startswith(level_name):
+                return v
+
+        _logger.warning(
+            'The log level "%s" is invalid, set it to default: "%s"',
+            level_name, _DEFAULT_LOG_LEVEL
+        )
+
+        return _LOGGING_LEVELS[_DEFAULT_LOG_LEVEL]
+
     def _load_logging(self, log_setting, variables):
         log_setting = log_setting or {}
         logger = {k: self._render_template(v, variables)
                   for k, v in log_setting.iteritems()}
 
-        level = logger.get('level', '').upper()
+        level_name = logger.get('level', '').upper()
+        logger['level'] = self._get_log_level(level_name)
 
-        if level not in _LOGGING_LEVELS:
-            _logger.warning(
-                'The log level "%s" is invalid, set it to default: "%s"'
-                % (level, _DEFAULT_LOG_LEVEL)
-            )
-            level = _DEFAULT_LOG_LEVEL
-
-        logger['level'] = _LOGGING_LEVELS[level]
         return logger
 
     def _load_global_setting(self, candidate, variables):

@@ -105,7 +105,9 @@ class TaConfig(object):
             if self._server_info.is_search_head():
                 task_config[c.use_kv_store] = True
             task_config[c.appname] = TaConfig._appname
+            task_config[c.mod_input_name] = self._input_type
             task_config[c.stanza_name] = task_config[c.name]
+
             all_task_configs.append(task_config)
         self._task_configs = all_task_configs
 

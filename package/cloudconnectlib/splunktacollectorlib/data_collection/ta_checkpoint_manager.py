@@ -1,4 +1,5 @@
 import json
+import re
 
 from . import ta_consts as c
 from . import ta_helper as th
@@ -23,7 +24,12 @@ class TACheckPointMgr(object):
     def _create_state_store(self, meta_config, app_name):
         if self._use_kv_store():
             stulog.logger.debug("Creating KV state store.")
-            return ss.get_state_store(meta_config, app_name, use_kv_store=True)
+            return ss.get_state_store(
+                meta_config,
+                appname=app_name,
+                collection_name=self._get_collection_name(),
+                use_kv_store=True
+            )
 
         use_cache_file = self._use_cache_file()
         max_cache_seconds = \
@@ -39,6 +45,18 @@ class TACheckPointMgr(object):
             use_cache_file=use_cache_file,
             max_cache_seconds=max_cache_seconds
         )
+
+    def _get_collection_name(self):
+        collection = self._task_config.get(c.collection_name, '').strip()
+
+        if not collection:
+            input_name = self._task_config[c.mod_input_name]
+            stulog.logger.info(
+                'Collection name="%s" is empty, set it to "%s"',
+                collection, input_name
+            )
+            collection = input_name
+        return re.sub(r'[^\w]+', '_', collection)
 
     def _use_kv_store(self):
         # TODO Move the default value outside code

@@ -4,10 +4,10 @@ This module hanles configuration related stuff
 
 import os.path as op
 
-import splunktalib.conf_manager.conf_endpoints as scmc
-import splunktalib.conf_manager.data_input_endpoints as scmdi
-import splunktalib.conf_manager.property_endpoints as scmp
-import splunktalib.conf_manager.request as req
+from . import conf_endpoints as scmc
+from . import data_input_endpoints as scmdi
+from . import property_endpoints as scmp
+from . import request as req
 
 
 def conf_file2name(conf_file):

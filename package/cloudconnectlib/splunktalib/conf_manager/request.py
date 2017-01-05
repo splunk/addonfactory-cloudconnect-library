@@ -1,5 +1,5 @@
-import splunktalib.rest as rest
-from splunktalib.common import log
+from .. import rest
+from ..common import log
 
 
 class ConfRequestException(Exception):

@@ -1,6 +1,6 @@
-import splunktalib.common.xml_dom_parser as xdp
-import splunktalib.common.util as util
-from splunktalib.conf_manager.request import content_request
+from .request import content_request
+from ..common import util
+from ..common import xml_dom_parser as xdp
 
 CONF_ENDPOINT = "%s/servicesNS/%s/%s/configs/conf-%s"
 

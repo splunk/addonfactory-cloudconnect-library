@@ -2,13 +2,13 @@
 This module hanles high level TA configuration related stuff
 """
 
-import os.path as op
 import copy
+import os.path as op
 
-import splunktalib.common.util as utils
-import splunktalib.credentials as cred
-import splunktalib.conf_manager.conf_manager as conf
-import splunktalib.conf_manager.request as conf_req
+from . import conf_manager as conf
+from . import request as conf_req
+from .. import credentials as cred
+from ..common import util as utils
 
 
 class TAConfManager(object):

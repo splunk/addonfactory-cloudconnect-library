@@ -2,14 +2,12 @@
 Handles credentials related stuff
 """
 
-import xml.dom.minidom as xdm
 import re
+import xml.dom.minidom as xdm
 
-import splunktalib.common.xml_dom_parser as xdp
-import splunktalib.rest as rest
-from splunktalib.common import log
-import splunktalib.common.util as util
-
+from . import rest
+from .common import util
+from .common import xml_dom_parser as xdp
 
 # Splunk can only encrypt string when length <=255
 SPLUNK_CRED_LEN_LIMIT = 255

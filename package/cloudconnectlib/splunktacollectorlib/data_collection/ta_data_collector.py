@@ -63,7 +63,7 @@ class TADataCollector(object):
     def stop(self):
         self._stopped = True
         if self._client:
-           self._client.stop()
+            self._client.stop()
 
     def __call__(self):
         self.index_data()
@@ -90,23 +90,11 @@ class TADataCollector(object):
             evts.append(evt)
         return evts
 
-    def _get_ckpt(self):
-        return self._checkpoint_manager.get_ckpt()
-
-    def _get_ckpt_key(self):
-        return self._checkpoint_manager.get_ckpt_key()
-
-    def _update_ckpt(self, ckpt):
-        return self._checkpoint_manager.update_ckpt(ckpt)
-
     def _create_data_client(self):
-        ckpt = self._get_ckpt()
-        data_client = self.data_client_cls(self._meta_config,
-            self._task_config, ckpt, self._checkpoint_manager,
-                                           self._data_loader.get_event_writer())
-
-        stulog.logger.debug("{} Set {}={} ".format(self._p, c.ckpt_dict, ckpt))
-        return data_client
+        return self.data_client_cls(self._meta_config,
+                                    self._task_config,
+                                    self._checkpoint_manager,
+                                    self._data_loader.get_event_writer())
 
     def index_data(self):
         if self._lock.locked():
@@ -115,56 +103,35 @@ class TADataCollector(object):
                     self._task_config[c.stanza_name]))
             return
         with self._lock:
-            checkpoint_key = self._get_ckpt_key()
-            stulog.logger.info(
-                "%s Start indexing data for checkpoint_key=%s",
-                self._p, checkpoint_key)
-
             try:
                 self._do_safe_index()
                 self._checkpoint_manager.close()
             except Exception:
                 stulog.logger.exception("{} Failed to index data"
                                         .format(self._p))
-            stulog.logger.info("{} End of indexing data for checkpoint_key={}"
-                               .format(self._p, checkpoint_key))
+            stulog.logger.info("{} End of indexing data".format(self._p))
             if not self._ta_config.is_single_instance():
                 self._data_loader.tear_down()
 
-    def _write_events(self, ckpt, events):
+    def _write_events(self, events):
         evts = self._build_event(events)
         if evts:
             if not self._data_loader.write_events(evts):
                 stulog.logger.info("{} the event queue is closed and the "
                                    "received data will be discarded".format(
-                    self._p))
+                                       self._p))
                 return False
-        if ckpt is None:
-            return True
-        for i in range(3):
-            try:
-                self._update_ckpt(ckpt)
-            except Exception:
-                stulog.logger.exception(
-                    "{} Failed to update ckpt {} to {}".format(
-                        self._p, self._get_ckpt_key(), ckpt))
-                time.sleep(2)
-                continue
-            else:
-                return True
-        # write checkpoint fail
-        self.stop()
-        return False
+        return True
 
     def _do_safe_index(self):
         self._client = self._create_data_client()
         while not self._stopped:
             try:
-                events, ckpt = self._client.get()
-                if not events and not ckpt:
+                events = self._client.get()
+                if not events:
                     continue
                 else:
-                    if not self._write_events(ckpt, events):
+                    if not self._write_events(events):
                         break
             except StopIteration:
                 stulog.logger.info("{} Finished this round".format(self._p))
@@ -172,6 +139,6 @@ class TADataCollector(object):
             except Exception:
                 stulog.logger.exception("{} Failed to get msg".format(self._p))
                 break
-        #in case encounter exception or fail to write events
+        # in case encounter exception or fail to write events
         if not self._stopped:
             self.stop()

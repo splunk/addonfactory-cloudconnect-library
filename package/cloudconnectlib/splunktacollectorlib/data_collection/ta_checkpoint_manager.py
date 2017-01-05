@@ -137,7 +137,7 @@ class TACheckPointMgr(object):
             namespaces = [self._task_config[c.stanza_name]]
         key_str = TACheckPointMgr.SEPARATOR.join(namespaces)
         hashed_file = th.format_name_for_file(key_str)
-        stulog.logger.info('raw file=%s hashed file=%s', key_str, hashed_file)
+        stulog.logger.info("raw_file='%s' hashed_file='%s'", key_str, hashed_file)
         return hashed_file, namespaces
 
     def close(self, key=None):

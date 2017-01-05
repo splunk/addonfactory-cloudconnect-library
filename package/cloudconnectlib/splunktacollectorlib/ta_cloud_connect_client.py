@@ -8,13 +8,11 @@ class TACloudConnectClient(TaDataClient):
     def __init__(self,
                  meta_config,
                  task_config,
-                 ckpt=None,
                  checkpoint_mgr=None,
                  event_writer=None
                  ):
         super(TACloudConnectClient, self).__init__(meta_config,
                                                    task_config,
-                                                   ckpt,
                                                    checkpoint_mgr,
                                                    event_writer)
         self._set_log()

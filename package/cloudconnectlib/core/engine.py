@@ -141,7 +141,7 @@ class Job(object):
         """
         pre_processor = self._request.pre_process
 
-        if not pre_processor.should_skipped(self._context):
+        if pre_processor.should_skipped(self._context):
             _logger.info('Skip pre process condition satisfied, do nothing')
             return
 

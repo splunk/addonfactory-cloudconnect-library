@@ -41,4 +41,6 @@ division = "division"
 stanza_name = "stanza_name"
 divide_key = "_divide_key"
 divide_endpoint = "_divide_endpoint"
-mod_input_name = 'mod_input_name'
+mod_input_name = "mod_input_name"
+global_settings = "global_settings"
+all_configs = "all_configs"

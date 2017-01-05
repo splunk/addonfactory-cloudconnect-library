@@ -22,17 +22,13 @@ class TaConfig(object):
         self._input_type = input_type
         self._log_suffix = log_suffix
         self._single_instance = single_instance
-        if self._stanza_name and self._log_suffix:
-            stulog.reset_logger(self._log_suffix + "_" +
-                                th.format_name_for_file(
-                                    self._stanza_name))
-            stulog.logger.info("Start {} task".format(self._stanza_name))
         self._task_configs = []
         self._client_schema = client_schema
         self._server_info = sc.ServerInfo(meta_config[c.server_uri],
                                           meta_config[c.session_key])
         self._all_conf_contents = {}
         self._get_division_settings = {}
+        self.set_logging()
         self._load_task_configs()
 
     def is_shc_member(self):
@@ -51,16 +47,40 @@ class TaConfig(object):
         return self._task_configs
 
     def get_all_conf_contents(self):
-        return self._all_conf_contents
+        if self._all_conf_contents:
+            return self._all_conf_contents.get(c.inputs), \
+                self._all_conf_contents.get(c.all_configs), \
+                self._all_conf_contents.get(c.global_settings)
+
+        inputs, configs, global_settings = th.get_all_conf_contents(
+            self._meta_config[c.server_uri],
+            self._meta_config[c.session_key],
+            self._client_schema, self._input_type)
+        self._all_conf_contents[c.inputs] = inputs
+        self._all_conf_contents[c.all_configs] = configs
+        self._all_conf_contents[c.global_settings] = global_settings
+        return inputs, configs, global_settings
+
+    def set_logging(self):
+        # The default logger name is "cloud_connect_engine"
+        if self._stanza_name and self._log_suffix:
+            logger_name = self._log_suffix + "_" + th.format_name_for_file(
+                self._stanza_name)
+            stulog.reset_logger(logger_name)
+        inputs, configs, global_settings = self.get_all_conf_contents()
+        log_level = "INFO"
+        for item in global_settings.get("settings"):
+            if item.get(c.name) == "logging" and item.get("loglevel"):
+                log_level = item["loglevel"]
+                break
+        stulog.set_log_level(log_level)
+        stulog.logger.info("Start {} task".format(self._stanza_name))
 
     def get_input_type(self):
         return self._input_type
 
     def _load_task_configs(self):
-        inputs, configs, global_settings = th.get_all_conf_contents(
-            self._meta_config[c.server_uri],
-            self._meta_config[c.session_key],
-            self._client_schema, self._input_type)
+        inputs, configs, global_settings = self.get_all_conf_contents()
         if self._input_type:
             inputs = inputs.get(self._input_type)
         if not self._single_instance:

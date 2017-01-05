@@ -27,10 +27,14 @@ _AUTH_TYPES = {
 _LOGGING_LEVELS = {
     'DEBUG': logging.DEBUG,
     'INFO': logging.INFO,
-    'WARN': logging.WARN,
+    'WARNING': logging.WARNING,
     'ERROR': logging.ERROR,
     'FATAL': logging.FATAL,
+    'CRITICAL': logging.CRITICAL
 }
+
+# FIXME Make this configurable
+_DEFAULT_LOG_LEVEL = 'INFO'
 
 
 class CloudConnectConfigLoader(object):
@@ -74,14 +78,14 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         enabled = proxy.get('enabled', '0')
         if not is_valid_bool(enabled):
             raise ValueError(
-                'Proxy enabled expect to be bool type: {}'.format(enabled))
+                'Proxy "enabled" expect to be bool type: {}'.format(enabled))
         else:
             proxy['enabled'] = is_true(enabled)
 
         port = proxy['port']
         if proxy['host'] and not is_valid_port(port):
             raise ValueError(
-                'Proxy port expect to be in range [1,65535]: {}'.format(port)
+                'Proxy "port" expect to be in range [1,65535]: {}'.format(port)
             )
 
         # proxy type default to 'http'
@@ -89,7 +93,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         proxy_type = proxy_type.lower() if proxy_type else 'http'
         if proxy_type not in _PROXY_TYPES:
             raise ValueError(
-                'Proxy type expect to be one of [{}]: {}'.format(
+                'Proxy "type" expect to be one of [{}]: {}'.format(
                     ','.join(_PROXY_TYPES), proxy_type)
             )
         else:
@@ -99,24 +103,34 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         proxy_rdns = proxy.get('rdns', '0')
         if not is_valid_bool(proxy_rdns):
             raise ValueError(
-                'Proxy rdns expect to be bool type: {}'.format(proxy_rdns))
+                'Proxy "rdns" expect to be bool type: {}'.format(proxy_rdns)
+            )
         else:
             proxy['rdns'] = is_true(proxy_rdns)
 
         return proxy
+
+    @staticmethod
+    def _get_log_level(level_name):
+        for k, v in _LOGGING_LEVELS.iteritems():
+            if k.startswith(level_name):
+                return v
+
+        _logger.warning(
+            'The log level "%s" is invalid, set it to default: "%s"',
+            level_name, _DEFAULT_LOG_LEVEL
+        )
+
+        return _LOGGING_LEVELS[_DEFAULT_LOG_LEVEL]
 
     def _load_logging(self, log_setting, variables):
         log_setting = log_setting or {}
         logger = {k: self._render_template(v, variables)
                   for k, v in log_setting.iteritems()}
 
-        level = logger.get('level', '').upper()
+        level_name = logger.get('level', '').upper()
+        logger['level'] = self._get_log_level(level_name)
 
-        if level not in _LOGGING_LEVELS:
-            _logger.warning('Log level not specified, set log level to INFO')
-            logger['level'] = logging.INFO
-        else:
-            logger['level'] = _LOGGING_LEVELS[level]
         return logger
 
     def _load_global_setting(self, candidate, variables):

@@ -1,7 +1,6 @@
 import base64
 import traceback
 
-from jinja2 import TemplateError
 from .ext import lookup_method
 from .template import compile_template
 from ..common.log import get_cc_logger
@@ -27,7 +26,7 @@ class _Token(object):
             return self._source
         try:
             return self._value_for(variables)
-        except TemplateError as ex:
+        except Exception as ex:
             _logger.warning(
                 'Unable to render template "%s". Please make sure template is'
                 ' a valid Jinja2 template and token is exist in variables. '

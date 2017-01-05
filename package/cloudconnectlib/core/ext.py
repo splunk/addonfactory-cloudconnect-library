@@ -56,10 +56,11 @@ def json_path(source, json_path_expr):
         )
         try:
             source = json.loads(source)
-        except ValueError:
+        except ValueError as ex:
             _logger.warning(
-                'Unable to load JSON from source. '
+                'Unable to load JSON from source: %s.'
                 'Attempt to apply JSONPATH "%s" on source directly.',
+                ex.message,
                 json_path_expr
             )
 
@@ -71,15 +72,16 @@ def json_path(source, json_path_expr):
             'Got %s elements extracted with JSONPATH expression "%s"',
             len(results), json_path_expr
         )
-        return results
-    except Exception:
+        return results[0] if len(results) == 1 else results
+    except Exception as ex:
         _logger.warning(
             'Unable to apply JSONPATH expression "%s" on source,'
-            ' cause=%s',
+            ' message=%s cause=%s',
             json_path_expr,
+            ex.message,
             traceback.format_exc()
         )
-    return []
+    return ''
 
 
 def splunk_xml(candidates,
@@ -158,15 +160,7 @@ def _parse_json(source, json_path_expr=None):
         )
         source = json_path(source, json_path_expr)
 
-    if not source or isinstance(source, (dict, list, tuple)):
-        return source
-
-    try:
-        return json.loads(source)
-    except ValueError:
-        _logger.warning('Unable to load JSON from source, return None.')
-
-    return None
+    return json.loads(source) if isinstance(source, basestring) else source
 
 
 def json_empty(source, json_path_expr=None):
@@ -176,8 +170,13 @@ def json_empty(source, json_path_expr=None):
     :param source: source to extract JSON
     :return: `True` if the result JSON is empty
     """
-    data = _parse_json(source, json_path_expr)
-    if data is None:
+    try:
+        data = _parse_json(source, json_path_expr)
+    except ValueError as ex:
+        _logger.warning(
+            'Unable to load JSON from source, treat it as '
+            'not json_empty: %s', ex.message
+        )
         return False
 
     if isinstance(data, (list, tuple)):
@@ -186,14 +185,21 @@ def json_empty(source, json_path_expr=None):
 
 
 def json_not_empty(source, json_path_expr=None):
-    """Check if a JSON object is not empty, return True only if the JSON to
-     check is a valid JSON and is not empty.
+    """Check if a JSON object is not empty, return True only if the
+     source is a valid JSON object and the value leading by
+     json_path_expr is empty.
     :param json_path_expr: A optional JSONPATH expression
     :param source: source to extract JSON
     :return: `True` if the result JSON is not empty
     """
-    data = _parse_json(source, json_path_expr)
-    if data is None:
+    try:
+        data = _parse_json(source, json_path_expr)
+    except ValueError as ex:
+        _logger.warning(
+            'Unable to load JSON from source, treat it as not '
+            'json_not_empty: %s',
+            ex.message
+        )
         return False
 
     if isinstance(data, (list, tuple)):

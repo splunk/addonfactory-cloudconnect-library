@@ -66,8 +66,8 @@ def test_jsonpath():
         (
             'abcedfghijkl$%^&#@$',
             '$',
-            19,
-            'abcedfghijkl$%^&#@$'
+            1,
+            ['abcedfghijkl$%^&#@$'],
         )
     ]
 
@@ -113,7 +113,8 @@ def test_json_empty():
     empty_cases = ['{}', {}, '[]', [], '']
     for case in empty_cases:
         assert json_empty(case)
-        assert not json_not_empty(case)
+        assert json_empty(case, '$')
+        assert not json_not_empty(case, '$')
 
     not_empty_cases = ['{"k": 1}', {'abc': True}, '{"k": true}']
     for case in not_empty_cases:

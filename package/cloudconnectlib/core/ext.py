@@ -57,14 +57,22 @@ def json_path(source, json_path_expr):
         try:
             source = json.loads(source)
         except ValueError:
-            _logger.warning('Unable to load JSON from source.'
-                            'Attempt to apply JSONPATH on source directly.')
+            _logger.warning(
+                'Unable to load JSON from source. '
+                'Attempt to apply JSONPATH "%s" on source directly.',
+                json_path_expr
+            )
 
     try:
         expression = parse(json_path_expr)
         results = [match.value for match in expression.find(source)]
-        return results[0] if len(results) == 1 else results
-    except:
+
+        _logger.debug(
+            'Got %s elements extracted with JSONPATH expression "%s"',
+            len(results), json_path_expr
+        )
+        return results
+    except Exception:
         _logger.warning(
             'Unable to apply JSONPATH expression "%s" on source,'
             ' cause=%s',
@@ -74,10 +82,13 @@ def json_path(source, json_path_expr):
     return []
 
 
-def splunk_xml(candidates, time=None, index=None, host=None, source=None,
+def splunk_xml(candidates,
+               time=None,
+               index=None,
+               host=None,
+               source=None,
                sourcetype=None):
-    """
-    Wrap a event with splunk xml format.
+    """ Wrap a event with splunk xml format.
     :param candidates: data used to wrap as event
     :param time: timestamp which must be empty or a valid float
     :param index: index name for event
@@ -126,50 +137,68 @@ def std_output(candidates):
                 ' basestring',
                 type(candidate)
             )
+
         if not PipeManager().write_events(candidate):
-            raise FuncException('Fail to output data to stdout. The Event'
-                                ' writer has stopped or encountered exception')
+            raise FuncException('Fail to output data to stdout. The event'
+                                ' writer is stopped or encountered exception')
 
     _logger.debug('Writing events to stdout finished.')
     return True
 
 
-def json_empty(source, json_path_expr=None):
-    """Check whether a JSON is empty.
-    :param json_path_expr: A optional jsonpath expression
-    :param source: target to extract
-    :return: `True` if the result JSON is `{}` or `[]` or `None`
-    """
+def _parse_json(source, json_path_expr=None):
     if not source:
-        _logger.debug(
-            'JSON to check is empty, treating it as empty: %s',
-            source)
-        return True
+        _logger.debug('Unable to parse JSON from empty source, return empty.')
+        return {}
 
     if json_path_expr:
+        _logger.debug(
+            'Try to extract JSON from source with JSONPATH expression: %s, ',
+            json_path_expr
+        )
         source = json_path(source, json_path_expr)
-    if not source:
-        return True
 
-    if isinstance(source, (dict, list, tuple)):
-        return len(source) == 0
+    if not source or isinstance(source, (dict, list, tuple)):
+        return source
 
     try:
-        return len(json.loads(source)) == 0
+        return json.loads(source)
     except ValueError:
-        _logger.warning(
-            'Cannot load JSON from string, treating it as not empty')
+        _logger.warning('Unable to load JSON from source, return None.')
+
+    return None
+
+
+def json_empty(source, json_path_expr=None):
+    """Check whether a JSON is empty, return True only if the JSON to
+     check is a valid JSON and is empty.
+    :param json_path_expr: A optional JSONPATH expression
+    :param source: source to extract JSON
+    :return: `True` if the result JSON is empty
+    """
+    data = _parse_json(source, json_path_expr)
+    if data is None:
         return False
+
+    if isinstance(data, (list, tuple)):
+        return all(len(ele) == 0 for ele in data)
+    return len(data) == 0
 
 
 def json_not_empty(source, json_path_expr=None):
-    """Check if a JSON object is not empty.
-    will be used to extract JSON from candidate.
-    :param json_path_expr: A optional jsonpath expression
-    :param source: target to extract
-    :return: `True` if the result JSON is not `{}` or `[]` or `None`
+    """Check if a JSON object is not empty, return True only if the JSON to
+     check is a valid JSON and is not empty.
+    :param json_path_expr: A optional JSONPATH expression
+    :param source: source to extract JSON
+    :return: `True` if the result JSON is not empty
     """
-    return not json_empty(source, json_path_expr)
+    data = _parse_json(source, json_path_expr)
+    if data is None:
+        return False
+
+    if isinstance(data, (list, tuple)):
+        return any(len(ele) > 0 for ele in data)
+    return len(data) > 0
 
 
 def set_var(value):

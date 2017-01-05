@@ -16,3 +16,5 @@ warning_statuses = (203, 204, 205, 206, 207, 208, 226,
 retries = 3  # Default maximum retry times.
 
 max_iteration_count = 100  # maximum iteration loop count
+
+charset = 'utf-8'  # Default response charset if not found in response header

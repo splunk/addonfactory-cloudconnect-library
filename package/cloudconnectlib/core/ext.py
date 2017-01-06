@@ -21,13 +21,13 @@ def regex_match(pattern, source, flags=0):
     """
     try:
         return re.match(pattern, source, flags) is not None
-    except (ValueError, TypeError, re.error):
+    except Exception:
         _logger.warning(
             'Unable to match source with pattern=%s, cause=%s',
             pattern,
             traceback.format_exc()
         )
-        return False
+    return False
 
 
 def regex_not_match(pattern, source, flags=0):
@@ -48,6 +48,10 @@ def json_path(source, json_path_expr):
     :param source: string to extract value
     :return: A `list` contains all values extracted
     """
+    if not source:
+        _logger.debug('source to apply JSONPATH is empty, return empty.')
+        return ''
+
     if isinstance(source, basestring):
         _logger.debug(
             'source expected is a JSON, not %s. Attempt to'
@@ -56,7 +60,7 @@ def json_path(source, json_path_expr):
         )
         try:
             source = json.loads(source)
-        except ValueError as ex:
+        except Exception as ex:
             _logger.warning(
                 'Unable to load JSON from source: %s.'
                 'Attempt to apply JSONPATH "%s" on source directly.',
@@ -72,7 +76,7 @@ def json_path(source, json_path_expr):
             'Got %s elements extracted with JSONPATH expression "%s"',
             len(results), json_path_expr
         )
-        return results[0] if len(results) == 1 else results
+        return results[0] or '' if len(results) == 1 else results
     except Exception as ex:
         _logger.warning(
             'Unable to apply JSONPATH expression "%s" on source,'
@@ -172,7 +176,7 @@ def json_empty(source, json_path_expr=None):
     """
     try:
         data = _parse_json(source, json_path_expr)
-    except ValueError as ex:
+    except Exception as ex:
         _logger.warning(
             'Unable to load JSON from source, treat it as '
             'not json_empty: %s', ex.message
@@ -194,7 +198,7 @@ def json_not_empty(source, json_path_expr=None):
     """
     try:
         data = _parse_json(source, json_path_expr)
-    except ValueError as ex:
+    except Exception as ex:
         _logger.warning(
             'Unable to load JSON from source, treat it as not '
             'json_not_empty: %s',

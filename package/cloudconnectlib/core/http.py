@@ -35,9 +35,19 @@ class HTTPResponse(object):
                 'Unable to find charset in response headers,'
                 ' set it to default "%s"', charset
             )
+       
         _logger.info('Decoding response content with charset=%s', charset)
-        
-        return content.decode(charset, errors="replace")
+
+        try:
+            return content.decode(charset, errors='replace')
+        except Exception as ex:
+            _logger.warning(
+                'Failure decoding response content with charset=%s,'
+                ' decode it with utf-8: %s',
+                charset, ex.message
+            )
+
+        return content.decode('utf-8', errors='replace')
 
     @property
     def header(self):

@@ -2,7 +2,7 @@ import time
 import traceback
 
 from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
-from solnlib.packages.requests import PreparedRequest
+from solnlib.packages.requests import PreparedRequest, utils
 from . import defaults
 from .exceptions import HTTPError
 from ..common.log import get_cc_logger
@@ -15,10 +15,39 @@ class HTTPResponse(object):
     HTTPResponse class wraps response of HTTP request for later use.
     """
 
-    def __init__(self, header, body):
-        self._status_code = header.status
-        self._header = header
-        self._body = body
+    def __init__(self, response, content):
+        """Construct a HTTPResponse from response and content returned
+        with httplib2 request"""
+        self._status_code = response.status
+        self._header = response
+        self._body = self._decode_content(response, content)
+
+    @staticmethod
+    def _decode_content(response, content):
+        if not content:
+            return ''
+
+        charset = utils.get_encoding_from_headers(response)
+
+        if charset is None:
+            charset = defaults.charset
+            _logger.info(
+                'Unable to find charset in response headers,'
+                ' set it to default "%s"', charset
+            )
+       
+        _logger.info('Decoding response content with charset=%s', charset)
+
+        try:
+            return content.decode(charset, errors='replace')
+        except Exception as ex:
+            _logger.warning(
+                'Failure decoding response content with charset=%s,'
+                ' decode it with utf-8: %s',
+                charset, ex.message
+            )
+
+        return content.decode('utf-8', errors='replace')
 
     @property
     def header(self):

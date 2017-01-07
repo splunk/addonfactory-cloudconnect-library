@@ -1,5 +1,6 @@
-from splunktalib.conf_manager.request import content_request
-import splunktalib.common.util as util
+from .request import content_request
+from ..common import util
+
 
 PROPERTY_ENDPOINT = "%s/servicesNS/%s/%s/properties/%s"
 

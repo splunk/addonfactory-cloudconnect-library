@@ -1,5 +1,5 @@
-import splunktalib.common.xml_dom_parser as xdp
-import splunktalib.conf_manager.request as req
+from . import request as req
+from ..common import xml_dom_parser as xdp
 
 
 class KnowledgeObjectManager(object):

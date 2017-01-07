@@ -38,7 +38,8 @@ class CloudConnectEngine(object):
 
         for request in config.requests:
             job = Job(
-                request=request, context=context,
+                request=request,
+                context=context,
                 checkpoint_mgr=checkpoint_mgr,
                 proxy=global_setting.proxy,
             )
@@ -53,6 +54,7 @@ class CloudConnectEngine(object):
                     'Engine has been stopped, stopping to execute jobs.')
                 break
 
+        self._stopped = True
         _logger.info('Engine executing finished')
 
     def stop(self):
@@ -181,7 +183,7 @@ class Job(object):
 
     def _get_checkpoint(self):
         checkpoint = self._request.checkpoint
-        if not self._request.checkpoint:
+        if not checkpoint:
             _logger.info('Checkpoint not specified, do not read it.')
             return
 

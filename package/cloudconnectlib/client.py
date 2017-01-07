@@ -33,8 +33,9 @@ class CloudConnectClient(object):
             conf = load_json_file(self._config_file)
         except:
             raise ConfigException(
-                'Cannot load JSON config from file {}: {}'.format(
-                    self._config_file, traceback.format_exc()))
+                'Unable to load configuration file %s: %s'
+                % (self._config_file, traceback.format_exc())
+            )
 
         version = conf.get('meta', {'apiVersion', None}).get('apiVersion', None)
         if not version:

@@ -67,16 +67,16 @@
                 "pipeline": [
                     {
                         "input": [
-                            "$.result[(@.length-1)].sys_updated_on",
-                            "{{__response__.body}}"
+                            "{{__response__.body}}",
+                            "$.result[(@.length-1)].sys_updated_on"
                         ],
                         "method": "json_path",
                         "output": "since_when"
                     },
                     {
                         "input": [
-                            "$.result.*",
-                            "{{__response__.body}}"
+                            "{{__response__.body}}",
+                            "$.result.*"
                         ],
                         "method": "json_path",
                         "output": "__stdout__"
@@ -84,6 +84,7 @@
                     {
                         "input": [
                             "{{__stdout__}}",
+                            "",
                             "{{index}}",
                             "{{host}}",
                             "{{source}}",
@@ -105,8 +106,8 @@
                 "stop_conditions": [
                     {
                         "input": [
-                            "$.result.*",
-                            "{{__response__.body}}"
+                            "{{__response__.body}}",
+                            "$.result.*"
                         ],
                         "method": "json_empty"
                     }

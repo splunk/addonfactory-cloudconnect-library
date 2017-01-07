@@ -1,5 +1,13 @@
+import base64
+
 import pytest
-from cloudconnectlib.core.models import _Token, _DictToken, Request
+from cloudconnectlib.core.models import (
+    _Token,
+    _DictToken,
+    Request,
+    BasicAuthorization,
+    Condition
+)
 from jinja2 import TemplateSyntaxError
 
 
@@ -70,3 +78,42 @@ def test_request():
     body = option.normalize_body({'value2': 'value_test'})
     assert body['params1'] == 123
     assert body['params2'] == 'value_test'
+
+
+def test_basic_auth():
+    options = [
+        {},
+        {'username': ''},
+        {'username': None},
+        {'password': ''}
+    ]
+    for option in options:
+        with pytest.raises(ValueError):
+            BasicAuthorization(option)
+
+    credentials = [
+        {'username': 'admin', 'password': 'abcdefg'},
+        {'username': 'xyz', 'password': 'xyz'}
+    ]
+    for c in credentials:
+        auth = BasicAuthorization(c)
+        headers = {}
+        auth(headers, {})
+        assert headers['Authorization'] == 'Basic %s' % base64.encodestring(
+            c['username'] + ':' + c['password']
+        ).strip()
+
+
+def test_calculate_conditions():
+    args = ['{}', '$']
+    con = Condition(inputs=args, function='json_empty')
+    assert con.calculate({})
+
+    args = ['{{abc}}', '$']
+    ctx = {'abc': '{}'}
+    con = Condition(inputs=args, function='json_empty')
+    assert con.calculate(ctx)
+
+    args = ['ASDFGG!@#$%']
+    con = Condition(inputs=args, function='json_empty')
+    assert not con.calculate({})

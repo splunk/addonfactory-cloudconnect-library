@@ -1,4 +1,5 @@
 import base64
+import traceback
 
 from .ext import lookup_method
 from .template import compile_template
@@ -21,8 +22,19 @@ class _Token(object):
     def render(self, variables):
         """Render value with variables if source is a string.
         Otherwise return source directly."""
-        return self._source if self._value_for is None \
-            else self._value_for(variables)
+        if self._value_for is None:
+            return self._source
+        try:
+            return self._value_for(variables)
+        except Exception as ex:
+            _logger.warning(
+                'Unable to render template "%s". Please make sure template is'
+                ' a valid Jinja2 template and token is exist in variables. '
+                'message=%s cause=%s',
+                ex.message,
+                traceback.format_exc()
+            )
+        return self._source
 
 
 class _DictToken(object):

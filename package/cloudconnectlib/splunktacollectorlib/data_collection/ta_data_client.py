@@ -21,14 +21,12 @@ class TaDataClient(object):
     def __init__(self,
                  meta_config,
                  task_config,
-                 ckpt=None,
                  checkpoint_mgr=None,
                  event_writer=None):
         self._meta_config = meta_config
         self._task_config = task_config
         self._checkpoint_mgr = checkpoint_mgr
         self._event_writer = event_writer
-        self._ckpt = ckpt or {}
         self._stop = False
 
     def is_stopped(self):
@@ -55,12 +53,12 @@ def create_data_collector(dataloader,
 
 def client_adatper(job_func):
     class TaDataClientAdapter(TaDataClient):
-        def __init__(self, all_conf_contents, meta_config, task_config, ckpt,
+        def __init__(self, all_conf_contents, meta_config, task_config,
                      chp_mgr):
-            super(TaDataClientAdapter, self).__init__(meta_config, task_config, ckpt, chp_mgr)
+            super(TaDataClientAdapter, self).__init__(meta_config, task_config,
+                                                      chp_mgr)
             self._execute_times = 0
-            self._gen = job_func(self._task_config,
-                                 self._ckpt)
+            self._gen = job_func(self._task_config, chp_mgr)
 
         def stop(self):
             """

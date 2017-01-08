@@ -3,7 +3,7 @@ import base64
 import pytest
 from cloudconnectlib.core.models import (
     _Token,
-    _DictToken,
+    DictToken,
     Request,
     BasicAuthorization,
     Condition
@@ -50,7 +50,7 @@ def test_dict_token():
         'abc': '{{xyz}}',
         'int': '{{int}}'
     }
-    dt = _DictToken(tokens_as_dict)
+    dt = DictToken(tokens_as_dict)
 
     dtv = dt.render({'xyz': 'abc_test', 'int': 124})
     print dtv

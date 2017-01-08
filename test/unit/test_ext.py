@@ -66,8 +66,8 @@ def test_jsonpath():
         (
             'abcedfghijkl$%^&#@$',
             '$',
-            1,
-            ['abcedfghijkl$%^&#@$'],
+            19,
+            'abcedfghijkl$%^&#@$',
         )
     ]
 

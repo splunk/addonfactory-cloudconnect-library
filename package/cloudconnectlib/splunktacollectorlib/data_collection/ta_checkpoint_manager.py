@@ -47,7 +47,8 @@ class TACheckPointMgr(object):
         )
 
     def _get_collection_name(self):
-        collection = self._task_config.get(c.collection_name, '').strip()
+        collection = self._task_config.get(c.collection_name)
+        collection = collection.strip() if collection else ''
 
         if not collection:
             input_name = self._task_config[c.mod_input_name]

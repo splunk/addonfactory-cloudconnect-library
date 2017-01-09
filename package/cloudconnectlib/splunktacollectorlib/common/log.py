@@ -16,10 +16,15 @@ def set_log_level(log_level):
             stclog.Logs().set_level(logging.WARN)
         elif log_level.upper() == "ERROR":
             stclog.Logs().set_level(logging.ERROR)
+        elif log_level.upper() == "WARNING":
+            stclog.Logs().set_level(logging.WARNING)
+        elif log_level.upper() == "CRITICAL":
+            stclog.Logs().set_level(logging.CRITICAL)
         else:
             stclog.Logs().set_level(logging.INFO)
     elif isinstance(log_level, int):
-        if log_level in [logging.DEBUG, logging.INFO, logging.ERROR]:
+        if log_level in [logging.DEBUG, logging.INFO, logging.ERROR,
+                         logging.WARN, logging.WARNING, logging.CRITICAL]:
             stclog.Logs().set_level(log_level)
         else:
             stclog.Logs().set_level(logging.INFO)

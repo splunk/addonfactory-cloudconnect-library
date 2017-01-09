@@ -1,0 +1,69 @@
+{
+    "meta": {
+        "apiVersion": "1.0.0"
+    },
+    "requests": [
+        {
+            "pre_process": {},
+            "post_process": {
+                "pipeline": [
+                    {
+                        "input": [
+                            "{{__response__.body}}"
+                        ],
+                        "method": "splunk_xml",
+                        "output": "events"
+                    },
+                    {
+                        "input": [
+                            "{{events}}"
+                        ],
+                        "method": "std_output"
+                    }
+                ],
+                "skip_conditions": [
+                    {
+                        "method": "json_empty",
+                        "input": [
+                            "{{__response__.body}}",
+                            "$"
+                        ]
+                    }
+                ]
+            },
+            "request": {
+                "url": "http://www.baidu.com/",
+                "method": "GET",
+                "headers": {}
+            },
+            "iteration_mode": {
+                "iteration_count": "1",
+                "stop_conditions": [
+                ]
+            }
+        }
+    ],
+    "global_settings": {
+        "proxy": {
+            "host": "{{__settings__.proxy_host}}",
+            "username": "{{__settings__.proxy_username}}",
+            "password": "{{__settings__.proxy_password}}",
+            "type": "{{__settings__.proxy_type}}",
+            "rdns": "{{__settings__.proxy_rdns}}",
+            "port": "{{__settings__.proxy_port}}",
+            "enabled": false
+        },
+        "logging": {
+            "level": "{{__settings__.logging_level}}"
+        }
+    },
+    "tokens": [
+        "__settings__.proxy_host",
+        "__settings__.proxy_type",
+        "__settings__.proxy_username",
+        "__settings__.proxy_password",
+        "__settings__.proxy_rdns",
+        "__settings__.proxy_port",
+        "__settings__.logging_level"
+    ]
+}

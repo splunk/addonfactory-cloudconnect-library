@@ -74,6 +74,7 @@ class TaConfig(object):
                 log_level = item["loglevel"]
                 break
         stulog.set_log_level(log_level)
+        stulog.logger.info("Set log_level={}".format(log_level))
         stulog.logger.info("Start {} task".format(self._stanza_name))
 
     def get_input_type(self):

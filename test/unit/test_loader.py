@@ -143,6 +143,7 @@ def test_load_config():
     schema_file = _schema_file_path_for(schema_file)
 
     config = loader.load(conf, schema_file, {
+        'proxy_host': 'localhost',
         'proxy_port': '1024',
         'proxy_enabled': '0',
         'proxy_username': 'admin',
@@ -168,6 +169,7 @@ def test_load_examples():
     schema_file = _schema_file_path_for(schema_file)
 
     ctx = {
+        'proxy_host': 'localhost',
         'proxy_port': '1024',
         'proxy_enabled': '0',
         'proxy_username': 'admin',

@@ -138,3 +138,14 @@ def test_lookup():
     assert f == json_empty
     f = lookup_method('set_var')
     assert f == set_var
+
+
+def test_set_var():
+    x1 = {'key': True}
+    assert set_var(x1) == x1
+    x2 = [1, 2, 3]
+    assert set_var(x2) == x2
+    assert set_var(True) == True
+    assert set_var(False) == False
+    assert set_var(1) == 1
+    assert set_var(None) is None

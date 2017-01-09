@@ -62,7 +62,7 @@ def json_path(source, json_path_expr):
             source = json.loads(source)
         except Exception as ex:
             _logger.warning(
-                'Unable to load JSON from source: %s.'
+                'Unable to load JSON from source: %s. '
                 'Attempt to apply JSONPATH "%s" on source directly.',
                 ex.message,
                 json_path_expr
@@ -164,7 +164,10 @@ def _parse_json(source, json_path_expr=None):
         )
         source = json_path(source, json_path_expr)
 
-    return json.loads(source) if isinstance(source, basestring) else source
+    elif isinstance(source, basestring):
+        source = json.loads(source)
+
+    return source
 
 
 def json_empty(source, json_path_expr=None):

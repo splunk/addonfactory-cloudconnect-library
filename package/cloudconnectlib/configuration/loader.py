@@ -13,9 +13,9 @@ from ..core.exceptions import ConfigException
 from ..core.ext import lookup_method
 from ..core.models import (
     BasicAuthorization, Request, Processor,
-    Condition, Task, Checkpoint, IterationMode
+    Condition, Task, Checkpoint, IterationMode,
+    DictToken
 )
-from ..core.template import compile_template
 
 _logger = get_cc_logger()
 
@@ -49,7 +49,7 @@ class CloudConnectConfigLoader(object):
             return load_json_file(schema_file)
         except:
             raise ConfigException(
-                'Cannot load schema from {}: {}'.format(
+                'Cannot load schema from file {}: {}'.format(
                     schema_file, traceback.format_exc())
             )
 
@@ -60,8 +60,11 @@ class CloudConnectConfigLoader(object):
 
 class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     @staticmethod
-    def _render_template(template, variables):
-        return compile_template(template)(variables)
+    def _render_from_dict(source, ctx):
+        rendered = DictToken(source).render(ctx)
+
+        return dict((k, v.strip() if isinstance(v, basestring) else v)
+                    for k, v in rendered.iteritems())
 
     def _load_proxy(self, candidate, variables):
         """
@@ -70,23 +73,29 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         :param variables: variables to render template in proxy setting.
         :return: A `dict` contains rendered proxy setting.
         """
-        if candidate is None:
-            return None
-        proxy = {k: self._render_template(v, variables).strip()
-                 for k, v in candidate.iteritems()}
+        if not candidate:
+            return {}
+
+        proxy = self._render_from_dict(candidate, variables)
 
         enabled = proxy.get('enabled', '0')
         if not is_valid_bool(enabled):
             raise ValueError(
-                'Proxy "enabled" expect to be bool type: {}'.format(enabled))
-        else:
-            proxy['enabled'] = is_true(enabled)
-
-        port = proxy['port']
-        if proxy['host'] and not is_valid_port(port):
-            raise ValueError(
-                'Proxy "port" expect to be in range [1,65535]: {}'.format(port)
+                'Proxy "enabled" expect to be bool type: {}'.format(enabled)
             )
+
+        proxy['enabled'] = is_true(enabled)
+
+        host, port = proxy.get('host'), proxy.get('port')
+
+        if host or port:
+            if not host:
+                raise ValueError('Proxy "host" must not be empty')
+
+            if not is_valid_port(port):
+                raise ValueError(
+                    'Proxy "port" expect to be in range [1,65535]: %s' % port
+                )
 
         # proxy type default to 'http'
         proxy_type = proxy.get('type')
@@ -112,9 +121,12 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
     @staticmethod
     def _get_log_level(level_name):
-        for k, v in _LOGGING_LEVELS.iteritems():
-            if k.startswith(level_name):
-                return v
+        if level_name:
+            level_name = level_name.upper().strip()
+
+            for k, v in _LOGGING_LEVELS.iteritems():
+                if k.startswith(level_name):
+                    return v
 
         _logger.warning(
             'The log level "%s" is invalid, set it to default: "%s"',
@@ -124,12 +136,9 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         return _LOGGING_LEVELS[_DEFAULT_LOG_LEVEL]
 
     def _load_logging(self, log_setting, variables):
-        log_setting = log_setting or {}
-        logger = {k: self._render_template(v, variables)
-                  for k, v in log_setting.iteritems()}
+        logger = self._render_from_dict(log_setting, variables)
 
-        level_name = logger.get('level', '').upper()
-        logger['level'] = self._get_log_level(level_name)
+        logger['level'] = self._get_log_level(logger.get('level'))
 
         return logger
 
@@ -251,7 +260,8 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
 
         try:
             global_settings = self._load_global_setting(
-                definition.get('global_settings'), context)
+                definition.get('global_settings'), context
+            )
 
             requests = [self._load_request(item) for item in definition['requests']]
 
@@ -261,9 +271,10 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                 'global_settings': global_settings,
                 'requests': requests,
             })
-        except (TypeError, ValueError):
-            _logger.exception('Unable to parse config')
-            raise ConfigException('Unable to load configuration')
+        except Exception as ex:
+            error = 'Unable to load configuration: %s' % str(ex)
+            _logger.exception(error)
+            raise ConfigException(error)
 
 
 _loader_and_schema_by_version = {

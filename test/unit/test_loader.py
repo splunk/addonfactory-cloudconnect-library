@@ -34,16 +34,38 @@ def test_load_proxy():
         with pytest.raises(ValueError):
             loader._load_proxy(bp, {})
 
-    good_proxy = [{'enabled': 'True',
-                   'host': 'host',
-                   'port': '1'},
-                  {'enabled': 'True',
-                   'host': 'host',
-                   'port': '65535'},
-                  {'enabled': 'TRUE',
-                   'host': 'host',
-                   'port': '1024'}
-                  ]
+    good_proxy = [
+        {
+            'enabled': 'True',
+            'host': 'host',
+            'port': '1'
+        },
+        {
+            'enabled': 'True',
+            'host': 'host',
+            'port': '65535'
+        },
+        {
+            'enabled': 'TRUE',
+            'host': 'host',
+            'port': '1024'
+        },
+        {
+            'enabled': True,
+            'host': 'host',
+            'port': '1024'
+        },
+        {
+            'enabled': 1,
+            'host': 'host',
+            'port': '1024'
+        },
+        {
+            'enabled': '1',
+            'host': 'host',
+            'port': '1024'
+        }
+    ]
 
     for gp in good_proxy:
         proxy = loader._load_proxy(gp, {})
@@ -92,18 +114,19 @@ def test_load_global_setting():
     setting_log_only['logging']['level'] = 'ERROR'
     setting = loader._load_global_setting(setting_log_only, {})
     assert setting.logging.level == logging.ERROR
-    assert setting.proxy is None
+    assert setting.proxy == {}
 
     setting_with_proxy = {
         'logging': {
-            'level': 'INFO'
+            'level': ' INFO '
         },
-        'proxy': {'enabled': 'True',
-                  'host': 'host',
-                  'port': '1',
-                  'username': 'admin',
-                  'password': 'changeme'
-                  },
+        'proxy': {
+            'enabled': 'True',
+            'host': 'host',
+            'port': '1',
+            'username': 'admin',
+            'password': 'changeme'
+        },
     }
     setting = loader._load_global_setting(setting_with_proxy, {})
     assert setting.logging.level == logging.INFO

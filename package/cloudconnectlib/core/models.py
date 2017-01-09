@@ -37,7 +37,7 @@ class _Token(object):
         return self._source
 
 
-class _DictToken(object):
+class DictToken(object):
     """DictToken wraps a dict which value is template expression"""
 
     def __init__(self, template_expr):
@@ -82,11 +82,11 @@ class BasicAuthorization(BaseAuth):
 
 class Request(object):
     def __init__(self, url, method, header=None, auth=None, body=None):
-        self._header = _DictToken(header)
+        self._header = DictToken(header)
         self._url = _Token(url)
         self._method = method.upper()
         self._auth = auth
-        self._body = _DictToken(body)
+        self._body = DictToken(body)
 
     @property
     def header(self):
@@ -198,7 +198,8 @@ class _Conditional(object):
         :return: `True` if all passed else `False`
         """
         return any(
-            condition.calculate(context) for condition in self._conditions)
+            condition.calculate(context) for condition in self._conditions
+        )
 
 
 class Processor(_Conditional):
@@ -241,7 +242,7 @@ class Checkpoint(object):
             raise ValueError('Checkpoint content must not be empty')
 
         self._namespace = tuple(_Token(expr) for expr in namespace or ())
-        self._content = _DictToken(content)
+        self._content = DictToken(content)
 
     @property
     def namespace(self):

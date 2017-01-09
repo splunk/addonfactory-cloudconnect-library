@@ -84,16 +84,17 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
                 'Proxy "enabled" expect to be bool type: {}'.format(enabled)
             )
 
-        enabled = proxy['enabled'] = is_true(enabled)
+        proxy['enabled'] = is_true(enabled)
 
-        if enabled:
-            if not proxy.get('host'):
+        host, port = proxy.get('host'), proxy.get('port')
+
+        if host or port:
+            if not host:
                 raise ValueError('Proxy "host" must not be empty')
 
-            port = proxy.get('port')
             if not is_valid_port(port):
                 raise ValueError(
-                    'Proxy "port" expect to be in range [1,65535]: {}'.format(port)
+                    'Proxy "port" expect to be in range [1,65535]: %s' % port
                 )
 
         # proxy type default to 'http'

@@ -11,7 +11,7 @@
         "sourcetype",
         "source",
         "checkpoint_dir",
-        "proxy_enable",
+        "proxy_enabled",
         "proxy_host",
         "proxy_type",
         "proxy_username",
@@ -23,7 +23,7 @@
     ],
     "global_settings": {
         "proxy": {
-            "enabled": "{{proxy_enable}}",
+            "enabled": "{{proxy_enabled}}",
             "host": "{{proxy_host}}",
             "port": "{{proxy_port}}",
             "username": "{{proxy_username}}",
@@ -66,7 +66,7 @@
                     {
                         "input": [
                             "{{__response__.body}}",
-                            "$.result[(@.length-1)].sys_updated_on"
+                            "$.result[-1].sys_updated_on"
                         ],
                         "method": "json_path",
                         "output": "since_when"
@@ -74,7 +74,7 @@
                     {
                         "input": [
                             "{{__response__.body}}",
-                            "$.result.*"
+                            "$.result[*]"
                         ],
                         "method": "json_path",
                         "output": "__stdout__"

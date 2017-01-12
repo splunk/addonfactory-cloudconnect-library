@@ -27,7 +27,10 @@ def test_client(monkeypatch):
         'username': 'splunk',
         'password': 'Splunk123$',
         '__settings__': {
-            'logging': {}
+            'logging': {},
+            'proxy': {
+                'proxy_enabled': False
+            }
         }
     }
     filepath = op.join(TEST_DATA_DIR, 'file_not_exist.json')

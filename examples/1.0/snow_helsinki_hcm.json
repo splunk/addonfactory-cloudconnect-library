@@ -3,44 +3,42 @@
         "apiVersion": "1.0.0"
     },
     "tokens": [
-        "name",
-        "host",
+        "snow_host",
         "sysparm_limit",
         "table_name",
         "since_when",
-        "host",
         "index",
         "sourcetype",
         "source",
-        "checkpoint_dir",
-        "proxy_enabled",
-        "proxy_host",
-        "proxy_type",
-        "proxy_username",
-        "proxy_rdns",
-        "proxy_type",
-        "logging_level",
-        "username",
-        "password"
+        "__settings__.proxy.proxy_enabled",
+        "__settings__.proxy.proxy_url",
+        "__settings__.proxy.proxy_port",
+        "__settings__.proxy.proxy_username",
+        "__settings__.proxy.proxy_password",
+        "__settings__.proxy.proxy_rdns",
+        "__settings__.proxy.proxy_type",
+        "__settings__.logging.loglevel",
+        "account.username",
+        "account.password"
     ],
     "global_settings": {
         "proxy": {
-            "enabled": "{{proxy_enabled}}",
-            "host": "{{proxy_host}}",
-            "port": "{{proxy_port}}",
-            "username": "{{proxy_username}}",
-            "password": "{{proxy_password}}",
-            "rdns": "{{proxy_rdns}}",
-            "type": "{{proxy_type}}"
+            "enabled": "{{__settings__.proxy.proxy_enabled}}",
+            "host": "{{__settings__.proxy.proxy_url}}",
+            "port": "{{__settings__.proxy.proxy_port}}",
+            "username": "{{__settings__.proxy.proxy_username}}",
+            "password": "{{__settings__.proxy.proxy_password}}",
+            "rdns": "{{__settings__.proxy.proxy_rdns}}",
+            "type": "{{__settings__.proxy.proxy_type}}"
         },
         "logging": {
-            "level": "{{logging_level}}"
+            "level": "{{__settings__.logging.loglevel}}"
         }
     },
     "requests": [
         {
             "request": {
-                "url": "https://{{host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
+                "url": "https://{{snow_host}}/api/now/table/{{table_name}}?sysparm_limit={{sysparm_limit}}&sysparm_query=sys_updated_on>{{since_when}}^ORDERBYsys_updated_on",
                 "method": "GET",
                 "auth": {
                     "type": "basic_auth",

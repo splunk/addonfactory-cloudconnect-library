@@ -113,6 +113,7 @@ setup(
 
     package_data={
         'cloudconnectlib.configuration': ['*.*'],
+        'cloudconnectlib.core': ['cacerts/ca_certs_locater.py'],
         'cloudconnectlib.splunktalib': ['setting.conf']
     },
     install_requires=[
@@ -123,7 +124,7 @@ setup(
         "splunk-sdk==1.6.0",
         "sortedcontainers==1.5.2",
         "munch==2.0.4",
-        "splunktaucclib==3.0.0",
+        "splunktaucclib>=3.0.0-develop",
         "solnlib>=1.0.16-dev",
         "functools32==3.2.3-2",
     ],

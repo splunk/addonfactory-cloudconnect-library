@@ -9,16 +9,6 @@ from ..common.log import get_cc_logger
 _logger = get_cc_logger()
 
 
-def check_should_stop(func):
-    def wrapper(*args, **kwargs):
-        if args[0]._should_stop:
-            _logger.info('Job should been stopped.')
-            return
-        else:
-            return func(*args, **kwargs)
-    return wrapper
-
-
 class CloudConnectEngine(object):
     """The cloud connect engine to process request instantiated
      from user options."""
@@ -141,17 +131,13 @@ class Job(object):
     def _set_context(self, key, value):
         self._context[key] = value
 
-    @check_should_stop
     def _execute_tasks(self, tasks):
         if not tasks:
             return
         for task in tasks:
-            if self._should_stop:
-                _logger.info('Job should been stopped.')
-                return
+            if self._check_should_stop(): return
             self._context.update(task.execute(self._context))
 
-    @check_should_stop
     def _on_pre_process(self):
         """
         Execute tasks in pre process one by one if condition satisfied.
@@ -167,7 +153,6 @@ class Job(object):
             'Got %s tasks need be executed before process', len(tasks))
         self._execute_tasks(tasks)
 
-    @check_should_stop
     def _on_post_process(self):
         """
         Execute tasks in post process one by one if condition satisfied.
@@ -185,7 +170,6 @@ class Job(object):
         )
         self._execute_tasks(tasks)
 
-    @check_should_stop
     def _update_checkpoint(self):
         """Updates checkpoint based on checkpoint namespace and content."""
         checkpoint = self._request.checkpoint
@@ -246,6 +230,11 @@ class Job(object):
 
         _logger.info('Job processing finished')
 
+    def _check_should_stop(self):
+        if self._should_stop:
+            _logger.info('Job should been stopped.')
+        return self._should_stop
+
     def _run(self):
         request = self._request.request
         method = request.method
@@ -253,9 +242,7 @@ class Job(object):
         self._get_checkpoint()
 
         while 1:
-            if self._should_stop:
-                _logger.info('Job should been stopped.')
-                return
+            if self._check_should_stop(): return
 
             url = request.normalize_url(self._context)
             header = request.normalize_header(self._context)
@@ -267,6 +254,7 @@ class Job(object):
 
             self._on_pre_process()
 
+            if self._check_should_stop(): return
             response, need_terminate = \
                 self._send_request(url, method, header, body=rb)
 
@@ -276,15 +264,16 @@ class Job(object):
 
             self._request_iterated_count += 1
             self._set_context('__response__', response)
+            if self._check_should_stop(): return
             self._on_post_process()
 
+            if self._check_should_stop(): return
             self._update_checkpoint()
 
             if self._is_stoppable():
                 _logger.info('Stop condition reached, exit job now')
                 break
 
-    @check_should_stop
     def _send_request(self, url, method, header, body):
         """Do send request with a simple error handling strategy. Refer to
         https://confluence.splunk.com/display/PROD/CC+1.0+-+Detail+Design"""

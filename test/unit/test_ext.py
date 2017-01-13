@@ -37,7 +37,7 @@ def test_splunk_xml():
                         '<data>data2</data></event></stream>'
 
 
-def test_jsonpath():
+def test_json_path():
     test_cases = [
         (
             {'foo': [{'baz': 1}, {'baz': 2}]},
@@ -110,23 +110,32 @@ def test_std_output():
 
 
 def test_json_empty():
-    empty_cases = ['{}', {}, '[]', [], '']
+    empty_cases = ['{}', {}, '[]', [], '', ['', '', {}]]
     for case in empty_cases:
         assert json_empty(case)
         assert json_empty(case, '$')
         assert not json_not_empty(case, '$')
 
-    not_empty_cases = ['{"k": 1}', {'abc': True}, '{"k": true}']
+    not_empty_cases = [
+        '{"k": 1}',
+        {'k': True},
+        '{"k": true}',
+        '{"k": 123.456}',
+    ]
+
     for case in not_empty_cases:
         assert json_not_empty(case)
         assert not json_empty(case)
         assert not json_empty(case, '$')
         assert not json_empty(case, '')
         assert not json_empty(case, None)
+        assert not json_empty(case, '$.k')
+        assert not json_not_empty(case, '$.k')
 
     invalid_cases = ['$$!@#', 'hahahha   ksk32', '{{}}}', '=---==', '\\=---']
     for case in invalid_cases:
         assert not json_empty(case)
+        assert not json_not_empty(case)
 
 
 def test_lookup():

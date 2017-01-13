@@ -179,16 +179,16 @@ def json_empty(source, json_path_expr=None):
     """
     try:
         data = _parse_json(source, json_path_expr)
+
+        if isinstance(data, (list, tuple)):
+            return all(len(ele) == 0 for ele in data)
+        return len(data) == 0
     except Exception as ex:
         _logger.warning(
-            'Unable to load JSON from source, treat it as '
+            'Unable to determine whether source is json_empty, treat it as '
             'not json_empty: %s', ex.message
         )
         return False
-
-    if isinstance(data, (list, tuple)):
-        return all(len(ele) == 0 for ele in data)
-    return len(data) == 0
 
 
 def json_not_empty(source, json_path_expr=None):
@@ -201,17 +201,17 @@ def json_not_empty(source, json_path_expr=None):
     """
     try:
         data = _parse_json(source, json_path_expr)
+
+        if isinstance(data, (list, tuple)):
+            return any(len(ele) > 0 for ele in data)
+        return len(data) > 0
     except Exception as ex:
         _logger.warning(
-            'Unable to load JSON from source, treat it as not '
-            'json_not_empty: %s',
+            'Unable to determine whether source is json_not_empty, '
+            'treat it as not json_not_empty: %s',
             ex.message
         )
         return False
-
-    if isinstance(data, (list, tuple)):
-        return any(len(ele) > 0 for ele in data)
-    return len(data) > 0
 
 
 def set_var(value):

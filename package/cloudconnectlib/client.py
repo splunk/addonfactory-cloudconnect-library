@@ -2,10 +2,13 @@ import copy
 import os.path
 import traceback
 
+from .common.log import get_cc_logger
 from .common.util import load_json_file
 from .configuration import get_loader_by_version
 from .core import CloudConnectEngine
 from .core.exceptions import ConfigException
+
+_logger = get_cc_logger()
 
 
 class CloudConnectClient(object):
@@ -53,15 +56,19 @@ class CloudConnectClient(object):
         """
         Initialize a new `CloudConnectEngine` instance and start it.
         """
-        if self._config is None:
-            self._config = self._load_config()
+        try:
+            if self._config is None:
+                self._config = self._load_config()
 
-        self._engine = CloudConnectEngine()
-        self._engine.start(
-            context=copy.deepcopy(self._context),
-            config=self._config,
-            checkpoint_mgr=self._checkpoint_mgr
-        )
+            self._engine = CloudConnectEngine()
+            self._engine.start(
+                context=copy.deepcopy(self._context),
+                config=self._config,
+                checkpoint_mgr=self._checkpoint_mgr
+            )
+        except Exception as ex:
+            _logger.exception('Error while starting client')
+            raise ex
 
     def stop(self):
         """Stop the current cloud connect engine.

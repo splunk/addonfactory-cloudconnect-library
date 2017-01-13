@@ -31,6 +31,7 @@ class _Token(object):
                 'Unable to render template "%s". Please make sure template is'
                 ' a valid Jinja2 template and token is exist in variables. '
                 'message=%s cause=%s',
+                self._source,
                 ex.message,
                 traceback.format_exc()
             )

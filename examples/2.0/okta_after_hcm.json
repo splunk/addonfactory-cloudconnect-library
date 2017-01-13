@@ -13,7 +13,7 @@
         "sourcetype",
         "source",
         "checkpoint_dir",
-        "proxy_enable",
+        "proxy_enabled",
         "proxy_host",
         "proxy_type",
         "proxy_username",
@@ -21,7 +21,7 @@
     ],
     "global_settings": {
         "proxy": {
-            "enabled": "{{proxy_enable}}",
+            "enabled": "{{proxy_enabled}}",
             "host": "{{proxy_host}}",
             "port": "{{proxy_port}}",
             "username": "{{proxy_username}}",
@@ -58,8 +58,8 @@
                 "skip_conditions": [
                     {
                         "input": [
-                            "$.*",
-                            "{{__response__.body}}"
+                            "{{__response__.body}}",
+                            "$"
                         ],
                         "method": "json_empty"
                     }
@@ -67,23 +67,24 @@
                 "pipeline": [
                     {
                         "input": [
-                            "$[(@.length-1)].eventId",
-                            "{{__response__.body}}"
+                            "{{__response__.body}}",
+                            "$[-1].eventId"
                         ],
-                        "method": "jsonpath",
+                        "method": "json_path",
                         "output": "after"
                     },
                     {
                         "input": [
-                            "$.*",
-                            "{{__response__.body}}"
+                            "{{__response__.body}}",
+                            "$"
                         ],
-                        "method": "jsonpath",
+                        "method": "json_path",
                         "output": "__events__"
                     },
                     {
                         "input": [
                             "{{__events__}}",
+                            "",
                             "{{index}}",
                             "{{host}}",
                             "{{source}}",
@@ -105,8 +106,8 @@
                 "stop_conditions": [
                     {
                         "input": [
-                            "$.*",
-                            "{{__response__.body}}"
+                            "{{__response__.body}}",
+                            "$"
                         ],
                         "method": "json_empty"
                     }

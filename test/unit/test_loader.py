@@ -142,15 +142,21 @@ def test_load_config():
     conf = load_json_file(_config_file)
     schema_file = _schema_file_path_for(schema_file)
 
-    config = loader.load(conf, schema_file, {
-        'proxy_host': 'localhost',
-        'proxy_port': '1024',
-        'proxy_enabled': '0',
-        'proxy_username': 'admin',
-        'proxy_password': 'pwd',
-        'proxy_type': 'http',
-        'proxy_rdns': ''
-    })
+    ctx = {
+        '__settings__': {
+            'proxy': {
+                'proxy_url': 'localhost',
+                'proxy_port': '1024',
+                'proxy_enabled': '0',
+                'proxy_username': 'admin',
+                'proxy_password': 'pwd',
+                'proxy_type': 'http',
+                'proxy_rdns': ''
+            }
+        }
+    }
+
+    config = loader.load(conf, schema_file, ctx)
     assert config.meta.apiVersion == '1.0.0'
     assert config.global_settings.logging.level == logging.INFO
     assert config.global_settings.proxy.enabled is False
@@ -169,13 +175,17 @@ def test_load_examples():
     schema_file = _schema_file_path_for(schema_file)
 
     ctx = {
-        'proxy_host': 'localhost',
-        'proxy_port': '1024',
-        'proxy_enabled': '0',
-        'proxy_username': 'admin',
-        'proxy_password': 'pwd',
-        'proxy_type': 'http',
-        'proxy_rdns': ''
+        '__settings__': {
+            'proxy': {
+                'proxy_url': 'localhost',
+                'proxy_port': '1024',
+                'proxy_enabled': '0',
+                'proxy_username': 'admin',
+                'proxy_password': 'pwd',
+                'proxy_type': 'http',
+                'proxy_rdns': ''
+            }
+        }
     }
 
     for f in files:

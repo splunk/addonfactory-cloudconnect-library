@@ -135,6 +135,8 @@ class Job(object):
         if not tasks:
             return
         for task in tasks:
+            if self._check_should_stop():
+                return
             self._context.update(task.execute(self._context))
 
     def _on_pre_process(self):
@@ -229,6 +231,11 @@ class Job(object):
 
         _logger.info('Job processing finished')
 
+    def _check_should_stop(self):
+        if self._should_stop:
+            _logger.info('Job should been stopped.')
+        return self._should_stop
+
     def _run(self):
         request = self._request.request
         method = request.method
@@ -236,8 +243,7 @@ class Job(object):
         self._get_checkpoint()
 
         while 1:
-            if self._should_stop:
-                _logger.info('Job should been stopped.')
+            if self._check_should_stop():
                 return
 
             url = request.normalize_url(self._context)
@@ -250,6 +256,8 @@ class Job(object):
 
             self._on_pre_process()
 
+            if self._check_should_stop():
+                return
             response, need_terminate = \
                 self._send_request(url, method, header, body=rb)
 
@@ -259,8 +267,12 @@ class Job(object):
 
             self._request_iterated_count += 1
             self._set_context('__response__', response)
+            if self._check_should_stop():
+                return
             self._on_post_process()
 
+            if self._check_should_stop():
+                return
             self._update_checkpoint()
 
             if self._is_stoppable():

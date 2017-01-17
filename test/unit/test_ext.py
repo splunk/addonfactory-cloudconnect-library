@@ -194,7 +194,27 @@ def test_time_str2str():
         ('22/11/06 00:30', '2006-11-22T00:30:00'),
         ('23/11/06 01:30', '2006-11-23T01:30:00'),
     ]
+
     for vs, vr in valid_string:
         r = time_str2str(vs, format3, format2)
 
         assert r == vr
+
+    # timezone is not supported
+    r = time_str2str('Tue Jun 22 12:10:20 2010 EST', '%a %b %d %H:%M:%S %Y %Z', '%Y-%m-%d %H:%M:%S %Z')
+    assert r == 'Tue Jun 22 12:10:20 2010 EST'
+    
+    r = time_str2str('Tue Jun 22 12:10:20 2010 UTC', '%a %b %d %H:%M:%S %Y %Z', '%Y-%m-%d %H:%M:%S %Z')
+    assert r == '2010-06-22 12:10:20 '
+
+    # convert to timestamp
+    timestamp_cases = [
+        ('21/11/06 16:30', '2006-11-21T16:30:00', '1164097800'),
+        ('10/11/06 02:30', '2006-11-10T02:30:00', '1163097000'),
+        ('22/11/06 00:30', '2006-11-22T00:30:00', '1164126600'),
+        ('23/11/06 01:30', '2006-11-23T01:30:00', '1164216600'),
+    ]
+    for vs, vr, vt in timestamp_cases:
+        r = time_str2str(vs, format3, '%s')
+
+        assert r == vt

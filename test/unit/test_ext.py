@@ -8,6 +8,7 @@ from cloudconnectlib.core.ext import (
     json_empty,
     json_not_empty,
     set_var,
+    time_str2str,
 )
 
 
@@ -158,3 +159,42 @@ def test_set_var():
     assert set_var(False) == False
     assert set_var(1) == 1
     assert set_var(None) is None
+
+
+def test_time_str2str():
+    non_string = [{}, 123, [], ()]
+    format1 = '%Y-%m-%d %H:%M:%S'
+    format2 = '%Y-%m-%dT%H:%M:%S'
+
+    for ns in non_string:
+        r = time_str2str(ns, format1, format2)
+        assert r == ns
+
+    bad_string = ['12345', '----', '===', '$%^^&', '!@#$%^', '999999999', '-1']
+    for ns in bad_string:
+        r = time_str2str(ns, format1, format2)
+        assert r == ns
+
+    valid_string = [
+        '2015-01-12 00:00:01',
+        '2014-02-12 00:00:02',
+        '2016-03-12 00:10:01',
+        '2017-04-12 00:10:02',
+        '2018-05-12 10:00:01',
+        '2018-05-12 10:00:02',
+    ]
+    for ns in valid_string:
+        r = time_str2str(ns, format1, format2)
+        assert r == ns.replace(' ', 'T')
+
+    format3 = '%d/%m/%y %H:%M'
+    valid_string = [
+        ('21/11/06 16:30', '2006-11-21T16:30:00'),
+        ('10/11/06 02:30', '2006-11-10T02:30:00'),
+        ('22/11/06 00:30', '2006-11-22T00:30:00'),
+        ('23/11/06 01:30', '2006-11-23T01:30:00'),
+    ]
+    for vs, vr in valid_string:
+        r = time_str2str(vs, format3, format2)
+
+        assert r == vr

@@ -1,6 +1,7 @@
 import json
 import re
 import traceback
+from datetime import datetime
 
 from jsonpath_rw import parse
 from .exceptions import FuncException
@@ -219,7 +220,34 @@ def set_var(value):
     return value
 
 
-_EXT_FUNCTIONS = {
+def time_str2str(date_string, from_format, to_format):
+    """Convert a date string with given format to another format. Return
+    the original date string if it's type is not string or failed to parse or
+    convert it with format."""
+    if not isinstance(date_string, basestring):
+        _logger.warning(
+            '"date_string" must be a string type, found %s,'
+            ' return the original date_string directly.',
+            type(date_string)
+        )
+        return date_string
+
+    try:
+        dt = datetime.strptime(date_string, from_format)
+        return dt.strftime(to_format)
+    except Exception:
+        _logger.warning(
+            'Unable to convert date_string "%s" from format "%s" to "%s",'
+            ' return the original date_string, cause=%s',
+            date_string,
+            from_format,
+            to_format,
+            traceback.format_exc()
+        )
+    return date_string
+
+
+_extension_functions = {
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
     'set_var': set_var,
@@ -228,6 +256,7 @@ _EXT_FUNCTIONS = {
     'json_path': json_path,
     'json_empty': json_empty,
     'json_not_empty': json_not_empty,
+    'time_str2str': time_str2str,
 }
 
 
@@ -236,4 +265,4 @@ def lookup_method(name):
     :param name: function name.
     :return: A function with given name.
     """
-    return _EXT_FUNCTIONS.get(name)
+    return _extension_functions.get(name)

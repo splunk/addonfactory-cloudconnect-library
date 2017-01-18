@@ -184,7 +184,8 @@ def test_load_examples():
                 'proxy_password': 'pwd',
                 'proxy_type': 'http',
                 'proxy_rdns': ''
-            }
+            },
+            'logging': {}
         }
     }
 

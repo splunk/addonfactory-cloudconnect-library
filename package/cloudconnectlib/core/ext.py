@@ -221,6 +221,20 @@ def set_var(value):
     return value
 
 
+def _fix_timestamp_format(fmt, timestamp):
+    """Replace '%s' in time format with timestamp if the number
+        of '%' before 's' is odd."""
+    return re.sub(
+        r'%+s',
+        (
+            lambda x:
+            x.group() if len(x.group()) % 2 else x.group().replace('%s',
+                                                                   timestamp)
+        ),
+        fmt
+    )
+
+
 def time_str2str(date_string, from_format, to_format):
     """Convert a date string with given format to another format. Return
     the original date string if it's type is not string or failed to parse or
@@ -235,13 +249,14 @@ def time_str2str(date_string, from_format, to_format):
 
     try:
         dt = datetime.strptime(date_string, from_format)
-        # We need to pre process '%s' in to_format here because '%s' is not
+        # Need to pre process '%s' in to_format here because '%s' is not
         # available on all platforms. Even on supported platforms, the
         # result may be different because it depends on implementation on each
-        # platform. We return UTC timestamp here directly.
-        timestamp = calendar.timegm(dt.timetuple())
-        fmt = to_format.replace('%s', str(timestamp)) if to_format else ''
-        return dt.strftime(fmt)
+        # platform. Replace it with UTC timestamp here directly.
+        if to_format:
+            timestamp = calendar.timegm(dt.timetuple())
+            to_format = _fix_timestamp_format(to_format, str(timestamp))
+        return dt.strftime(to_format)
     except Exception:
         _logger.warning(
             'Unable to convert date_string "%s" from format "%s" to "%s",'

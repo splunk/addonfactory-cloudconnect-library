@@ -9,6 +9,7 @@ from cloudconnectlib.core.ext import (
     json_not_empty,
     set_var,
     time_str2str,
+    _fix_timestamp_format,
 )
 
 
@@ -217,3 +218,18 @@ def test_time_str2str():
     for vs, vt in timestamp_cases:
         r = time_str2str(vs, format3, '%s')
         assert r == vt
+
+
+def test_fix_timestamp_format():
+    cases = [
+        ('%s', '1392134402', '1392134402'),
+        ('%s%s%s%s', '1392134402', '1392134402139213440213921344021392134402'),
+        ('abcdedfsdfg%sedfhitop', '1392134402', 'abcdedfsdfg1392134402edfhitop'),
+        ('abcd%s%s%%%%%%s', '1392134402', 'abcd13921344021392134402%%%%%%s'),
+        ('%%%%%s', '1392134402', '%%%%1392134402'),
+        ('%%s%%s%%s%%%s', '1392134402', '%%s%%s%%s%%1392134402'),
+        ('-==1234%s%S%s%SSSSss', '1392134402', '-==12341392134402%S1392134402%SSSSss')
+    ]
+    for fmt, tmp, result in cases:
+        converted = _fix_timestamp_format(fmt, tmp)
+        assert converted == result

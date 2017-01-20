@@ -1,3 +1,4 @@
+import calendar
 import json
 import re
 import traceback
@@ -234,7 +235,13 @@ def time_str2str(date_string, from_format, to_format):
 
     try:
         dt = datetime.strptime(date_string, from_format)
-        return dt.strftime(to_format)
+        # We need to pre process '%s' in to_format here because '%s' is not
+        # available on all platforms. Even on supported platforms, the
+        # result may be different because it depends on implementation on each
+        # platform. We return UTC timestamp here directly.
+        timestamp = calendar.timegm(dt.timetuple())
+        fmt = to_format.replace('%s', str(timestamp)) if to_format else ''
+        return dt.strftime(fmt)
     except Exception:
         _logger.warning(
             'Unable to convert date_string "%s" from format "%s" to "%s",'

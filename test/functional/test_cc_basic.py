@@ -86,10 +86,14 @@ def cp_cc_json_to_ta(cc_json_path,dst_ta_path,mod_input_name):
 
 def test_start():
     install_cc_ucc.install_cc_ucc_libs()
-    basedir = os.path.dirname(os.path.abspath(__file__))
+    basedir = os.path.join(working_directory,"test","functional")
     cclib_path = os.path.join(basedir,"download_package","cc_ucc_lib","cloudconnectlib")
     ucclib_path = os.path.join(basedir,"download_package","cc_ucc_lib","splunktaucclib")
+    logger.info("cclib path is %s", cclib_path)
+    logger.info("ucclib path is %s",ucclib_path)
     sample_ta_path = os.path.join(basedir,"sample_ta")
+    assert os.path.exists(cclib_path)
+    assert os.path.exists(ucclib_path)
     use_latest_build.use_latest_cc_build(cclib_path,sample_ta_path)
     use_latest_build.use_latestucc_build(ucclib_path,sample_ta_path)
 
@@ -113,7 +117,7 @@ def test_snow_data_in():
     assert  searchutil.checkQueryCount(search_string,90)
     time.sleep(60)
     assert  searchutil.checkQueryCount(search_string,96)
-    search_string ="search index=_internal source=*ta* ERROR"
+    search_string ="search index=_internal source=*splunk_ta_my* ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_snow_temp_certs_folder_created():
@@ -145,7 +149,7 @@ def test_okta2_data_in():
     searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=main  sourcetype=my_okta2_test1 "
     assert  searchutil.checkQueryCount(search_string,18)
-    search_string ="search index=_internal source=*ta* ERROR"
+    search_string ="search index=_internal source=*splunk_ta_my* ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_okta2_checkpoint_created():
@@ -179,7 +183,7 @@ def test_mytest2_json_list_to_events():
     assert searchutil.checkQueryCount(search_string,25)
     time.sleep(60)
     assert searchutil.checkQueryCount(search_string,50)
-    search_string ="search index=_internal source=*ta* ERROR"
+    search_string ="search index=_internal source=*splunk_ta_my* ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 
@@ -204,9 +208,9 @@ def test_mytest2_different_chaset():
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string ="search index=main  sourcetype=test_charset_google"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal source=*ta* google WARNING \"Failure decoding response content\""
+    search_string = "search index=_internal source=*splunk_ta_my* google WARNING \"Failure decoding response content\""
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string ="search index=_internal source=*ta* ERROR earliest= -60s"
+    search_string ="search index=_internal source=*splunk_ta_my* ERROR earliest= -60s"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 
@@ -251,7 +255,7 @@ def test_mytest2_extracted_data_int():
     searchutil = splunk_login(local_splunk,logger)
     searchstring = "search index=main sourcetype=test_int"
     assert searchutil.checkQueryCount(searchstring,3)
-    searchstring = "search index=_internal source=*ta* ERROR"
+    searchstring = "search index=_internal source=*splunk_ta_my* ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
 
 def test_https_cert_warning():
@@ -271,9 +275,9 @@ def test_https_cert_warning():
     searchutil = splunk_login(local_splunk,logger)
     search_string = "search index=main sourcetype=test_https_waring \"utf-8\""
     assert searchutil.checkQueryCount(search_string,1)
-    search_string = "search index=_internal source=*ta* log_level=warning  \"SSL: CERTIFICATE_VERIFY_FAILED\""
+    search_string = "search index=_internal source=*splunk_ta_my* log_level=warning  \"SSL: CERTIFICATE_VERIFY_FAILED\""
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal source=*ta* ERROR"
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 
@@ -300,7 +304,7 @@ def test_mytest_kvstore():
     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
     collection_file_path = os.path.join(splunk_ta_path,'local',"collections.conf")
     assert  os.path.exists(collection_file_path)
-    searchstring = "search index=_internal source=*ta* \"Using KV store for checkpoint\""
+    searchstring = "search index=_internal source=*splunk_ta_my* \"Using KV store for checkpoint\""
     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
     time.sleep(60)
     search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
@@ -311,7 +315,7 @@ def test_mytest_kvstore():
     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
     searchstring = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
-    searchstring = "search index=_internaal  sourcetype=*ta* ERROR"
+    searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
     assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
 
 
@@ -334,7 +338,7 @@ def test_time_convert_epoch_time():
     search_string = "search index=main  sourcetype=\"test_timeconvert\"  1352128663"
 
     assert searchutil.checkQueryCount(search_string,1)
-    search_string = "search index=_internal source=*ta* ERROR  limit=31352128663"
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR  limit=31352128663"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_time_convert_remove_T():
@@ -353,7 +357,7 @@ def test_time_convert_remove_T():
     search_string = "search index=main  sourcetype=test_timeconvert  \"2012-11-05 15:17:43\""
 
     assert searchutil.checkQueryCount(search_string,1)
-    search_string = "search index=_internal source=*ta* ERROR  limit=32012-11-05"
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR  limit=32012-11-05"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 
@@ -373,11 +377,11 @@ def test_proxy_http_no_auth():
     local_splunk.restart()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=_internal source=*ta* \"Proxy is not enabled\""
+    search_string = "search index=_internal source=*splunk_ta_my* \"Proxy is not enabled\""
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=main sourcetype=test_proxy_no_auth"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal source=*ta* ERROR"
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 
@@ -395,11 +399,11 @@ def test_proxy_http_auth_special_character():
     local_splunk.restart()
     time.sleep(80)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=_internal source=*ta* \"Proxy is not enabled\""
+    search_string = "search index=_internal source=*splunk_ta_my* \"Proxy is not enabled\""
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=main sourcetype=test_proxy_auth_special_character"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal source=*ta* ERROR"
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_proxy_http_wrong_auth():
@@ -416,11 +420,11 @@ def test_proxy_http_wrong_auth():
     local_splunk.restart()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=_internal source=*ta* \"Proxy is not enabled\""
+    search_string = "search index=_internal source=*splunk_ta_my* \"Proxy is not enabled\""
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=main sourcetype=test_proxy_wrong_auth"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal source=*ta* ERROR Proxy Authentication Required"
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR Proxy Authentication Required"
     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 
@@ -441,7 +445,7 @@ def test_update_proxy_from_backend():
     searchutil = splunk_login(local_splunk,logger)
     search_string = "search index=main sourcetype=test_proxy_update"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal source=*ta* ERROR Proxy Authentication Required"
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR Proxy Authentication Required"
     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
     proxy_conf = "{}/splunk_ta_myokta_settings_auth_special_character.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
@@ -464,9 +468,9 @@ def test_logging_INFO():
     searchutil = splunk_login(local_splunk,logger)
     search_string = "search index=main  sourcetype=test_logging_INFO "
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal log_level=INFO source=*ta*"
+    search_string = "search index=_internal log_level=INFO source=*splunk_ta_my*"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal  source=*ta* AND ( \"DEBUG\" OR \"ERROR\")"
+    search_string = "search index=_internal  source=*splunk_ta_my* AND ( \"DEBUG\" OR \"ERROR\")"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_logging_ERROR():
@@ -482,9 +486,9 @@ def test_logging_ERROR():
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=_internal  source=*ta* log_level=ERROR \"The response status=400 for request which url=https://acme2.okta.com/api/v1/events?after=tev68-xxxxx&limit=3\""
+    search_string = "search index=_internal  source=*splunk_ta_my* log_level=ERROR \"The response status=400 for request which url=https://acme2.okta.com/api/v1/events?after=tev68-xxxxx&limit=3\""
     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal log_level=INFO source=*ta*"
+    search_string = "search index=_internal log_level=INFO source=*splunk_ta_my*"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_logging_WARNING():
@@ -506,9 +510,9 @@ def test_logging_WARNING():
     searchutil = splunk_login(local_splunk,logger)
     search_string = "search index=main sourcetype=test_logging_waring \"utf-8\""
     assert searchutil.checkQueryCount(search_string,1)
-    search_string = "search index=_internal source=*ta* log_level=warning  \"SSL: CERTIFICATE_VERIFY_FAILED\""
+    search_string = "search index=_internal source=*splunk_ta_my* log_level=warning  \"SSL: CERTIFICATE_VERIFY_FAILED\""
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal source=*ta* INFO"
+    search_string = "search index=_internal source=*splunk_ta_my* INFO"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_logging_CRITICAL():
@@ -524,9 +528,9 @@ def test_logging_CRITICAL():
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=_internal  source=*ta* log_level=ERROR"
+    search_string = "search index=_internal  source=*splunk_ta_my* log_level=ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal log_level=INFO source=*ta*"
+    search_string = "search index=_internal log_level=INFO source=*splunk_ta_my*"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=main sourcetype=test_logging_critical2"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)

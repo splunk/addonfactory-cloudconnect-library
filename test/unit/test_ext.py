@@ -9,6 +9,7 @@ from cloudconnectlib.core.ext import (
     json_not_empty,
     set_var,
     time_str2str,
+    _fix_timestamp_format,
 )
 
 
@@ -203,18 +204,32 @@ def test_time_str2str():
     # timezone is not supported
     r = time_str2str('Tue Jun 22 12:10:20 2010 EST', '%a %b %d %H:%M:%S %Y %Z', '%Y-%m-%d %H:%M:%S %Z')
     assert r == 'Tue Jun 22 12:10:20 2010 EST'
-    
+
     r = time_str2str('Tue Jun 22 12:10:20 2010 UTC', '%a %b %d %H:%M:%S %Y %Z', '%Y-%m-%d %H:%M:%S %Z')
     assert r == '2010-06-22 12:10:20 '
 
     # convert to timestamp
     timestamp_cases = [
-        ('21/11/06 16:30', '2006-11-21T16:30:00', '1164097800'),
-        ('10/11/06 02:30', '2006-11-10T02:30:00', '1163097000'),
-        ('22/11/06 00:30', '2006-11-22T00:30:00', '1164126600'),
-        ('23/11/06 01:30', '2006-11-23T01:30:00', '1164216600'),
+        ('21/11/06 16:30', '1164126600'),
+        ('10/11/06 02:30', '1163125800'),
+        ('22/11/06 00:30', '1164155400'),
+        ('23/11/06 01:30', '1164245400'),
     ]
-    for vs, vr, vt in timestamp_cases:
+    for vs, vt in timestamp_cases:
         r = time_str2str(vs, format3, '%s')
-
         assert r == vt
+
+
+def test_fix_timestamp_format():
+    cases = [
+        ('%s', '1392134402', '1392134402'),
+        ('%s%s%s%s', '1392134402', '1392134402139213440213921344021392134402'),
+        ('abcdedfsdfg%sedfhitop', '1392134402', 'abcdedfsdfg1392134402edfhitop'),
+        ('abcd%s%s%%%%%%s', '1392134402', 'abcd13921344021392134402%%%%%%s'),
+        ('%%%%%s', '1392134402', '%%%%1392134402'),
+        ('%%s%%s%%s%%%s', '1392134402', '%%s%%s%%s%%1392134402'),
+        ('-==1234%s%S%s%SSSSss', '1392134402', '-==12341392134402%S1392134402%SSSSss')
+    ]
+    for fmt, tmp, result in cases:
+        converted = _fix_timestamp_format(fmt, tmp)
+        assert converted == result

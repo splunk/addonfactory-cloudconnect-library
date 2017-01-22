@@ -12,6 +12,7 @@ SPLUNK_HOME = os.environ.get("SPLUNK_HOME")
 if SPLUNK_HOME is None:
     SPLUNK_HOME = "/usr/local/bamboo/splunk-install"
 
+os.environ["SPLUNK_HOME"] = SPLUNK_HOME
 working_directory = os.environ.get("working_directory")
 # if working_directory is None:
 #     working_directory = "/Users/cloris/cloud-connect-engine"

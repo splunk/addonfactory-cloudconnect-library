@@ -330,9 +330,29 @@ def test_time_convert_epoch_time():
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=main  sourcetype=\"epoch_time\"  1352099863"
+    search_string = "search index=main  sourcetype=\"test_timeconvert\"  1352128663"
+
     assert searchutil.checkQueryCount(search_string,1)
-    search_string = "search index=_internal source=*ta* ERROR  limit=31352099863"
+    search_string = "search index=_internal source=*ta* ERROR  limit=31352128663"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+def test_time_convert_remove_T():
+    ta_name = "Splunk_TA_myokta2"
+    okta2_ta_path = ta_orig_path_temp.format(ta_name)
+    conf_file_path = test_data.format("timeconvert")
+    cc_json_path = "{}/okta_inputs_timeconvert2.cc.json".format(conf_file_path)
+    splunk_ta_path = "$SPLUNK_HOME/etc/apps/Splunk_TA_myokta2"
+    clean_local_splunk()
+    cp_ta_to_splunk(okta2_ta_path)
+    cp_conf_to_ta(conf_file_path,splunk_ta_path)
+    cp_cc_json_to_ta(cc_json_path,splunk_ta_path,"okta_inputs")
+    local_splunk.start()
+    time.sleep(60)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=main  sourcetype=test_timeconvert  \"2012-11-05 15:17:43\""
+
+    assert searchutil.checkQueryCount(search_string,1)
+    search_string = "search index=_internal source=*ta* ERROR  limit=32012-11-05"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 

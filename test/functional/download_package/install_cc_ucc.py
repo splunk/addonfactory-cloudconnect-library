@@ -22,5 +22,3 @@ def install_cc_ucc_libs():
     os.system(install_cmd)
     os.system("rm -rf " + target + "/*.egg-info")
     os.system("rm -rf " + target + "/_yaml.so")
-
-

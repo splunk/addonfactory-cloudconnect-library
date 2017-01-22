@@ -10,6 +10,7 @@ from cloudconnectlib.core.ext import (
     set_var,
     time_str2str,
     _fix_timestamp_format,
+    _fix_microsecond_format,
 )
 
 
@@ -233,3 +234,15 @@ def test_fix_timestamp_format():
     for fmt, tmp, result in cases:
         converted = _fix_timestamp_format(fmt, tmp)
         assert converted == result
+
+
+def test_fix_microsecond_format():
+    cases = [
+        ('%f', '123456', '%f'),
+        ('%1f %2f %3f %4f %5f %6f', '123456', '1 12 123 1234 12345 123456'),
+        ('%1f %2f %3f %4f %5f %6ff', '123456', '1 12 123 1234 12345 123456f'),
+        ('%7f', '123456', '%7f'),
+        ('%xf', '123456', '%xf')
+    ]
+    for fmt, tmp, result in cases:
+        converted = _fix_microsecond_format(fmt, tmp)

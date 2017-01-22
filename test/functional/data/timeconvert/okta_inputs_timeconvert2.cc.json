@@ -70,7 +70,7 @@
                         "input": [
                             "{{my_time}}",
                             "%Y-%m-%dT%H:%M:%S.%fZ",
-                            "%s"
+                            "%Y-%m-%d %H:%M:%S"
                         ],
                         "method": "time_str2str",
                         "output": "xyz"

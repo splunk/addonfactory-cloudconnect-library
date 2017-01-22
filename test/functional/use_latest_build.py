@@ -37,9 +37,3 @@ def use_latestucc_build(ucclib_path,sample_ta_path):
              cp_cmd_string = "cp -r {} {}".format(ucclib_path,local_ucc_parent_path)
              os.system(cp_cmd_string)
              print "Copy latest UCCLib from package"
-
-cclib_path = "/Users/cloris/Desktop/cloudconnectlib"
-ucclib_path = "/Users/cloris/ta-ui-framework/UCC-REST-lib/splunktaucclib"
-sample_ta_path = "/Users/cloris/cloud-connect-engine/examples/1.0/mytest"
-use_latest_cc_build(cclib_path,sample_ta_path)
-use_latestucc_build(cclib_path,sample_ta_path)

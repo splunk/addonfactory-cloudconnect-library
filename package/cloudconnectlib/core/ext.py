@@ -223,14 +223,17 @@ def set_var(value):
 
 def _fix_microsecond_format(fmt, micros):
     """
-    implement %Nf so that user can control the digital number of microtime
+    implement %Nf so that user can control the digital number of microsecond.
+    If number of % is even, don't do replacement.
+    If N is not in [1-6], don't do replacement.
+    If time length m is less than N, return m digitals.
     """
-    micros = str(micros)
-    return re.sub(
-        r'%([1-6])f',
-        lambda x:
-        micros[:int(x.group(1))] if int(x.group(1)) in range(1, 7) else x.group(),
-        fmt)
+    def do_replacement(x, micros):
+        if int(x.group(1)) in range(1, 7) and len(x.group()) % 2:
+            return x.group().replace('%' + x.group(1) + 'f',
+                                     micros[:min(int(x.group(1)), len(micros))])
+        return x.group()
+    return re.sub(r'%+([1-6])f', lambda x: do_replacement(x, str(micros)), fmt)
 
 
 def _fix_timestamp_format(fmt, timestamp):

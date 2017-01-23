@@ -385,6 +385,27 @@ def test_proxy_http_no_auth():
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 
+def test_proxy_http_auth():
+    ta_name = "Splunk_TA_myokta"
+    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(okta_ta_path)
+    proxy_conf = "{}/splunk_ta_myokta_settings_auth.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    input_conf = "{}/inputs_auth.conf".format(test_data.format("proxy"))
+    local_splunk.restart()
+    cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
+    local_splunk.restart()
+    time.sleep(80)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=_internal source=*splunk_ta_my* \"Proxy is not enabled\""
+    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=main sourcetype=test_proxy_auth"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
 def test_proxy_http_auth_special_character():
     ta_name = "Splunk_TA_myokta"
     okta_ta_path = ta_orig_path_temp.format(ta_name)
@@ -452,6 +473,28 @@ def test_update_proxy_from_backend():
     time.sleep(120)
     search_string = "search index=main sourcetype=test_proxy_update"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+def test_proxy_disabled():
+    ta_name = "Splunk_TA_myokta"
+    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(okta_ta_path)
+    proxy_conf = "{}/splunk_ta_myokta_settings_disabled.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    input_conf = "{}/inputs_proxy_disabled.conf".format(test_data.format("proxy"))
+    local_splunk.restart()
+    cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
+    local_splunk.restart()
+    time.sleep(60)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=_internal source=*splunk_ta_my* \"Proxy is not enabled\""
+    assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=main sourcetype=test_proxy_disabled"
+    assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
 
 def test_logging_INFO():
     ta_name = "Splunk_TA_myokta"
@@ -534,6 +577,160 @@ def test_logging_CRITICAL():
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=main sourcetype=test_logging_critical2"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+def test_interation_count_0():
+    ta_name = "Splunk_TA_mytest2"
+    mytest2_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest2_ta_path)
+    json_file_path = "{}/inputs_01_interatoin_count_0.cc.json".format(test_data.format("interation_count"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"inputs_01")
+    inputs_conf_file = "{}/inputs_01_interation_0.conf".format(test_data.format("interation_count"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/splunk_ta_mytest2_account.conf".format(test_data.format("interation_count"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    searchutil = splunk_login(local_splunk,logger)
+    time.sleep(180)
+    search_string = "search index=main sourcetype=test_interation_count_0"
+    assert searchutil.checkQueryCount(search_string,100)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+
+def test_interation_count_minus1():
+    ta_name = "Splunk_TA_mytest2"
+    mytest2_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest2_ta_path)
+    json_file_path = "{}/inputs_01_interation_count_minus_1.cc.json".format(test_data.format("interation_count"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"inputs_01")
+    inputs_conf_file = "{}/inputs_01_interation_minus_1.conf".format(test_data.format("interation_count"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/splunk_ta_mytest2_account.conf".format(test_data.format("interation_count"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    searchutil = splunk_login(local_splunk,logger)
+    time.sleep(200)
+    search_string = "search index=main sourcetype=test_interation_count_minus_1"
+    assert searchutil.checkQueryCount(search_string,100)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+def test_interation_count_1000():
+    ta_name = "Splunk_TA_mytest2"
+    mytest2_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest2_ta_path)
+    json_file_path = "{}/inputs_01_interation_count_1000.cc.json".format(test_data.format("interation_count"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"inputs_01")
+    inputs_conf_file = "{}/inputs_01_interation_1000.conf".format(test_data.format("interation_count"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/splunk_ta_mytest2_account.conf".format(test_data.format("interation_count"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    searchutil = splunk_login(local_splunk,logger)
+    time.sleep(200)
+    search_string = "search index=main sourcetype=test_interation_count_1000"
+    assert searchutil.checkQueryCount(search_string,100)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#
+def test_two_inputs_does_not_impact_each_fake_account():
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(snow_ta_path)
+    json_file_path = "{}/snow_interation_count_minus1.cc.json".format(test_data.format("multiple_input"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+    inputs_conf_file = "{}/snow_inputs_2_one_using_fake_account.conf".format(test_data.format("multiple_input"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/snow_account_one_wrong.conf".format(test_data.format("multiple_input"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    time.sleep(120)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=main sourcetype=test_snow_input_correct_account"
+    assert searchutil.checkQueryCount(search_string,96)
+    search_string = "search index=_internal source=*splunk_ta_my*  snow_input_correct_account ERROR"
+    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
+    search_string = "search index=_internal source=*splunk_ta_my* snow_input_fake_account ERROR"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+
+def test_two_inputs_does_not_impact_each_fake_server():
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(snow_ta_path)
+    json_file_path = "{}/snow_interation_count_minus1.cc.json".format(test_data.format("multiple_input"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+    inputs_conf_file = "{}/snow_inputs_2_one_wrong_server.conf".format(test_data.format("multiple_input"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/snow_account.conf".format(test_data.format("multiple_input"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    time.sleep(120)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=main sourcetype=test_snow_input_right_server"
+    assert searchutil.checkQueryCount(search_string,96)
+    search_string = "search index=_internal source=*splunk_ta_my*  snow_input_right_server ERROR"
+    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
+    search_string = "search index=_internal source=*splunk_ta_my* snow_input_wrong_server ERROR"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+def test_32_inputs_data_all_in():
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(snow_ta_path)
+    json_file_path = "{}/snow_interation_count_minus1.cc.json".format(test_data.format("multiple_input"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+    inputs_conf_file = "{}/snow_32_inputs.conf".format(test_data.format("multiple_input"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/snow_account.conf".format(test_data.format("multiple_input"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    searchutil = splunk_login(local_splunk,logger)
+    time.sleep(240)
+    search_string ="search index=main  sourcetype=test_snow_input_multi*|dedup sourcetype "
+    assert  searchutil.checkQueryCount(search_string,32)
+    search_string = "search index=main sourcetype=test_snow_input_multi_9"
+    assert  searchutil.checkQueryCount(search_string,96)
+    search_string = "search index=main sourcetype=test_snow_input_multi*"
+    assert  searchutil.checkQueryCount(search_string,3072)
+    search_string ="search index=_internal source=*splunk_ta_my* ERROR"
+    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+
+def test_remove_checkpoint_file_recovery():
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(snow_ta_path)
+    json_file_path = "{}/snow_interation_count_minus1.cc.json".format(test_data.format("checkpoint"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+    inputs_conf_file = "{}/snow_inputs.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/snow_account.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    searchutil = splunk_login(local_splunk,logger)
+    time.sleep(120)
+    search_string ="search index=main  sourcetype=test_checkpoint_remove_recovery"
+    assert searchutil.checkQueryCount(search_string,96)
+    checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ceb30d5cc2cdb107c7e631b994d8075956e48ab0875e35f7390f6c1faf865bdf".format(SPLUNK_HOME)
+    assert os.path.exists(checkpoint_file_dir)
+    remove_checkpoint_file_cmd = "rm -f {}".format(checkpoint_file_dir)
+    os.system(remove_checkpoint_file_cmd)
+    time.sleep(120)
+    assert searchutil.checkQueryCount(search_string,192)
 
 def test_teardown():
     local_splunk.stop()

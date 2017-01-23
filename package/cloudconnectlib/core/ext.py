@@ -221,6 +221,21 @@ def set_var(value):
     return value
 
 
+def _fix_microsecond_format(fmt, micros):
+    """
+    implement %Nf so that user can control the digital number of microsecond.
+    If number of % is even, don't do replacement.
+    If N is not in [1-6], don't do replacement.
+    If time length m is less than N, return m digitals.
+    """
+    def do_replacement(x, micros):
+        if int(x.group(1)) in range(1, 7) and len(x.group()) % 2:
+            return x.group().replace('%' + x.group(1) + 'f',
+                                     micros[:min(int(x.group(1)), len(micros))])
+        return x.group()
+    return re.sub(r'%+([1-6])f', lambda x: do_replacement(x, str(micros)), fmt)
+
+
 def _fix_timestamp_format(fmt, timestamp):
     """Replace '%s' in time format with timestamp if the number
         of '%' before 's' is odd."""
@@ -256,6 +271,7 @@ def time_str2str(date_string, from_format, to_format):
         if to_format:
             timestamp = calendar.timegm(dt.timetuple())
             to_format = _fix_timestamp_format(to_format, str(timestamp))
+            to_format = _fix_microsecond_format(to_format, str(dt.microsecond))
         return dt.strftime(to_format)
     except Exception:
         _logger.warning(

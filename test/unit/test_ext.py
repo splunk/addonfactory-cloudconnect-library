@@ -245,7 +245,9 @@ def test_fix_microsecond_format():
         ('%xf', '123456', '%xf'),
         ('%%1f', '123456', '%%1f'),
         ('%%1f%%%2f', '123456', '%%1f%%12'),
-        ('xx%6fxx', '1234', 'xx1234xx'),
+        ('xx%6fxx', '1234', 'xx001234xx'),
+        ('1234', '5555', '1234'),
+        ('.%2f+08:00', '10000', '.01+08:00')
     ]
     for fmt, tmp, result in cases:
         converted = _fix_microsecond_format(fmt, tmp)

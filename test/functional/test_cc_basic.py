@@ -308,13 +308,13 @@ def test_mytest_kvstore():
     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
     time.sleep(60)
     search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
-    assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=_internal  source=*kv_2*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
-    assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
-    searchstring = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
-    assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
-    searchstring = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
-    assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+    assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+    assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
     searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
     assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
 
@@ -731,6 +731,85 @@ def test_remove_checkpoint_file_recovery():
     os.system(remove_checkpoint_file_cmd)
     time.sleep(120)
     assert searchutil.checkQueryCount(search_string,192)
+
+def test_namespace_used_generated_checkpoint():
+      ta_name = "Splunk_TA_mysnow"
+      snow_ta_path = ta_orig_path_temp.format(ta_name)
+      splunk_ta_path = ta_dest_path_temp.format(ta_name)
+      clean_local_splunk()
+      cp_ta_to_splunk(snow_ta_path)
+      json_file_path = "{}/snow_namespace_as_checkpoint.cc.json".format(test_data.format("checkpoint"))
+      cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+      inputs_conf_file = "{}/snow_inputs_namespace.conf".format(test_data.format("checkpoint"))
+      cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+      account_conf_file = "{}/snow_account.conf".format(test_data.format("checkpoint"))
+      cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+      local_splunk.start()
+      searchutil = splunk_login(local_splunk,logger)
+      time.sleep(120)
+      search_string ="search index=main  sourcetype=test_namespace_as_checkpoint"
+      assert searchutil.checkQueryCount(search_string,96)
+      checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ceb30d5cc2cdb107c7e631b994d8075956e48ab0875e35f7390f6c1faf865bdf".format(SPLUNK_HOME)
+      assert os.path.exists(checkpoint_file_dir)
+      remove_checkpoint_file_cmd = "rm -f {}".format(checkpoint_file_dir)
+      os.system(remove_checkpoint_file_cmd)
+      time.sleep(120)
+      assert searchutil.checkQueryCount(search_string,192)
+
+def test_api_version_check():
+    ta_name = "Splunk_TA_mytest2"
+    mytest2_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest2_ta_path)
+    json_file_path = "{}/inputs_01_api_version_check.cc.json".format(test_data.format("others"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"inputs_01")
+    inputs_conf_file = "{}/inputs_01_api_version_check.conf".format(test_data.format("others"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/splunk_ta_mytest2_account.conf".format(test_data.format("others"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    time.sleep(60)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=_internal source=*splunk_ta_my* \"Unsupported schema version 1.1.0\""
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=main sourcetype=test_api_version_check"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
+
+def test_no_logging_used_static_url():
+    ta_name = "Splunk_TA_mytest"
+    mytest_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest_ta_path)
+    inputs_conf_file =  "{}/inputs_01_no_logging_used.conf".format(test_data.format("others"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/splunk_ta_mytest_no_logging_account.conf".format(test_data.format("others"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    time.sleep(60)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=main sourcetype=test_use_no_logging"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
+
+
+def test_solarwind_data_in():
+    ta_name = "Splunk_TA_mysolarwinds"
+    mytest_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest_ta_path)
+    local_splunk.start()
+    time.sleep(120)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=main sourcetype=test_solarwind_data_in"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*splunk_ta_my* ERROR"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
 
 def test_teardown():
     local_splunk.stop()

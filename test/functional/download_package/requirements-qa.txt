@@ -1,1 +1,1 @@
-cloudconnectlib>=1.0.0.dev86
+cloudconnectlib==1.0.0

@@ -731,30 +731,30 @@ def test_remove_checkpoint_file_recovery():
     os.system(remove_checkpoint_file_cmd)
     time.sleep(120)
     assert searchutil.checkQueryCount(search_string,192)
-
-def test_namespace_used_generated_checkpoint():
-      ta_name = "Splunk_TA_mysnow"
-      snow_ta_path = ta_orig_path_temp.format(ta_name)
-      splunk_ta_path = ta_dest_path_temp.format(ta_name)
-      clean_local_splunk()
-      cp_ta_to_splunk(snow_ta_path)
-      json_file_path = "{}/snow_namespace_as_checkpoint.cc.json".format(test_data.format("checkpoint"))
-      cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
-      inputs_conf_file = "{}/snow_inputs_namespace.conf".format(test_data.format("checkpoint"))
-      cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
-      account_conf_file = "{}/snow_account.conf".format(test_data.format("checkpoint"))
-      cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
-      local_splunk.start()
-      searchutil = splunk_login(local_splunk,logger)
-      time.sleep(120)
-      search_string ="search index=main  sourcetype=test_namespace_as_checkpoint"
-      assert searchutil.checkQueryCount(search_string,96)
-      checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ceb30d5cc2cdb107c7e631b994d8075956e48ab0875e35f7390f6c1faf865bdf".format(SPLUNK_HOME)
-      assert os.path.exists(checkpoint_file_dir)
-      remove_checkpoint_file_cmd = "rm -f {}".format(checkpoint_file_dir)
-      os.system(remove_checkpoint_file_cmd)
-      time.sleep(120)
-      assert searchutil.checkQueryCount(search_string,192)
+#
+# def test_namespace_used_generated_checkpoint():
+#       ta_name = "Splunk_TA_mysnow"
+#       snow_ta_path = ta_orig_path_temp.format(ta_name)
+#       splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#       clean_local_splunk()
+#       cp_ta_to_splunk(snow_ta_path)
+#       json_file_path = "{}/snow_namespace_as_checkpoint.cc.json".format(test_data.format("checkpoint"))
+#       cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+#       inputs_conf_file = "{}/snow_inputs_namespace.conf".format(test_data.format("checkpoint"))
+#       cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+#       account_conf_file = "{}/snow_account.conf".format(test_data.format("checkpoint"))
+#       cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+#       local_splunk.start()
+#       searchutil = splunk_login(local_splunk,logger)
+#       time.sleep(120)
+#       search_string ="search index=main  sourcetype=test_namespace_as_checkpoint"
+#       assert searchutil.checkQueryCount(search_string,96)
+#       checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ceb30d5cc2cdb107c7e631b994d8075956e48ab0875e35f7390f6c1faf865bdf".format(SPLUNK_HOME)
+#       assert os.path.exists(checkpoint_file_dir)
+#       remove_checkpoint_file_cmd = "rm -f {}".format(checkpoint_file_dir)
+#       os.system(remove_checkpoint_file_cmd)
+#       time.sleep(120)
+#       assert searchutil.checkQueryCount(search_string,192)
 
 def test_api_version_check():
     ta_name = "Splunk_TA_mytest2"

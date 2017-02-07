@@ -5,7 +5,7 @@ import traceback
 from datetime import datetime
 
 from jsonpath_rw import parse
-from .exceptions import FuncException
+from .exceptions import FuncException, StopCCEIteration
 from .pipemgr import PipeManager
 from ..common import util, log
 
@@ -236,6 +236,7 @@ def _fix_microsecond_format(fmt, micros):
             return x.group().replace('%' + x.group(1) + 'f',
                                      micros[:min(int(x.group(1)), len(micros))])
         return x.group()
+
     return re.sub(r'%+([1-6])f', lambda x: do_replacement(x, micros), fmt)
 
 
@@ -288,7 +289,25 @@ def time_str2str(date_string, from_format, to_format):
     return date_string
 
 
+def _check_if_true(value):
+    return str(value).strip().lower() == 'true'
+
+
+def exit_if_true(value):
+    """Raise a StopCCEIteration exception if value is True"""
+    if _check_if_true(value):
+        raise StopCCEIteration
+
+
+def assert_true(value, message=None):
+    """Assert value is True"""
+    if not _check_if_true(value):
+        raise AssertionError(message or '"%s" is not true' % value)
+
+
 _extension_functions = {
+    'assert_true': assert_true,
+    'exit_if_true': exit_if_true,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
     'set_var': set_var,

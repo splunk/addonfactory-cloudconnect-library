@@ -103,8 +103,12 @@ class TaConfig(object):
                     "The interval value {} is invalid."
                     " It should be a positive integer".format(
                         task_config[c.interval]))
-            if self._server_info.is_search_head():
-                task_config[c.use_kv_store] = True
+
+            storage_type = task_config.get(c.checkpoint_storage_type,
+                                           c.checkpoint_auto)
+            if storage_type == c.checkpoint_auto and self.is_search_head():
+                task_config[c.checkpoint_storage_type] = c.checkpoint_kv_storage
+
             task_config[c.appname] = TaConfig._appname
             task_config[c.mod_input_name] = self._input_type
             task_config[c.stanza_name] = task_config[c.name]

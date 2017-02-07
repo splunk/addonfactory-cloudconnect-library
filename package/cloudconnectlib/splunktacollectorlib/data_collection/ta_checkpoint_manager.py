@@ -7,8 +7,6 @@ from ..common import log as stulog
 from ...splunktalib import state_store as ss
 from ...splunktalib.common.util import is_true
 
-_logger = stulog.logger
-
 
 class TACheckPointMgr(object):
     SEPARATOR = "_" * 3
@@ -20,17 +18,17 @@ class TACheckPointMgr(object):
     def __init__(self, meta_config, task_config):
         self._task_config = task_config
         self._store = self._create_state_store(
-            meta_config, task_config[c.appname]
+            meta_config,
+            task_config.get(c.checkpoint_storage_type),
+            task_config[c.appname]
         )
 
-    def _create_state_store(self, meta_config, app_name):
-        storage_type = meta_config.get(c.checkpoint_kv_storage)
-
-        _logger.debug('Got checkpoint storage type=%s', storage_type)
+    def _create_state_store(self, meta_config, storage_type, app_name):
+        stulog.logger.debug('Got checkpoint storage type=%s', storage_type)
 
         if storage_type == c.checkpoint_kv_storage:
             collection_name = self._get_collection_name()
-            _logger.debug(
+            stulog.logger.debug(
                 'Creating KV state store, collection name=%s', collection_name
             )
             return ss.get_state_store(
@@ -44,7 +42,7 @@ class TACheckPointMgr(object):
         max_cache_seconds = \
             self._get_max_cache_seconds() if use_cache_file else None
 
-        _logger.debug(
+        stulog.logger.debug(
             'Creating file state store, use_cache_file=%s, max_cache_seconds=%s',
             use_cache_file, max_cache_seconds
         )
@@ -62,7 +60,7 @@ class TACheckPointMgr(object):
 
         if not collection:
             input_name = self._task_config[c.mod_input_name]
-            _logger.info(
+            stulog.logger.info(
                 'Collection name="%s" is empty, set it to "%s"',
                 collection, input_name
             )
@@ -73,7 +71,7 @@ class TACheckPointMgr(object):
         # TODO Move the default value outside code
         use_cache_file = is_true(self._task_config.get(c.use_cache_file, True))
         if use_cache_file:
-            _logger.info(
+            stulog.logger.info(
                 "Stanza=%s using cached file store to create checkpoint",
                 self._task_config[c.stanza_name]
             )
@@ -87,7 +85,7 @@ class TACheckPointMgr(object):
         try:
             seconds = int(seconds)
         except ValueError:
-            _logger.warning(
+            stulog.logger.warning(
                 "The max_cache_seconds '%s' is not a valid integer,"
                 " so set this variable to default value %s",
                 seconds, default
@@ -98,7 +96,7 @@ class TACheckPointMgr(object):
             if not (1 <= seconds <= maximum):
                 # for seconds>3600 set it to 3600. for seconds <=0 set it to default.
                 adjusted = max(min(seconds, maximum), default)
-                _logger.warning(
+                stulog.logger.warning(
                     "The max_cache_seconds (%s) is expected in range[1,%s],"
                     " set it to %s",
                     seconds, maximum, adjusted
@@ -112,20 +110,20 @@ class TACheckPointMgr(object):
     def get_ckpt(self, namespaces=None, show_namespaces=False):
         key, namespaces = self.get_ckpt_key(namespaces)
         raw_checkpoint = self._store.get_state(key)
-        _logger.info("Get checkpoint key='%s' value='%s'",
-                     key, json.dumps(raw_checkpoint))
+        stulog.logger.info("Get checkpoint key='%s' value='%s'",
+                           key, json.dumps(raw_checkpoint))
         if not show_namespaces and raw_checkpoint:
             return raw_checkpoint.get("data")
         return raw_checkpoint
 
     def update_ckpt(self, ckpt, namespaces=None):
         if not ckpt:
-            _logger.warning("Checkpoint expect to be not empty.")
+            stulog.logger.warning("Checkpoint expect to be not empty.")
             return
         key, namespaces = self.get_ckpt_key(namespaces)
         value = {"namespaces": namespaces, "data": ckpt}
-        _logger.info("Update checkpoint key='%s' value='%s'",
-                     key, json.dumps(value))
+        stulog.logger.info("Update checkpoint key='%s' value='%s'",
+                           key, json.dumps(value))
         self._store.update_state(key, value)
 
     def remove_ckpt(self, namespaces=None):
@@ -134,16 +132,16 @@ class TACheckPointMgr(object):
 
     def _key_formatter(self, namespaces=None):
         if not namespaces:
-            _logger.info('Namespaces is empty, using stanza name instead.')
+            stulog.logger.info('Namespaces is empty, using stanza name instead.')
             namespaces = [self._task_config[c.stanza_name]]
         key_str = TACheckPointMgr.SEPARATOR.join(namespaces)
         hashed_file = th.format_name_for_file(key_str)
-        _logger.info("raw_file='%s' hashed_file='%s'", key_str, hashed_file)
+        stulog.logger.info("raw_file='%s' hashed_file='%s'", key_str, hashed_file)
         return hashed_file, namespaces
 
     def close(self, key=None):
         try:
             self._store.close(key)
-            _logger.info('Closed state store successfully. key=%s', key)
+            stulog.logger.info('Closed state store successfully. key=%s', key)
         except Exception:
-            _logger.exception('Error closing state store. key=%s', key)
+            stulog.logger.exception('Error closing state store. key=%s', key)

@@ -107,6 +107,10 @@ class TaConfig(object):
             storage_type = task_config.get(c.checkpoint_storage_type,
                                            c.checkpoint_auto)
             if storage_type == c.checkpoint_auto and self.is_search_head():
+                stulog.logger.debug(
+                    "Checkpoint storage type is 'auto' and instance is "
+                    "search head, set checkpoint storage type to kv store."
+                )
                 task_config[c.checkpoint_storage_type] = c.checkpoint_kv_storage
 
             task_config[c.appname] = TaConfig._appname

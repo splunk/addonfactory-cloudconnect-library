@@ -52,7 +52,31 @@
                     "accept": "application/json"
                 }
             },
-            "pre_process": {},
+            "pre_process": {
+                "skip_conditions": [],
+                "pipeline": [
+                    {
+                        "input": [
+                            "{{since_when}}"
+                        ],
+                        "method": "set_var",
+                        "output": [
+                            "{{_raw_since_when}}"
+                        ]
+                    },
+                    {
+                        "input": [
+                            "{{since_when}}",
+                            "%Y-%m-%d %H:%M:%S",
+                            "%Y-%m-%dT%H:%M:%S"
+                        ],
+                        "method": "time_str2str",
+                        "output": [
+                            "{{since_when}}"
+                        ]
+                    }
+                ]
+            },
             "post_process": {
                 "skip_conditions": [
                     {
@@ -70,6 +94,26 @@
                             "$.result[-1].sys_updated_on"
                         ],
                         "method": "json_path",
+                        "output": "_new_raw_since_when"
+                    },
+                    {
+                        "input": [
+                            "{{_new_raw_since_when != ''}}",
+                            "since_when must not be empty!"
+                        ],
+                        "method": "assert_true"
+                    },
+                    {
+                        "input": [
+                            "{{_new_raw_since_when == _raw_since_when}}"
+                        ],
+                        "method": "exit_if_true"
+                    },
+                    {
+                        "input": [
+                            "{{_new_raw_since_when}}"
+                        ],
+                        "method": "set_var",
                         "output": "since_when"
                     },
                     {

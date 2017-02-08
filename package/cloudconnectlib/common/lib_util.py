@@ -1,4 +1,5 @@
 import os
+import os.path as op
 import platform
 import sys
 
@@ -10,6 +11,19 @@ from ..splunktacollectorlib.common import log as stulog
 def get_main_file():
     """Return the running mod input file"""
     return __main__.__file__
+
+
+def get_app_root_dir():
+    """Return the root dir of app"""
+    return op.dirname(op.dirname(op.abspath(get_main_file())))
+
+
+def get_mod_input_script_name():
+    """Return the name of running mod input"""
+    script_name = os.path.basename(get_main_file())
+    if script_name.lower().endswith('.py'):
+        script_name = script_name[:-3]
+    return script_name
 
 
 def register_module(new_path):

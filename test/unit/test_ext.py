@@ -3,6 +3,7 @@ from cloudconnectlib.core.exceptions import StopCCEIteration
 from cloudconnectlib.core.ext import (
     assert_true,
     exit_if_true,
+    is_true,
     lookup_method,
     regex_match,
     regex_not_match,
@@ -286,3 +287,13 @@ def test_assert_true():
 
     for t in _get_all_trues():
         assert_true(t, '%s is true' % t)
+
+
+def test_is_true():
+    for t in _get_all_trues():
+        assert is_true(t)
+
+    not_truth = [123, -123, 1.2345, -1.2345, [1], (1,), {'v': 1}, 'non-empty-string']
+
+    for nt in not_truth:
+        assert not is_true(nt)

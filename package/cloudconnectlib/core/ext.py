@@ -289,19 +289,20 @@ def time_str2str(date_string, from_format, to_format):
     return date_string
 
 
-def _check_if_true(value):
+def is_true(value):
+    """Determine whether value is True"""
     return str(value).strip().lower() == 'true'
 
 
 def exit_if_true(value):
     """Raise a StopCCEIteration exception if value is True"""
-    if _check_if_true(value):
+    if is_true(value):
         raise StopCCEIteration
 
 
 def assert_true(value, message=None):
     """Assert value is True"""
-    if not _check_if_true(value):
+    if not is_true(value):
         raise AssertionError(
             message or '"{value}" is not true'.format(value=value)
         )
@@ -310,6 +311,7 @@ def assert_true(value, message=None):
 _extension_functions = {
     'assert_true': assert_true,
     'exit_if_true': exit_if_true,
+    'is_true': is_true,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
     'set_var': set_var,

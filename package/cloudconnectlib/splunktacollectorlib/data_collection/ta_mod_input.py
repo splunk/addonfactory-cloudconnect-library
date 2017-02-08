@@ -27,8 +27,7 @@ __CHECKPOINT_DIR_MAX_LEN__ = 180
 
 
 def do_scheme(
-        ta_short_name,
-        ta_name,
+        ta_display_name,
         mod_input_title,
         schema_para_list=None,
         single_instance=True,
@@ -38,32 +37,42 @@ def do_scheme(
     Feed splunkd the TA's scheme
 
     """
-    param_str = ""
     builtin_names = {
         "name", "index", "sourcetype", "host", "source",
         "disabled", "interval"
     }
 
-    schema_para_list = schema_para_list or ()
+    param_string_list = []
+    if schema_para_list is None:
+        schema_para_list = ()
+
     for param in schema_para_list:
         if param in builtin_names:
             continue
-        param_str += """<arg name="{param}">
+
+        param_string_list.append(
+            """
+        <arg name="{param}">
           <title>{param}</title>
           <required_on_create>0</required_on_create>
           <required_on_edit>0</required_on_edit>
-        </arg>""".format(param=param)
+        </arg>
+        """.format(param=param)
+        )
+
+    data_input_title = "{ta_name} {mod_input_title}".format(
+        ta_name=ta_display_name,
+        mod_input_title=mod_input_title
+    )
 
     if not description:
-        description = ("Enable data inputs for {ta_name} "
-                       "{mod_input_title}").format(
-            ta_name=ta_name,
-            mod_input_title=mod_input_title
+        description = "Enable data inputs for {data_input_title}".format(
+            data_input_title=data_input_title
         )
 
     print """
     <scheme>
-    <title>Splunk Add-on for {ta_short_name} {mod_input_title}</title>
+    <title>Splunk Add-on for {data_input_title}</title>
     <description>{description}</description>
     <use_external_validation>true</use_external_validation>
     <streaming_mode>xml</streaming_mode>
@@ -71,7 +80,7 @@ def do_scheme(
     <endpoint>
       <args>
         <arg name="name">
-          <title>{ta_name} Data Input Name</title>
+          <title>{ta_display_name} Data Input Name</title>
         </arg>
         {param_str}
       </args>
@@ -79,10 +88,9 @@ def do_scheme(
     </scheme>
     """.format(
         single_instance=(str(single_instance)).lower(),
-        ta_short_name=ta_short_name,
-        mod_input_title=mod_input_title,
-        ta_name=ta_name,
-        param_str=param_str,
+        data_input_title=data_input_title,
+        ta_display_name=ta_display_name,
+        param_str=''.join(param_string_list),
         description=description,
     )
 
@@ -242,8 +250,8 @@ def main(
 
     # FIXME Validate UCC globalConfig.json with schema here
     ucc_meta = settings.get('meta', {})
-    ta_short_name = ucc_meta.get('name', '').lower()
-    ta_display_name = ucc_meta.get('displayName', '').lower()
+    ta_short_name = ucc_meta.get('name', '')
+    ta_display_name = ucc_meta.get('displayName', '')
 
     title = ''
     ucc_inputs = settings.get('pages', {}).get('inputs', {})
@@ -260,7 +268,6 @@ def main(
     if len(args) > 1:
         if args[1] == "--scheme":
             do_scheme(
-                ta_short_name,
                 ta_display_name,
                 mod_input_title=title,
                 description=description,

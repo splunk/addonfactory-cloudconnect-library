@@ -27,7 +27,7 @@ __CHECKPOINT_DIR_MAX_LEN__ = 180
 
 
 def do_scheme(
-        ta_display_name,
+        ta_name,
         mod_input_title,
         schema_para_list=None,
         single_instance=True,
@@ -60,14 +60,13 @@ def do_scheme(
         """.format(param=param)
         )
 
-    data_input_title = "{ta_name} {mod_input_title}".format(
-        ta_name=ta_display_name,
-        mod_input_title=mod_input_title
+    title = ' '.join(
+        rv.strip() for rv in (ta_name, mod_input_title) if rv and rv.strip()
     )
 
     if not description:
         description = "Enable data inputs for {data_input_title}".format(
-            data_input_title=data_input_title
+            data_input_title=title
         )
 
     print """
@@ -80,7 +79,7 @@ def do_scheme(
     <endpoint>
       <args>
         <arg name="name">
-          <title>{ta_display_name} Data Input Name</title>
+          <title>{data_input_title} Data Input Name</title>
         </arg>
         {param_str}
       </args>
@@ -88,8 +87,7 @@ def do_scheme(
     </scheme>
     """.format(
         single_instance=(str(single_instance)).lower(),
-        data_input_title=data_input_title,
-        ta_display_name=ta_display_name,
+        data_input_title=title,
         param_str=''.join(param_string_list),
         description=description,
     )
@@ -269,7 +267,7 @@ def main(
         if args[1] == "--scheme":
             do_scheme(
                 ta_display_name,
-                mod_input_title=title,
+                title,
                 description=description,
                 schema_para_list=schema_para_list,
                 single_instance=single_instance

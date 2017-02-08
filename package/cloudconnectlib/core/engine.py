@@ -246,7 +246,11 @@ class Job(object):
             if self._check_should_stop():
                 return
 
-            self._on_pre_process()
+            try:
+                self._on_pre_process()
+            except StopCCEIteration:
+                _logger.info("Stop iteration signal received, exit job now.")
+                return
 
             url = request.normalize_url(self._context)
             header = request.normalize_header(self._context)

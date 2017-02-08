@@ -94,27 +94,20 @@
                             "$.result[-1].sys_updated_on"
                         ],
                         "method": "json_path",
-                        "output": "_new_raw_since_when"
+                        "output": "since_when"
                     },
                     {
                         "input": [
-                            "{{_new_raw_since_when != ''}}",
+                            "{{since_when != ''}}",
                             "since_when must not be empty!"
                         ],
                         "method": "assert_true"
                     },
                     {
                         "input": [
-                            "{{_new_raw_since_when == _raw_since_when}}"
+                            "{{since_when == _raw_since_when}}"
                         ],
                         "method": "exit_if_true"
-                    },
-                    {
-                        "input": [
-                            "{{_new_raw_since_when}}"
-                        ],
-                        "method": "set_var",
-                        "output": "since_when"
                     },
                     {
                         "input": [

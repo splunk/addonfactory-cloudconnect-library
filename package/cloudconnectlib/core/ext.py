@@ -302,7 +302,9 @@ def exit_if_true(value):
 def assert_true(value, message=None):
     """Assert value is True"""
     if not _check_if_true(value):
-        raise AssertionError(message or '"%s" is not true' % value)
+        raise AssertionError(
+            message or '"{value}" is not true'.format(value=value)
+        )
 
 
 _extension_functions = {

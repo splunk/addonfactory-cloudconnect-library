@@ -60,9 +60,7 @@
                             "{{since_when}}"
                         ],
                         "method": "set_var",
-                        "output": [
-                            "{{_raw_since_when}}"
-                        ]
+                        "output": "_raw_since_when"
                     },
                     {
                         "input": [
@@ -71,9 +69,7 @@
                             "%Y-%m-%dT%H:%M:%S"
                         ],
                         "method": "time_str2str",
-                        "output": [
-                            "{{since_when}}"
-                        ]
+                        "output": "since_when"
                     }
                 ]
             },
@@ -108,6 +104,13 @@
                             "{{since_when == _raw_since_when}}"
                         ],
                         "method": "exit_if_true"
+                    },
+                    {
+                        "input": [
+                            "{{since_when}}"
+                        ],
+                        "method": "set_var",
+                        "output": "_raw_since_when"
                     },
                     {
                         "input": [
@@ -154,7 +157,7 @@
                     "{{name}}"
                 ],
                 "content": {
-                    "since_when": "{{since_when}}"
+                    "since_when": "{{_raw_since_when}}"
                 }
             }
         }

@@ -86,9 +86,8 @@ class TaConfig(object):
 
         cs_type = cs_type.strip() if cs_type else c.checkpoint_auto
 
-        if cs_type not in (c.checkpoint_auto,
-                           c.checkpoint_kv_storage,
-                           c.checkpoint_file):
+        # Allow user configure 'auto' and 'file' only.
+        if cs_type not in (c.checkpoint_auto, c.checkpoint_file):
             stulog.logger.warning(
                 "Checkpoint storage type='%s' is invalid, change it to '%s'",
                 cs_type, c.checkpoint_auto

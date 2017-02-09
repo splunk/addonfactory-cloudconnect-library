@@ -5,12 +5,11 @@ snow_host =
 sysparm_limit = 
 since_when = 
 table_name =
-builtin_system_checkpoint_storage_type = [auto|file|kv_store]
+builtin_system_checkpoint_storage_type = [auto|file]
 # This setting used to set checkpoint storage type.
-# If set to 'auto', the input use kv_store on search head, use file for other
+# If set to 'auto', the input use KV store on search head, use file for other
 # instance role.
 # If set to 'file', the input always store checkpoint to file.
-# If set to 'kv_store', the input always store checkpoint to KV store.
 # Defaults to 'auto'.
 
 builtin_system_use_cache_file = <bool>

@@ -95,7 +95,7 @@
                     {
                         "input": [
                             "{{since_when != ''}}",
-                            "since_when must not be empty!"
+                            "The value of token \"since_when\" extracted from response cannot be empty!"
                         ],
                         "method": "assert_true"
                     },

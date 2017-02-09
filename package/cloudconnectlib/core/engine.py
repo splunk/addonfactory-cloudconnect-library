@@ -249,7 +249,7 @@ class Job(object):
             try:
                 self._on_pre_process()
             except StopCCEIteration:
-                _logger.info('Stop iteration signal received, exit job now.')
+                _logger.info('Stop iteration command in pre process is received, exit job now.')
                 return
 
             url = request.normalize_url(self._context)
@@ -278,7 +278,7 @@ class Job(object):
             try:
                 self._on_post_process()
             except StopCCEIteration:
-                _logger.info('Stop iteration signal received, exit job now.')
+                _logger.info('Stop iteration command in post process is received, exit job now.')
                 return
 
             if self._check_should_stop():

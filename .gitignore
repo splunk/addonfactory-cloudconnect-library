@@ -16,6 +16,13 @@
 /package/munch/
 /package/solnlib/
 /package/splunktaucclib/
+package/_pytest/
+package/coverage/
+package/py/
+package/pytest-cov.pth
+package/pytest.py
+package/pytest_cov/
+package/test/
 
 venv/
 examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/

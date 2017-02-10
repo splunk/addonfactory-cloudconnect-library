@@ -18,16 +18,23 @@ class TACheckPointMgr(object):
     def __init__(self, meta_config, task_config):
         self._task_config = task_config
         self._store = self._create_state_store(
-            meta_config, task_config[c.appname]
+            meta_config,
+            task_config.get(c.checkpoint_storage_type),
+            task_config[c.appname]
         )
 
-    def _create_state_store(self, meta_config, app_name):
-        if self._use_kv_store():
-            stulog.logger.debug("Creating KV state store.")
+    def _create_state_store(self, meta_config, storage_type, app_name):
+        stulog.logger.debug('Got checkpoint storage type=%s', storage_type)
+
+        if storage_type == c.checkpoint_kv_storage:
+            collection_name = self._get_collection_name()
+            stulog.logger.debug(
+                'Creating KV state store, collection name=%s', collection_name
+            )
             return ss.get_state_store(
                 meta_config,
                 appname=app_name,
-                collection_name=self._get_collection_name(),
+                collection_name=collection_name,
                 use_kv_store=True
             )
 
@@ -35,9 +42,10 @@ class TACheckPointMgr(object):
         max_cache_seconds = \
             self._get_max_cache_seconds() if use_cache_file else None
 
-        stulog.logger.debug("Creating file state store, "
-                            "use_cache_file=%s, max_cache_seconds=%s",
-                            use_cache_file, max_cache_seconds)
+        stulog.logger.debug(
+            'Creating file state store, use_cache_file=%s, max_cache_seconds=%s',
+            use_cache_file, max_cache_seconds
+        )
 
         return ss.get_state_store(
             meta_config,
@@ -58,16 +66,6 @@ class TACheckPointMgr(object):
             )
             collection = input_name
         return re.sub(r'[^\w]+', '_', collection)
-
-    def _use_kv_store(self):
-        # TODO Move the default value outside code
-        use_kv_store = is_true(self._task_config.get(c.use_kv_store, False))
-        if use_kv_store:
-            stulog.logger.info(
-                "Stanza=%s Using KV store for checkpoint",
-                self._task_config[c.stanza_name]
-            )
-        return use_kv_store
 
     def _use_cache_file(self):
         # TODO Move the default value outside code
@@ -92,6 +90,7 @@ class TACheckPointMgr(object):
                 " so set this variable to default value %s",
                 seconds, default
             )
+            seconds = default
         else:
             maximum = self._MAXIMUM_MAX_CACHE_SECONDS
             if not (1 <= seconds <= maximum):
@@ -103,8 +102,7 @@ class TACheckPointMgr(object):
                     seconds, maximum, adjusted
                 )
                 seconds = adjusted
-            return seconds
-        return default
+        return seconds
 
     def get_ckpt_key(self, namespaces=None):
         return self._key_formatter(namespaces)
@@ -112,8 +110,8 @@ class TACheckPointMgr(object):
     def get_ckpt(self, namespaces=None, show_namespaces=False):
         key, namespaces = self.get_ckpt_key(namespaces)
         raw_checkpoint = self._store.get_state(key)
-        stulog.logger.info("Get checkpoint key='{}' value='{}'"
-                           .format(key, json.dumps(raw_checkpoint)))
+        stulog.logger.info("Get checkpoint key='%s' value='%s'",
+                           key, json.dumps(raw_checkpoint))
         if not show_namespaces and raw_checkpoint:
             return raw_checkpoint.get("data")
         return raw_checkpoint
@@ -124,8 +122,8 @@ class TACheckPointMgr(object):
             return
         key, namespaces = self.get_ckpt_key(namespaces)
         value = {"namespaces": namespaces, "data": ckpt}
-        stulog.logger.info("Update checkpoint key='{}' value='{}'"
-                           .format(key, json.dumps(value)))
+        stulog.logger.info("Update checkpoint key='%s' value='%s'",
+                           key, json.dumps(value))
         self._store.update_state(key, value)
 
     def remove_ckpt(self, namespaces=None):

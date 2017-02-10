@@ -27,11 +27,9 @@ __CHECKPOINT_DIR_MAX_LEN__ = 180
 
 
 def do_scheme(
-        ta_name,
-        mod_input_title,
+        mod_input_name,
         schema_para_list=None,
         single_instance=True,
-        description=None,
 ):
     """
     Feed splunkd the TA's scheme
@@ -60,18 +58,12 @@ def do_scheme(
         """.format(param=param)
         )
 
-    title = ' '.join(
-        rv.strip() for rv in (ta_name, mod_input_title) if rv and rv.strip()
-    )
-
-    if not description:
-        description = "Enable data inputs for {data_input_title}".format(
-            data_input_title=title
-        )
+    description = ("Go to the add-on's configuration UI and configure"
+                   " modular inputs under the Inputs menu.")
 
     print """
     <scheme>
-    <title>Splunk Add-on for {data_input_title}</title>
+    <title>{data_input_title}</title>
     <description>{description}</description>
     <use_external_validation>true</use_external_validation>
     <streaming_mode>xml</streaming_mode>
@@ -87,7 +79,7 @@ def do_scheme(
     </scheme>
     """.format(
         single_instance=(str(single_instance)).lower(),
-        data_input_title=title,
+        data_input_title=mod_input_name,
         param_str=''.join(param_string_list),
         description=description,
     )
@@ -246,29 +238,13 @@ def main(
 
     settings = ld(schema_file_path)
 
-    # FIXME Validate UCC globalConfig.json with schema here
-    ucc_meta = settings.get('meta', {})
-    ta_short_name = ucc_meta.get('name', '')
-    ta_display_name = ucc_meta.get('displayName', '')
-
-    title = ''
-    ucc_inputs = settings.get('pages', {}).get('inputs', {})
-    script_name = get_mod_input_script_name()
-
-    for sv in ucc_inputs.get('services', []):
-        if sv.get('name', '') == script_name:
-            title = sv.get('title', '')
-            break
-
-    description = ucc_inputs.get('description')
+    mod_input_name = get_mod_input_script_name()
 
     args = sys.argv
     if len(args) > 1:
         if args[1] == "--scheme":
             do_scheme(
-                ta_display_name,
-                title,
-                description=description,
+                mod_input_name=mod_input_name,
                 schema_para_list=schema_para_list,
                 single_instance=single_instance
             )

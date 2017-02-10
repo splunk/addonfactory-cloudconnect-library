@@ -1,4 +1,9 @@
+import pytest
+from cloudconnectlib.core.exceptions import StopCCEIteration
 from cloudconnectlib.core.ext import (
+    assert_true,
+    exit_if_true,
+    is_true,
     lookup_method,
     regex_match,
     regex_not_match,
@@ -252,3 +257,43 @@ def test_fix_microsecond_format():
     for fmt, tmp, result in cases:
         converted = _fix_microsecond_format(fmt, tmp)
         assert converted == result
+
+
+def _get_all_trues():
+    for x in xrange(1 << 4):
+        text = ['t', 'r', 'u', 'e']
+        for j in xrange(4):
+            if j & x:
+                text[j] = text[j].upper()
+        yield ''.join(text)
+
+
+def test_exit_if_true():
+    non_truth = [123, '123', 'not-true', '', None, [], [1, 2, 3],
+                 (), (1, 2, 3), {}, {'v': True}]
+    for case in non_truth:
+        exit_if_true(case)
+
+    for t in _get_all_trues():
+        with pytest.raises(StopCCEIteration):
+            exit_if_true(t)
+
+
+def test_assert_true():
+    not_truth = [123, -123, 1.2345, -1.2345, [1], (1,), {'v': 1}, 'non-empty-string']
+    for nt in not_truth:
+        with pytest.raises(AssertionError):
+            assert_true(nt, 'value %s is not true' % nt)
+
+    for t in _get_all_trues():
+        assert_true(t, '%s is true' % t)
+
+
+def test_is_true():
+    for t in _get_all_trues():
+        assert is_true(t)
+
+    not_truth = [123, -123, 1.2345, -1.2345, [1], (1,), {'v': 1}, 'non-empty-string']
+
+    for nt in not_truth:
+        assert not is_true(nt)

@@ -267,6 +267,6 @@ def main(
             )
         except Exception:
             stulog.logger.exception(
-                "{} task encounter exception".format(ta_short_name))
-        stulog.logger.info("End {} task".format(ta_short_name))
+                "{} task encounter exception".format(mod_input_name))
+        stulog.logger.info("End {} task".format(mod_input_name))
     sys.exit(0)

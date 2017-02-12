@@ -78,6 +78,10 @@ def json_path(source, json_path_expr):
             'Got %s elements extracted with JSONPATH expression "%s"',
             len(results), json_path_expr
         )
+
+        if not results:
+            return ''
+
         return results[0] or '' if len(results) == 1 else results
     except Exception as ex:
         _logger.warning(

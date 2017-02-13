@@ -23,6 +23,8 @@ package/pytest-cov.pth
 package/pytest.py
 package/pytest_cov/
 package/test/
+node_modules/
+.coverage
 
 venv/
 examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/

@@ -2,7 +2,7 @@ import json
 import threading
 
 from . import defaults
-from .exceptions import HTTPError
+from .exceptions import HTTPError, StopCCEIteration
 from .http import HTTPRequest
 from ..common.log import get_cc_logger
 
@@ -222,9 +222,9 @@ class Job(object):
         try:
             self._running_thread = threading.current_thread()
             self._run()
-        except Exception as e:
-            _logger.exception('Encountered error while running job.')
-            raise e
+        except Exception:
+            _logger.exception('Error encountered while running job.')
+            raise
         finally:
             self._terminated.set()
             self._stopped = True
@@ -246,20 +246,25 @@ class Job(object):
             if self._check_should_stop():
                 return
 
+            try:
+                self._on_pre_process()
+            except StopCCEIteration:
+                _logger.info('Stop iteration command in pre process is received, exit job now.')
+                return
+
             url = request.normalize_url(self._context)
             header = request.normalize_header(self._context)
             body = request.normalize_body(self._context)
-            rb = json.dumps(body) if body else None
+            body_json = json.dumps(body) if body else None
 
             if authorizer:
                 authorizer(header, self._context)
 
-            self._on_pre_process()
-
             if self._check_should_stop():
                 return
+
             response, need_terminate = \
-                self._send_request(url, method, header, body=rb)
+                self._send_request(url, method, header, body=body_json)
 
             if need_terminate:
                 _logger.info('This job need to be terminated.')
@@ -269,7 +274,12 @@ class Job(object):
             self._set_context('__response__', response)
             if self._check_should_stop():
                 return
-            self._on_post_process()
+
+            try:
+                self._on_post_process()
+            except StopCCEIteration:
+                _logger.info('Stop iteration command in post process is received, exit job now.')
+                return
 
             if self._check_should_stop():
                 return

@@ -44,8 +44,8 @@
                     "Content-Type": "application/json"
                 },
                 "body": {
-                    "username": "elias@splunk.com",
-                    "password": "Monday123$"
+                    "username": "xxx@splunk.com",
+                    "password": "xxx"
                 }
             },
             "pre_process": {},

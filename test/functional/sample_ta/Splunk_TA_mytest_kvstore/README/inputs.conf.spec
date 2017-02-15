@@ -4,7 +4,7 @@ interval =
 limit_count = 
 event_id = 
 index =
-builtin_system_use_kv_store =
+builtin_system_checkpoint_storage_type =
 
 [inputs_okta_kv_2://<name>]
 account = 
@@ -12,4 +12,4 @@ limit_count =
 event_id = 
 interval = 
 index =
-builtin_system_use_kv_store =
+builtin_system_checkpoint_storage_type =

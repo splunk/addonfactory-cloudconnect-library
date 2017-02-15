@@ -20,3 +20,8 @@ class HTTPError(Exception):
         """
         self.reason = reason
         super(HTTPError, self).__init__(reason)
+
+
+class StopCCEIteration(Exception):
+    """Exception to exit from the engine iteration."""
+    pass

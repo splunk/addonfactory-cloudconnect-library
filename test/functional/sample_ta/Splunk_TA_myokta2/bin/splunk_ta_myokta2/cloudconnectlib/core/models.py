@@ -178,9 +178,24 @@ class Condition(_Function):
     """A condition return the value calculated from input and function"""
 
     def calculate(self, context):
+        """Calculate condition with input arguments rendered from context
+        and method which expected return a bool result.
+        :param context: context contains key value pairs
+        :return A bool value returned from the corresponding method
+        """
         args = [arg for arg in self.inputs_values(context)]
-        caller = lookup_method(self.function)
-        return caller(*args)
+        callable_method = lookup_method(self.function)
+
+        _logger.debug(
+            'Calculating condition with method: [%s], input size: [%s]',
+            self.function, len(args)
+        )
+
+        result = callable_method(*args)
+
+        _logger.debug("Calculated result: %s", result)
+
+        return result
 
 
 class _Conditional(object):

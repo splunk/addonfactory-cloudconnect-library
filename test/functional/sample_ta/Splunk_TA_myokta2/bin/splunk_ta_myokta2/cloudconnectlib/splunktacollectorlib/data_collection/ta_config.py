@@ -49,8 +49,8 @@ class TaConfig(object):
     def get_all_conf_contents(self):
         if self._all_conf_contents:
             return self._all_conf_contents.get(c.inputs), \
-                self._all_conf_contents.get(c.all_configs), \
-                self._all_conf_contents.get(c.global_settings)
+                   self._all_conf_contents.get(c.all_configs), \
+                   self._all_conf_contents.get(c.global_settings)
 
         inputs, configs, global_settings = th.get_all_conf_contents(
             self._meta_config[c.server_uri],
@@ -80,6 +80,30 @@ class TaConfig(object):
     def get_input_type(self):
         return self._input_type
 
+    def _get_checkpoint_storage_type(self, config):
+        cs_type = config.get(c.checkpoint_storage_type)
+        stulog.logger.debug("Checkpoint storage type=%s", cs_type)
+
+        cs_type = cs_type.strip() if cs_type else c.checkpoint_auto
+
+        # Allow user configure 'auto' and 'file' only.
+        if cs_type not in (c.checkpoint_auto, c.checkpoint_file):
+            stulog.logger.warning(
+                "Checkpoint storage type='%s' is invalid, change it to '%s'",
+                cs_type, c.checkpoint_auto
+            )
+            cs_type = c.checkpoint_auto
+
+        if cs_type == c.checkpoint_auto and self.is_search_head():
+            stulog.logger.info(
+                "Checkpoint storage type is '%s' and instance is "
+                "search head, set checkpoint storage type to '%s'.",
+                c.checkpoint_auto,
+                c.checkpoint_kv_storage
+            )
+            cs_type = c.checkpoint_kv_storage
+        return cs_type
+
     def _load_task_configs(self):
         inputs, configs, global_settings = self.get_all_conf_contents()
         if self._input_type:
@@ -103,8 +127,10 @@ class TaConfig(object):
                     "The interval value {} is invalid."
                     " It should be a positive integer".format(
                         task_config[c.interval]))
-            if self._server_info.is_search_head():
-                task_config[c.use_kv_store] = True
+
+            task_config[c.checkpoint_storage_type] = \
+                self._get_checkpoint_storage_type(task_config)
+
             task_config[c.appname] = TaConfig._appname
             task_config[c.mod_input_name] = self._input_type
             task_config[c.stanza_name] = task_config[c.name]

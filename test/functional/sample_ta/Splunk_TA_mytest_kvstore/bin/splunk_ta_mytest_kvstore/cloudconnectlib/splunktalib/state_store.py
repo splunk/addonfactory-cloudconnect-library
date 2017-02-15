@@ -3,6 +3,7 @@ import os
 import os.path as op
 import time
 
+from ..splunktacollectorlib.common import log as stulog
 from ..splunktalib import kv_client as kvc
 from ..splunktalib.common import util
 
@@ -116,6 +117,24 @@ class StateStore(BaseStateStore):
             self._states_cache[state["_key"]] = value
 
 
+def _create_checkpoint_dir_if_needed(checkpoint_dir):
+    if os.path.isdir(checkpoint_dir):
+        return
+
+    stulog.logger.info(
+        "Checkpoint dir '%s' doesn't exist, try to create it",
+        checkpoint_dir)
+    try:
+        os.mkdir(checkpoint_dir)
+    except OSError:
+        stulog.logger.exception(
+            "Failure creating checkpoint dir '%s'", checkpoint_dir
+        )
+        raise Exception(
+            "Unable to create checkpoint dir '{}'".format(checkpoint_dir)
+        )
+
+
 class FileStateStore(BaseStateStore):
     def __init__(self, meta_configs, appname):
         """
@@ -131,7 +150,10 @@ class FileStateStore(BaseStateStore):
         :return: None if successful, otherwise throws exception
         """
 
-        fname = op.join(self._meta_configs["checkpoint_dir"], key)
+        checkpoint_dir = self._meta_configs["checkpoint_dir"]
+        _create_checkpoint_dir_if_needed(checkpoint_dir)
+
+        fname = op.join(checkpoint_dir, key)
         with open(fname + ".new", "w") as jsonfile:
             json.dump(states, jsonfile)
 
@@ -190,7 +212,12 @@ class CachedFileStateStore(BaseStateStore):
         :return: None if successful, otherwise throws exception
         """
         self._states_cache_lmd[key] = (now, states)
-        fname = op.join(self._meta_configs["checkpoint_dir"], key)
+        checkpoint_dir = self._meta_configs["checkpoint_dir"]
+
+        _create_checkpoint_dir_if_needed(checkpoint_dir)
+
+        fname = op.join(checkpoint_dir, key)
+
         with open(fname + ".new", "w") as jsonfile:
             json.dump(states, jsonfile)
 

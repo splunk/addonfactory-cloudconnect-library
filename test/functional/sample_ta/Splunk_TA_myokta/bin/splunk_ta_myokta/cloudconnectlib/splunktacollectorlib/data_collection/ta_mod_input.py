@@ -15,7 +15,7 @@ from . import ta_data_client as tdc
 from . import ta_data_loader as dl
 from ..common import load_schema_file as ld
 from ..common import log as stulog
-from ...common.lib_util import get_main_file
+from ...common.lib_util import get_app_root_dir, get_mod_input_script_name
 from ...splunktalib import file_monitor as fm
 from ...splunktalib import modinput
 from ...splunktalib import orphan_process_monitor as opm
@@ -23,48 +23,66 @@ from ...splunktalib.common import util as utils
 
 utils.remove_http_proxy_env_vars()
 
-__CHECKPOINT_DIR_MAX_LEN__=180
+__CHECKPOINT_DIR_MAX_LEN__ = 180
 
-def do_scheme(ta_short_name, ta_name, schema_para_list=None,
-              single_instance=True):
+
+def do_scheme(
+        mod_input_name,
+        schema_para_list=None,
+        single_instance=True,
+):
     """
     Feed splunkd the TA's scheme
 
     """
-    param_str = ""
-    builtsin_names = {"name", "index", "sourcetype", "host", "source",
-                      "disabled",
-                      "interval"}
+    builtin_names = {
+        "name", "index", "sourcetype", "host", "source",
+        "disabled", "interval"
+    }
 
-    schema_para_list = schema_para_list or ()
+    param_string_list = []
+    if schema_para_list is None:
+        schema_para_list = ()
+
     for param in schema_para_list:
-        if param in builtsin_names:
+        if param in builtin_names:
             continue
-        param_str += """<arg name="{param}">
+
+        param_string_list.append(
+            """
+        <arg name="{param}">
           <title>{param}</title>
           <required_on_create>0</required_on_create>
           <required_on_edit>0</required_on_edit>
-        </arg>""".format(param=param)
+        </arg>
+        """.format(param=param)
+        )
 
+    description = ("Go to the add-on's configuration UI and configure"
+                   " modular inputs under the Inputs menu.")
 
     print """
     <scheme>
-    <title>Splunk Add-on for {ta_short_name}</title>
-    <description>Enable data inputs for {ta_name}</description>
+    <title>{data_input_title}</title>
+    <description>{description}</description>
     <use_external_validation>true</use_external_validation>
     <streaming_mode>xml</streaming_mode>
-    <use_single_instance>{}</use_single_instance>
+    <use_single_instance>{single_instance}</use_single_instance>
     <endpoint>
       <args>
         <arg name="name">
-          <title>{ta_name} Data Input Name</title>
+          <title>{data_input_title} Data Input Name</title>
         </arg>
         {param_str}
       </args>
     </endpoint>
     </scheme>
-    """.format((str(single_instance)).lower(),ta_short_name=ta_short_name,
-               ta_name=ta_name, param_str=param_str)
+    """.format(
+        single_instance=(str(single_instance)).lower(),
+        data_input_title=mod_input_name,
+        param_str=''.join(param_string_list),
+        description=description,
+    )
 
 
 def _setup_signal_handler(data_loader, ta_short_name):
@@ -96,15 +114,14 @@ def _handle_file_changes(data_loader):
 
 def _get_conf_files(settings):
     rest_root = settings.get("meta").get("restRoot")
-    file_list = [rest_root+"_settings.conf"]
+    file_list = [rest_root + "_settings.conf"]
     if settings.get("pages") and settings.get("pages").get("configuration"):
         configs = settings.get("pages").get("configuration")
         tabs = configs.get("tabs") if configs.get("tabs") else []
         for tab in tabs:
             if tab.get("table"):
                 file_list.append(rest_root + "_" + tab.get("name") + ".conf")
-    ta_dir = op.dirname(op.dirname(op.abspath(
-        get_main_file())))
+    ta_dir = get_app_root_dir()
     return [op.join(ta_dir, "local", f) for f in file_list]
 
 
@@ -163,10 +180,17 @@ def run(collector_cls, settings, checkpoint_cls=None, config_cls=None,
                             __CHECKPOINT_DIR_MAX_LEN__)
         return
 
-    jobs = [tdc.create_data_collector(loader, tconfig, meta_config, task_config,
-                                      collector_cls,
-            checkpoint_cls=checkpoint_cls or cpmgr.TACheckPointMgr)
-            for task_config in task_configs]
+    jobs = [
+        tdc.create_data_collector(
+            loader,
+            tconfig,
+            meta_config,
+            task_config,
+            collector_cls,
+            checkpoint_cls=checkpoint_cls or cpmgr.TACheckPointMgr
+        )
+        for task_config in task_configs
+        ]
 
     loader.run(jobs)
 
@@ -196,10 +220,16 @@ def usage():
     sys.exit(1)
 
 
-def main(collector_cls, schema_file_path, log_suffix="modinput",
-         checkpoint_cls=None, configer_cls=None,
-         cc_json_file=None, schema_para_list=None,
-         single_instance=True):
+def main(
+        collector_cls,
+        schema_file_path,
+        log_suffix="modinput",
+        checkpoint_cls=None,
+        config_cls=None,
+        cc_json_file=None,
+        schema_para_list=None,
+        single_instance=True
+):
     """
     Main entry point
     """
@@ -207,14 +237,17 @@ def main(collector_cls, schema_file_path, log_suffix="modinput",
     assert schema_file_path, "ucc modinput schema file is None"
 
     settings = ld(schema_file_path)
-    ta_short_name = settings["meta"]["name"].lower()
-    ta_desc = settings["meta"]["displayName"].lower()
+
+    mod_input_name = get_mod_input_script_name()
 
     args = sys.argv
     if len(args) > 1:
         if args[1] == "--scheme":
-            do_scheme(ta_short_name, ta_desc, schema_para_list,
-                      single_instance)
+            do_scheme(
+                mod_input_name=mod_input_name,
+                schema_para_list=schema_para_list,
+                single_instance=single_instance
+            )
         elif args[1] == "--validate-arguments":
             sys.exit(validate_config())
         elif args[1] in ("-h", "--h", "--help"):
@@ -223,11 +256,17 @@ def main(collector_cls, schema_file_path, log_suffix="modinput",
             usage()
     else:
         try:
-            run(collector_cls, settings, checkpoint_cls=checkpoint_cls,
-                config_cls=configer_cls, log_suffix=log_suffix,
-                single_instance=single_instance, cc_json_file=cc_json_file)
-        except Exception as e:
+            run(
+                collector_cls,
+                settings,
+                checkpoint_cls=checkpoint_cls,
+                config_cls=config_cls,
+                log_suffix=log_suffix,
+                single_instance=single_instance,
+                cc_json_file=cc_json_file
+            )
+        except Exception:
             stulog.logger.exception(
-                "{} task encounter exception".format(ta_short_name))
-        stulog.logger.info("End {} task".format(ta_short_name))
+                "{} task encounter exception".format(mod_input_name))
+        stulog.logger.info("End {} task".format(mod_input_name))
     sys.exit(0)

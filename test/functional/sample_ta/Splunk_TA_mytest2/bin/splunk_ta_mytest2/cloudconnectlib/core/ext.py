@@ -1,10 +1,11 @@
+import calendar
 import json
 import re
 import traceback
 from datetime import datetime
 
 from jsonpath_rw import parse
-from .exceptions import FuncException
+from .exceptions import FuncException, StopCCEIteration
 from .pipemgr import PipeManager
 from ..common import util, log
 
@@ -77,6 +78,10 @@ def json_path(source, json_path_expr):
             'Got %s elements extracted with JSONPATH expression "%s"',
             len(results), json_path_expr
         )
+
+        if not results:
+            return ''
+
         return results[0] or '' if len(results) == 1 else results
     except Exception as ex:
         _logger.warning(
@@ -220,6 +225,39 @@ def set_var(value):
     return value
 
 
+def _fix_microsecond_format(fmt, micros):
+    """
+    implement %Nf so that user can control the digital number of microsecond.
+    If number of % is even, don't do replacement.
+    If N is not in [1-6], don't do replacement.
+    If time length m is less than N, convert it to 6 digitals and return N
+    digitals.
+    """
+    micros = str(micros).zfill(6)
+
+    def do_replacement(x, micros):
+        if int(x.group(1)) in range(1, 7) and len(x.group()) % 2:
+            return x.group().replace('%' + x.group(1) + 'f',
+                                     micros[:min(int(x.group(1)), len(micros))])
+        return x.group()
+
+    return re.sub(r'%+([1-6])f', lambda x: do_replacement(x, micros), fmt)
+
+
+def _fix_timestamp_format(fmt, timestamp):
+    """Replace '%s' in time format with timestamp if the number
+        of '%' before 's' is odd."""
+    return re.sub(
+        r'%+s',
+        (
+            lambda x:
+            x.group() if len(x.group()) % 2 else x.group().replace('%s',
+                                                                   timestamp)
+        ),
+        fmt
+    )
+
+
 def time_str2str(date_string, from_format, to_format):
     """Convert a date string with given format to another format. Return
     the original date string if it's type is not string or failed to parse or
@@ -234,6 +272,14 @@ def time_str2str(date_string, from_format, to_format):
 
     try:
         dt = datetime.strptime(date_string, from_format)
+        # Need to pre process '%s' in to_format here because '%s' is not
+        # available on all platforms. Even on supported platforms, the
+        # result may be different because it depends on implementation on each
+        # platform. Replace it with UTC timestamp here directly.
+        if to_format:
+            timestamp = calendar.timegm(dt.timetuple())
+            to_format = _fix_timestamp_format(to_format, str(timestamp))
+            to_format = _fix_microsecond_format(to_format, str(dt.microsecond))
         return dt.strftime(to_format)
     except Exception:
         _logger.warning(
@@ -247,7 +293,29 @@ def time_str2str(date_string, from_format, to_format):
     return date_string
 
 
+def is_true(value):
+    """Determine whether value is True"""
+    return str(value).strip().lower() == 'true'
+
+
+def exit_if_true(value):
+    """Raise a StopCCEIteration exception if value is True"""
+    if is_true(value):
+        raise StopCCEIteration
+
+
+def assert_true(value, message=None):
+    """Assert value is True"""
+    if not is_true(value):
+        raise AssertionError(
+            message or '"{value}" is not true'.format(value=value)
+        )
+
+
 _extension_functions = {
+    'assert_true': assert_true,
+    'exit_if_true': exit_if_true,
+    'is_true': is_true,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
     'set_var': set_var,

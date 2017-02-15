@@ -116,7 +116,8 @@ def test_snow_data_in():
     time.sleep(60)
     assert  searchutil.checkQueryCount(search_string,90)
     time.sleep(60)
-    assert  searchutil.checkQueryCount(search_string,96)
+    search_string = "search index=main  sourcetype=my_snow_test1| search number<=INC0010059"
+    assert  searchutil.checkQueryCount(search_string,97)
     search_string ="search index=_internal source=*splunk_ta_my* ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
@@ -124,48 +125,48 @@ def test_snow_temp_certs_folder_created():
     okta2_temp_certs_folder_path = "{}/etc/apps/Splunk_TA_mysnow/temp_certs".format(SPLUNK_HOME)
     assert  os.path.exists(okta2_temp_certs_folder_path)
 
-def test_okta2_data_in():
-
-    ta_name = "Splunk_TA_myokta2"
-    okta2_ta_path = ta_orig_path_temp.format(ta_name)
-    conf_file_path = test_data.format("myokta2")
-    splunk_ta_path = ta_dest_path_temp.format(ta_name)
-    clean_local_splunk()
-    cp_ta_to_splunk(okta2_ta_path)
-    cp_conf_to_ta(conf_file_path,splunk_ta_path)
-    local_splunk.start()
-    time.sleep(60)
-    searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev68Sjkzb5SDuwxiJs1jh-Eg1352128663000\""
-    searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev6ciaHBwXRAerA4qVbW6T4A1352316074000\""
-    searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
-    searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal  source=*okta*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
-    time.sleep(60)
-    # the second first
-    search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
-    searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=main  sourcetype=my_okta2_test1 "
-    assert  searchutil.checkQueryCount(search_string,18)
-    search_string ="search index=_internal source=*splunk_ta_my* ERROR"
-    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
-
-def test_okta2_checkpoint_created():
-    okta2_checkpoint_path = "{}/var/lib/splunk/modinputs/okta_inputs".format(SPLUNK_HOME)
-    if os.path.exists(okta2_checkpoint_path):
-        logger.info("checkpoint folder exists")
-        okta2_checkpoint_name = os.path.join(okta2_checkpoint_path,"a513366788cad3face3bec0fb4dd8c16c68d1e0039703e46a2c64ca880e5be60")
-        logger.info("checkpoint file %s",okta2_checkpoint_name)
-        assert os.path.exists(okta2_checkpoint_name)
-        return
-    assert 0
-
-def test_okta2_temp_certs_folder_created():
-    okta2_temp_certs_folder_path = "{}/etc/apps/Splunk_TA_myokta2/temp_certs".format(SPLUNK_HOME)
-    assert  os.path.exists(okta2_temp_certs_folder_path)
-
+# def test_okta2_data_in():
+#
+#     ta_name = "Splunk_TA_myokta2"
+#     okta2_ta_path = ta_orig_path_temp.format(ta_name)
+#     conf_file_path = test_data.format("myokta2")
+#     splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#     clean_local_splunk()
+#     cp_ta_to_splunk(okta2_ta_path)
+#     cp_conf_to_ta(conf_file_path,splunk_ta_path)
+#     local_splunk.start()
+#     time.sleep(60)
+#     searchutil = splunk_login(local_splunk,logger)
+#     search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev68Sjkzb5SDuwxiJs1jh-Eg1352128663000\""
+#     searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev6ciaHBwXRAerA4qVbW6T4A1352316074000\""
+#     searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*okta*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     time.sleep(60)
+#     # the second first
+#     search_string = "search index=_internal  source=*okta*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=main  sourcetype=my_okta2_test1 "
+#     assert  searchutil.checkQueryCount(search_string,18)
+#     search_string ="search index=_internal source=*splunk_ta_my* ERROR"
+#     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#
+# def test_okta2_checkpoint_created():
+#     okta2_checkpoint_path = "{}/var/lib/splunk/modinputs/okta_inputs".format(SPLUNK_HOME)
+#     if os.path.exists(okta2_checkpoint_path):
+#         logger.info("checkpoint folder exists")
+#         okta2_checkpoint_name = os.path.join(okta2_checkpoint_path,"a513366788cad3face3bec0fb4dd8c16c68d1e0039703e46a2c64ca880e5be60")
+#         logger.info("checkpoint file %s",okta2_checkpoint_name)
+#         assert os.path.exists(okta2_checkpoint_name)
+#         return
+#     assert 0
+#
+# def test_okta2_temp_certs_folder_created():
+#     okta2_temp_certs_folder_path = "{}/etc/apps/Splunk_TA_myokta2/temp_certs".format(SPLUNK_HOME)
+#     assert  os.path.exists(okta2_temp_certs_folder_path)
+#
 def test_mytest2_json_list_to_events():
     ta_name = "Splunk_TA_mytest2"
     test2_ta_path = ta_orig_path_temp.format(ta_name)
@@ -284,93 +285,335 @@ def test_https_cert_warning():
 
 
 
-def test_mytest_kvstore():
-    ta_name = "Splunk_TA_mytest_kvstore"
-    kvstore_ta_path = ta_orig_path_temp.format(ta_name)
-    splunk_ta_path = ta_dest_path_temp.format(ta_name)
-    clean_local_splunk()
-    cp_ta_to_splunk(kvstore_ta_path)
-    inputs_conf_file = "{}/inputs.conf".format(test_data.format("kvstore"))
-    account_conf_file = "{}/splunk_ta_mytest_kvstore_account.conf".format(test_data.format("kvstore"))
-    cp_conf_to_ta(account_conf_file,splunk_ta_path,conf_type="others")
-    local_splunk.start()
-    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,conf_type="inputs")
-    local_splunk.restart()
-    time.sleep(60)
-    searchutil = splunk_login(local_splunk,logger)
-    searchstring = "search index=main sourcetype=test_kv_1"
-    assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
-    searchstring = "search index=main sourcetype=test_kv_2"
-    assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
-    collection_file_path = os.path.join(splunk_ta_path,'local',"collections.conf")
-    assert  os.path.exists(collection_file_path)
-    searchstring = "search index=_internal source=*splunk_ta_my* \"Using KV store for checkpoint\""
-    assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
-    time.sleep(60)
-    search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
-    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal  source=*kv_2*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
-    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
-    assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
-    assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
-    assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+# def test_mytest_kvstore():
+#     ta_name = "Splunk_TA_mytest_kvstore"
+#     kvstore_ta_path = ta_orig_path_temp.format(ta_name)
+#     splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#     clean_local_splunk()
+#     cp_ta_to_splunk(kvstore_ta_path)
+#     inputs_conf_file = "{}/inputs.conf".format(test_data.format("kvstore"))
+#     account_conf_file = "{}/splunk_ta_mytest_kvstore_account.conf".format(test_data.format("kvstore"))
+#     cp_conf_to_ta(account_conf_file,splunk_ta_path,conf_type="others")
+#     local_splunk.start()
+#     cp_conf_to_ta(inputs_conf_file,splunk_ta_path,conf_type="inputs")
+#     local_splunk.restart()
+#     time.sleep(60)
+#     searchutil = splunk_login(local_splunk,logger)
+#     searchstring = "search index=main sourcetype=test_kv_1"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     searchstring = "search index=main sourcetype=test_kv_2"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     collection_file_path = os.path.join(splunk_ta_path,'local',"collections.conf")
+#     assert  os.path.exists(collection_file_path)
+#     searchstring = "search index=_internal source=*splunk_ta_my* \"Using KV store for checkpoint\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     time.sleep(60)
+#     search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
+#     assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#
+#
+# def test_checkpoint_type_file():
+#     ta_name = "Splunk_TA_mytest_kvstore"
+#     kvstore_ta_path = ta_orig_path_temp.format(ta_name)
+#     splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#     clean_local_splunk()
+#     cp_ta_to_splunk(kvstore_ta_path)
+#     inputs_conf_file = "{}/inputs_file.conf".format(test_data.format("kvstore"))
+#     account_conf_file = "{}/splunk_ta_mytest_kvstore_account.conf".format(test_data.format("kvstore"))
+#     cp_conf_to_ta(account_conf_file,splunk_ta_path,conf_type="others")
+#     local_splunk.start()
+#     cp_conf_to_ta(inputs_conf_file,splunk_ta_path,conf_type="inputs")
+#     local_splunk.restart()
+#     time.sleep(60)
+#     searchutil = splunk_login(local_splunk,logger)
+#     searchstring = "search index=main sourcetype=test_checkpoint_file_1"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     searchstring = "search index=main sourcetype=test_checkpoint_file_2"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     inputs_okta_kv_1_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_1".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_1_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_1_checkpoint_name = os.path.join(inputs_okta_kv_1_checkpoint_path,"caaa78b283a488b058c8e25c4dc7c7c9b314f97624f25265e560fe22c3d3921f")
+#          logger.info("checkpoint file %s",inputs_okta_kv_1_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_1_checkpoint_name)
+#     else:
+#         assert 0
+#     inputs_okta_kv_2_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_2".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_2_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_2_checkpoint_name = os.path.join(inputs_okta_kv_2_checkpoint_path,"caaa78b283a488b058c8e25c4dc7c7c9b314f97624f25265e560fe22c3d3921f")
+#          logger.info("checkpoint file %s",inputs_okta_kv_2_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_2_checkpoint_name)
+#     else:
+#         assert 0
+#
+# searchstring = "search index=_internal source=*splunk_ta_my* \"using cached file store to create checkpoint\""
+# assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+# time.sleep(60)
+# search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+# assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+# search_string = "search index=_internal  source=*kv_2*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+# assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+# search_string = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+# assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+# search_string = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+# assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+# searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
+# assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
 
-
-
-
-
+# def test_checkpoint_type_auto():
+#     ta_name = "Splunk_TA_mytest_kvstore"
+#     kvstore_ta_path = ta_orig_path_temp.format(ta_name)
+#     splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#     clean_local_splunk()
+#     cp_ta_to_splunk(kvstore_ta_path)
+#     inputs_conf_file = "{}/inputs_auto.conf".format(test_data.format("kvstore"))
+#     account_conf_file = "{}/splunk_ta_mytest_kvstore_account.conf".format(test_data.format("kvstore"))
+#     cp_conf_to_ta(account_conf_file,splunk_ta_path,conf_type="others")
+#     local_splunk.start()
+#     cp_conf_to_ta(inputs_conf_file,splunk_ta_path,conf_type="inputs")
+#     local_splunk.restart()
+#     time.sleep(60)
+#     searchutil = splunk_login(local_splunk,logger)
+#     searchstring = "search index=main sourcetype=test_checkpoint_auto_1"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     searchstring = "search index=main sourcetype=test_checkpoint_auto_2"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     inputs_okta_kv_1_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_1".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_1_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_1_checkpoint_name = os.path.join(inputs_okta_kv_1_checkpoint_path,"cb0d9a2c80506a996f452f8a1c7669206a486247526b5fed37c0862995c42e77")
+#          logger.info("checkpoint file %s",inputs_okta_kv_1_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_1_checkpoint_name)
+#     else:
+#         assert 0
+#     inputs_okta_kv_2_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_2".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_2_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_2_checkpoint_name = os.path.join(inputs_okta_kv_2_checkpoint_path,"cb0d9a2c80506a996f452f8a1c7669206a486247526b5fed37c0862995c42e77")
+#          logger.info("checkpoint file %s",inputs_okta_kv_2_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_2_checkpoint_name)
+#     else:
+#         assert 0
+#     searchstring = "search index=_internal source=*splunk_ta_my* \"using cached file store to create checkpoint\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     time.sleep(60)
+#     search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
+#     assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#
+# def test_checkpoint_type_not_set():
+#     ta_name = "Splunk_TA_mytest_kvstore"
+#     kvstore_ta_path = ta_orig_path_temp.format(ta_name)
+#     splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#     clean_local_splunk()
+#     cp_ta_to_splunk(kvstore_ta_path)
+#     inputs_conf_file = "{}/inputs_not_set.conf".format(test_data.format("kvstore"))
+#     account_conf_file = "{}/splunk_ta_mytest_kvstore_account.conf".format(test_data.format("kvstore"))
+#     cp_conf_to_ta(account_conf_file,splunk_ta_path,conf_type="others")
+#     local_splunk.start()
+#     cp_conf_to_ta(inputs_conf_file,splunk_ta_path,conf_type="inputs")
+#     local_splunk.restart()
+#     time.sleep(60)
+#     searchutil = splunk_login(local_splunk,logger)
+#     searchstring = "search index=main sourcetype=test_checkpoint_not_set_1"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     searchstring = "search index=main sourcetype=test_checkpoint_not_set_2"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     inputs_okta_kv_1_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_1".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_1_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_1_checkpoint_name = os.path.join(inputs_okta_kv_1_checkpoint_path,"726512ffa11d180df09eaf7584a6237f442ca3720b86b2b6c73d79aeda178473")
+#          logger.info("checkpoint file %s",inputs_okta_kv_1_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_1_checkpoint_name)
+#     else:
+#         assert 0
+#     inputs_okta_kv_2_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_2".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_2_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_2_checkpoint_name = os.path.join(inputs_okta_kv_2_checkpoint_path,"726512ffa11d180df09eaf7584a6237f442ca3720b86b2b6c73d79aeda178473")
+#          logger.info("checkpoint file %s",inputs_okta_kv_2_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_2_checkpoint_name)
+#     else:
+#         assert 0
+# #
+#     searchstring = "search index=_internal source=*splunk_ta_my* \"using cached file store to create checkpoint\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     time.sleep(60)
+#     search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
+#     assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#
+#
+# def test_checkpoint_type_2input_different_type():
+#     ta_name = "Splunk_TA_mytest_kvstore"
+#     kvstore_ta_path = ta_orig_path_temp.format(ta_name)
+#     splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#     clean_local_splunk()
+#     cp_ta_to_splunk(kvstore_ta_path)
+#     inputs_conf_file = "{}/inputs_2input_different_type.conf".format(test_data.format("kvstore"))
+#     account_conf_file = "{}/splunk_ta_mytest_kvstore_account.conf".format(test_data.format("kvstore"))
+#     cp_conf_to_ta(account_conf_file,splunk_ta_path,conf_type="others")
+#     local_splunk.start()
+#     cp_conf_to_ta(inputs_conf_file,splunk_ta_path,conf_type="inputs")
+#     local_splunk.restart()
+#     time.sleep(60)
+#     searchutil = splunk_login(local_splunk,logger)
+#     searchstring = "search index=main sourcetype=test_checkpoint_different_type_auto"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     searchstring = "search index=main sourcetype=test_checkpoint_different_type_file"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     inputs_okta_kv_1_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_1".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_1_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_1_checkpoint_name = os.path.join(inputs_okta_kv_1_checkpoint_path,"6ef655a84e907359fc7ad6866b6a0d6cb6f0f430a4b4ab0ac540345847ee05e4")
+#          logger.info("checkpoint file %s",inputs_okta_kv_1_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_1_checkpoint_name)
+#     else:
+#         assert 0
+#     inputs_okta_kv_2_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_2".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_2_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_2_checkpoint_name = os.path.join(inputs_okta_kv_2_checkpoint_path,"6ef655a84e907359fc7ad6866b6a0d6cb6f0f430a4b4ab0ac540345847ee05e4")
+#          logger.info("checkpoint file %s",inputs_okta_kv_2_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_2_checkpoint_name)
+#     else:
+#         assert 0
+# #
+#     searchstring = "search index=_internal source=*splunk_ta_my* \"using cached file store to create checkpoint\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     time.sleep(60)
+#     search_string = "search index=_internal  source=*kv_1*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_2*  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
+#     assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#
+# def test_checkpoint_type_one_modular_different_type():
+#     ta_name = "Splunk_TA_mytest_kvstore"
+#     kvstore_ta_path = ta_orig_path_temp.format(ta_name)
+#     splunk_ta_path = ta_dest_path_temp.format(ta_name)
+#     clean_local_splunk()
+#     cp_ta_to_splunk(kvstore_ta_path)
+#     inputs_conf_file = "{}/inputs_one_modular_different_type.conf".format(test_data.format("kvstore"))
+#     account_conf_file = "{}/splunk_ta_mytest_kvstore_account.conf".format(test_data.format("kvstore"))
+#     cp_conf_to_ta(account_conf_file,splunk_ta_path,conf_type="others")
+#     local_splunk.start()
+#     cp_conf_to_ta(inputs_conf_file,splunk_ta_path,conf_type="inputs")
+#     local_splunk.restart()
+#     time.sleep(60)
+#     searchutil = splunk_login(local_splunk,logger)
+#     searchstring = "search index=main sourcetype=test_checkpoint_one_modular_different_type_auto"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     searchstring = "search index=main sourcetype=test_checkpoint_one_modular_different_type_file"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     searchstring = "search index=main sourcetype=test_checkpoint_one_modular_different_type_not_set"
+#     assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     inputs_okta_kv_1_checkpoint_path = "{}/var/lib/splunk/modinputs/inputs_okta_kv_1".format(SPLUNK_HOME)
+#     if os.path.exists(inputs_okta_kv_1_checkpoint_path):
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_1_checkpoint_name = os.path.join(inputs_okta_kv_1_checkpoint_path,"0683972600e8975e4af7310504aac6a4cbad6dc990f05261fa35c88273dbeead")
+#          logger.info("checkpoint file %s",inputs_okta_kv_1_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_1_checkpoint_name)
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_1_checkpoint_name = os.path.join(inputs_okta_kv_1_checkpoint_path,"d004b33197871752e086692352409cb45f000184b29acd76d23fe3a7be273fe0")
+#          logger.info("checkpoint file %s",inputs_okta_kv_1_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_1_checkpoint_name)
+#          logger.info("checkpoint folder exists")
+#          inputs_okta_kv_1_checkpoint_name = os.path.join(inputs_okta_kv_1_checkpoint_path,"2002ac7d90e5cff7f4b5bcfb2779e992e04b3d0bef467b15654a3ba2ad2c93e9")
+#          logger.info("checkpoint file %s",inputs_okta_kv_1_checkpoint_name)
+#          assert os.path.exists(inputs_okta_kv_1_checkpoint_name)
+#     else:
+#         assert 0
+#
+#     searchstring = "search index=_internal source=*splunk_ta_my* \"using cached file store to create checkpoint\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#     time.sleep(60)
+#     search_string = "search index=_internal  source=*kv_1*  checkpoint_one_modular_different_type_auto Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1*  checkpoint_one_modular_different_type_file Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1* checkpoint_one_modular_different_type_not_set Get checkpoint \"tev6e8pxqEWRB2T7OBO3woNAA1354864915000\""
+#     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#
+#     search_string = "search index=_internal  source=*kv_1* checkpoint_one_modular_different_type_auto  Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1* checkpoint_one_modular_different_type_file Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     search_string = "search index=_internal  source=*kv_1*  checkpoint_one_modular_different_type_not_set Update checkpoint \"tev70JF0jKPTh-KDm-bzxeP1Q1354916744000\""
+#     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+#     searchstring = "search index=_internaal  sourcetype=*splunk_ta_my* ERROR"
+#     assert not searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+#
+#
 def test_time_convert_epoch_time():
-    ta_name = "Splunk_TA_myokta2"
+    ta_name = "Splunk_TA_mysolarwinds"
     okta2_ta_path = ta_orig_path_temp.format(ta_name)
     conf_file_path = test_data.format("timeconvert")
-    cc_json_path = "{}/okta_inputs_timeconvert.cc.json".format(conf_file_path)
-    splunk_ta_path = "$SPLUNK_HOME/etc/apps/Splunk_TA_myokta2"
+    cc_json_path = "{}/solarwind_inputs_timeconvert_to_epoch.cc.json".format(conf_file_path)
+    splunk_ta_path = "$SPLUNK_HOME/etc/apps/Splunk_TA_mysolarwinds"
     clean_local_splunk()
     cp_ta_to_splunk(okta2_ta_path)
-    cp_conf_to_ta(conf_file_path,splunk_ta_path)
-    cp_cc_json_to_ta(cc_json_path,splunk_ta_path,"okta_inputs")
+    cp_cc_json_to_ta(cc_json_path,splunk_ta_path,"solarwind_input")
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=main  sourcetype=\"test_timeconvert\"  1352128663"
-
-    assert searchutil.checkQueryCount(search_string,1)
-    search_string = "search index=_internal source=*splunk_ta_my* ERROR  limit=31352128663"
+    search_string = "search index=_internal source=*splunk_ta_my* \"Invoking request to\" 1420070400 "
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_time_convert_remove_T():
-    ta_name = "Splunk_TA_myokta2"
-    okta2_ta_path = ta_orig_path_temp.format(ta_name)
-    conf_file_path = test_data.format("timeconvert")
-    cc_json_path = "{}/okta_inputs_timeconvert2.cc.json".format(conf_file_path)
-    splunk_ta_path = "$SPLUNK_HOME/etc/apps/Splunk_TA_myokta2"
+    ta_name = "Splunk_TA_mysolarwinds"
+    solarwind_ta_path = ta_orig_path_temp.format(ta_name)
     clean_local_splunk()
-    cp_ta_to_splunk(okta2_ta_path)
-    cp_conf_to_ta(conf_file_path,splunk_ta_path)
-    cp_cc_json_to_ta(cc_json_path,splunk_ta_path,"okta_inputs")
+    cp_ta_to_splunk(solarwind_ta_path)
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=main  sourcetype=test_timeconvert  \"2012-11-05 15:17:43\""
-
-    assert searchutil.checkQueryCount(search_string,1)
-    search_string = "search index=_internal source=*splunk_ta_my* ERROR  limit=32012-11-05"
+    search_string = "search index=main  sourcetype=test_solarwind_data_in"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
-
-
+    search_string = "search index=_internal source=*splunk_ta_my* \"Invoking request to\" \"2015-01-01%2000:00:00.00\""
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*splunk_ta_my* error"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
 
 
 def test_proxy_http_no_auth():
-    ta_name = "Splunk_TA_myokta"
-    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
-    cp_ta_to_splunk(okta_ta_path)
-    proxy_conf = "{}/splunk_ta_myokta_settings_no_auth.conf".format(test_data.format("proxy"))
+    cp_ta_to_splunk(snow_ta_path)
+    proxy_conf = "{}/splunk_ta_mysnow_settings_no_auth.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mysnow_account.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_no_auth.conf".format(test_data.format("proxy"))
     local_splunk.restart()
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
@@ -386,13 +629,15 @@ def test_proxy_http_no_auth():
 
 
 def test_proxy_http_auth():
-    ta_name = "Splunk_TA_myokta"
-    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
-    cp_ta_to_splunk(okta_ta_path)
-    proxy_conf = "{}/splunk_ta_myokta_settings_auth.conf".format(test_data.format("proxy"))
+    cp_ta_to_splunk(snow_ta_path)
+    proxy_conf = "{}/splunk_ta_mysnow_settings_auth.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mysnow_account.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_auth.conf".format(test_data.format("proxy"))
     local_splunk.restart()
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
@@ -407,13 +652,15 @@ def test_proxy_http_auth():
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_proxy_http_auth_special_character():
-    ta_name = "Splunk_TA_myokta"
-    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
-    cp_ta_to_splunk(okta_ta_path)
-    proxy_conf = "{}/splunk_ta_myokta_settings_auth_special_character.conf".format(test_data.format("proxy"))
+    cp_ta_to_splunk(snow_ta_path)
+    proxy_conf = "{}/splunk_ta_mysnow_settings_auth_special_character.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mysnow_account.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_auth_special_character.conf".format(test_data.format("proxy"))
     local_splunk.restart()
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
@@ -428,13 +675,15 @@ def test_proxy_http_auth_special_character():
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_proxy_http_wrong_auth():
-    ta_name = "Splunk_TA_myokta"
-    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
-    cp_ta_to_splunk(okta_ta_path)
-    proxy_conf = "{}/splunk_ta_myokta_settings_invalid_proxy.conf".format(test_data.format("proxy"))
+    cp_ta_to_splunk(snow_ta_path)
+    proxy_conf = "{}/splunk_ta_mysnow_settings_invalid_proxy.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mysnow_account.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_wrong_auth.conf".format(test_data.format("proxy"))
     local_splunk.restart()
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
@@ -451,13 +700,15 @@ def test_proxy_http_wrong_auth():
 
 def test_update_proxy_from_backend():
 
-    ta_name = "Splunk_TA_myokta"
-    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
-    cp_ta_to_splunk(okta_ta_path)
-    proxy_conf = "{}/splunk_ta_myokta_settings_invalid_proxy.conf".format(test_data.format("proxy"))
+    cp_ta_to_splunk(snow_ta_path)
+    proxy_conf = "{}/splunk_ta_mysnow_settings_invalid_proxy.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mysnow_account.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_update.conf".format(test_data.format("proxy"))
     local_splunk.restart()
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
@@ -468,20 +719,22 @@ def test_update_proxy_from_backend():
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=_internal source=*splunk_ta_my* ERROR Proxy Authentication Required"
     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    proxy_conf = "{}/splunk_ta_myokta_settings_auth_special_character.conf".format(test_data.format("proxy"))
+    proxy_conf = "{}/splunk_ta_mysnow_settings_auth_special_character.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
     time.sleep(120)
     search_string = "search index=main sourcetype=test_proxy_update"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_proxy_disabled():
-    ta_name = "Splunk_TA_myokta"
-    okta_ta_path = ta_orig_path_temp.format(ta_name)
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
-    cp_ta_to_splunk(okta_ta_path)
-    proxy_conf = "{}/splunk_ta_myokta_settings_disabled.conf".format(test_data.format("proxy"))
+    cp_ta_to_splunk(snow_ta_path)
+    proxy_conf = "{}/splunk_ta_mysnow_settings_disabled.conf".format(test_data.format("proxy"))
     cp_conf_to_ta(proxy_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mysnow_account.conf".format(test_data.format("proxy"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_proxy_disabled.conf".format(test_data.format("proxy"))
     local_splunk.restart()
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
@@ -497,15 +750,19 @@ def test_proxy_disabled():
 
 
 def test_logging_INFO():
-    ta_name = "Splunk_TA_myokta"
+    ta_name = "Splunk_TA_mytest2"
     okta_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
     cp_ta_to_splunk(okta_ta_path)
-    logging_conf = "{}/splunk_ta_myokta_settings_INFO.conf".format(test_data.format("logging"))
+    json_file_path = "{}/inputs_02_logging.cc.json".format(test_data.format("logging"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"inputs_02")
+    logging_conf = "{}/splunk_ta_mytest2_settings_INFO.conf".format(test_data.format("logging"))
     cp_conf_to_ta(logging_conf,splunk_ta_path,conf_type="settings")
     input_conf = "{}/inputs_INFO.conf".format(test_data.format("logging"))
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
+    account_conf="{}/splunk_ta_mytest2_account.conf".format(test_data.format("logging"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
@@ -514,25 +771,32 @@ def test_logging_INFO():
     search_string = "search index=_internal log_level=INFO source=*splunk_ta_my*"
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=_internal  source=*splunk_ta_my* AND ( \"DEBUG\" OR \"ERROR\")"
-    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
 
 def test_logging_ERROR():
-    ta_name = "Splunk_TA_myokta"
+    ta_name = "Splunk_TA_mytest2"
     okta_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
     cp_ta_to_splunk(okta_ta_path)
-    logging_conf = "{}/splunk_ta_myokta_settings_ERROR.conf".format(test_data.format("logging"))
+    json_file_path = "{}/inputs_02_logging.cc.json".format(test_data.format("logging"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"inputs_02")
+    logging_conf = "{}/splunk_ta_mytest2_settings_ERROR.conf".format(test_data.format("logging"))
     cp_conf_to_ta(logging_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mytest2_fake_account.conf".format(test_data.format("logging"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_ERROR.conf".format(test_data.format("logging"))
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=_internal  source=*splunk_ta_my* log_level=ERROR \"The response status=400 for request which url=https://acme2.okta.com/api/v1/events?after=tev68-xxxxx&limit=3\""
+    search_string = "search index=_internal  source=*splunk_ta_my* log_level=ERROR "
     assert  searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = " search index=_internal  source=*splunk_ta_my* \"The response status=500 for request\""
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    #search_string = "search index=_internal log_level=INFO source=*splunk_ta_my* NOT \"End inputs_02 task\""
     search_string = "search index=_internal log_level=INFO source=*splunk_ta_my*"
-    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
 
 def test_logging_WARNING():
     ta_name = "Splunk_TA_mytest2"
@@ -559,24 +823,28 @@ def test_logging_WARNING():
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
 def test_logging_CRITICAL():
-    ta_name = "Splunk_TA_myokta"
+    ta_name = "Splunk_TA_mytest2"
     okta_ta_path = ta_orig_path_temp.format(ta_name)
     splunk_ta_path = ta_dest_path_temp.format(ta_name)
     clean_local_splunk()
     cp_ta_to_splunk(okta_ta_path)
-    logging_conf = "{}/splunk_ta_myokta_settings_CRITICAL.conf".format(test_data.format("logging"))
+    json_file_path = "{}/inputs_02_logging.cc.json".format(test_data.format("logging"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"inputs_02")
+    logging_conf = "{}/splunk_ta_mytest2_settings_CRITICAL.conf".format(test_data.format("logging"))
     cp_conf_to_ta(logging_conf,splunk_ta_path,conf_type="settings")
+    account_conf="{}/splunk_ta_mytest2_fake_account.conf".format(test_data.format("logging"))
+    cp_conf_to_ta(account_conf,splunk_ta_path,conf_type="account")
     input_conf = "{}/inputs_CRITICAL.conf".format(test_data.format("logging"))
     cp_conf_to_ta(input_conf,splunk_ta_path,conf_type="inputs")
     local_splunk.start()
     time.sleep(60)
     searchutil = splunk_login(local_splunk,logger)
     search_string = "search index=_internal  source=*splunk_ta_my* log_level=ERROR"
-    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
-    search_string = "search index=_internal log_level=INFO source=*splunk_ta_my*"
-    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
+    search_string = "search index=_internal log_level=INFO source=*splunk_ta_my* "
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
     search_string = "search index=main sourcetype=test_logging_critical2"
-    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
 
 def test_interation_count_0():
     ta_name = "Splunk_TA_mytest2"
@@ -654,8 +922,8 @@ def test_two_inputs_does_not_impact_each_fake_account():
     local_splunk.start()
     time.sleep(120)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=main sourcetype=test_snow_input_correct_account"
-    assert searchutil.checkQueryCount(search_string,96)
+    search_string = "search index=main sourcetype=test_snow_input_correct_account| search number<=INC0010059"
+    assert searchutil.checkQueryCount(search_string,97)
     search_string = "search index=_internal source=*splunk_ta_my*  snow_input_correct_account ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
     search_string = "search index=_internal source=*splunk_ta_my* snow_input_fake_account ERROR"
@@ -677,8 +945,8 @@ def test_two_inputs_does_not_impact_each_fake_server():
     local_splunk.start()
     time.sleep(120)
     searchutil = splunk_login(local_splunk,logger)
-    search_string = "search index=main sourcetype=test_snow_input_right_server"
-    assert searchutil.checkQueryCount(search_string,96)
+    search_string = "search index=main sourcetype=test_snow_input_right_server|search number<=INC0010059"
+    assert searchutil.checkQueryCount(search_string,97)
     search_string = "search index=_internal source=*splunk_ta_my*  snow_input_right_server ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
     search_string = "search index=_internal source=*splunk_ta_my* snow_input_wrong_server ERROR"
@@ -701,10 +969,10 @@ def test_32_inputs_data_all_in():
     time.sleep(240)
     search_string ="search index=main  sourcetype=test_snow_input_multi*|dedup sourcetype "
     assert  searchutil.checkQueryCount(search_string,32)
-    search_string = "search index=main sourcetype=test_snow_input_multi_9"
-    assert  searchutil.checkQueryCount(search_string,96)
-    search_string = "search index=main sourcetype=test_snow_input_multi*"
-    assert  searchutil.checkQueryCount(search_string,3072)
+    search_string = "search index=main sourcetype=test_snow_input_multi_9|search number<=INC0010059"
+    assert  searchutil.checkQueryCount(search_string,97)
+    search_string = "search index=main sourcetype=test_snow_input_multi*|search number<=INC0010059"
+    assert  searchutil.checkQueryCount(search_string,3104)
     search_string ="search index=_internal source=*splunk_ta_my* ERROR"
     assert  not searchutil.checkQueryCountIsGreaterThanZero(search_string)
 
@@ -723,14 +991,42 @@ def test_remove_checkpoint_file_recovery():
     local_splunk.start()
     searchutil = splunk_login(local_splunk,logger)
     time.sleep(120)
-    search_string ="search index=main  sourcetype=test_checkpoint_remove_recovery"
-    assert searchutil.checkQueryCount(search_string,96)
+    search_string ="search index=main  sourcetype=test_checkpoint_remove_recovery|search number<=INC0010059"
+    assert searchutil.checkQueryCount(search_string,97)
     checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ceb30d5cc2cdb107c7e631b994d8075956e48ab0875e35f7390f6c1faf865bdf".format(SPLUNK_HOME)
     assert os.path.exists(checkpoint_file_dir)
     remove_checkpoint_file_cmd = "rm -f {}".format(checkpoint_file_dir)
     os.system(remove_checkpoint_file_cmd)
     time.sleep(120)
-    assert searchutil.checkQueryCount(search_string,192)
+    assert searchutil.checkQueryCount(search_string,194)
+    checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ceb30d5cc2cdb107c7e631b994d8075956e48ab0875e35f7390f6c1faf865bdf".format(SPLUNK_HOME)
+    assert os.path.exists(checkpoint_file_dir)
+
+def test_remove_checkpoint_folder_recovery():
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(snow_ta_path)
+    json_file_path = "{}/snow_interation_count_minus1.cc.json".format(test_data.format("checkpoint"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+    inputs_conf_file = "{}/snow_inputs.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/snow_account.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    local_splunk.start()
+    searchutil = splunk_login(local_splunk,logger)
+    time.sleep(120)
+    search_string ="search index=main  sourcetype=test_checkpoint_remove_recovery | search number<=INC0010059"
+    assert searchutil.checkQueryCount(search_string,97)
+    checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs".format(SPLUNK_HOME)
+    assert os.path.exists(checkpoint_file_dir)
+    remove_checkpoint_file_cmd = "rm -rf {}".format(checkpoint_file_dir)
+    os.system(remove_checkpoint_file_cmd)
+    time.sleep(60)
+    assert searchutil.checkQueryCount(search_string,194)
+    checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ceb30d5cc2cdb107c7e631b994d8075956e48ab0875e35f7390f6c1faf865bdf".format(SPLUNK_HOME)
+    assert os.path.exists(checkpoint_file_dir)
 
 def test_namespace_used_generated_checkpoint():
       ta_name = "Splunk_TA_mysnow"
@@ -747,11 +1043,11 @@ def test_namespace_used_generated_checkpoint():
       local_splunk.start()
       searchutil = splunk_login(local_splunk,logger)
       time.sleep(120)
-      search_string ="search index=main  sourcetype=test_namespace_as_checkpoint"
-      assert searchutil.checkQueryCount(search_string,96)
+      search_string ="search index=main  sourcetype=test_namespace_as_checkpoint|search number<=INC0010059"
+      assert searchutil.checkQueryCount(search_string,97)
       checkpoint_file_dir="{}/var/lib/splunk/modinputs/snow_inputs/ff4bb432b6a7d0cac35577bafbef0c130affa9e3a00f2f99790f8a1582a7ba3b".format(SPLUNK_HOME)
       assert os.path.exists(checkpoint_file_dir)
-
+#
 def test_api_version_check():
     ta_name = "Splunk_TA_mytest2"
     mytest2_ta_path = ta_orig_path_temp.format(ta_name)
@@ -808,6 +1104,94 @@ def test_solarwind_data_in():
     assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
     search_string = "search index=_internal source=*splunk_ta_my* ERROR"
     assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
+
+def test_exit_if_checkpoint_is_empty_from_initial():
+    ta_name = "Splunk_TA_mysolarwinds"
+    mytest_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest_ta_path)
+    json_file_path = "{}/solarwind_input_checkpoint_empty.cc.json".format(test_data.format("checkpoint"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"solarwind_input")
+    inputs_conf_file =  "{}/solarwinds_checkpoint_empty.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    local_splunk.start()
+    time.sleep(60)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=main sourcetype=test_solarwind_checkpoint_empty"
+    assert not searchutil.checkQueryCountIsGreaterThanZero(search_string,retries=2)
+    search_string = "search index=_internal source=*splunk_ta_my* AssertionError: The value of token \"eventtime\" extracted from response cannot be empty!"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    # Correct setting in cc.json
+    inputs_solarwinds_checkpoint_path = "{}/var/lib/splunk/modinputs/solarwind_input".format(SPLUNK_HOME)
+    if os.path.exists(inputs_solarwinds_checkpoint_path):
+          logger.info("checkpoint folder exists")
+          inputs_solarwinds_checkpoint_name = os.path.join(inputs_solarwinds_checkpoint_path,"7c21dddec9ed578b78a6782473e55ce66a98dd7d4ea66c4d19ef4975d7a74847")
+          assert not os.path.exists(inputs_solarwinds_checkpoint_name)
+    else:
+         assert 0
+    json_file =  "{}/solarwind_input_checkpoint_correct.cc.json".format(test_data.format("checkpoint"))
+    cp_cc_json_to_ta(json_file,splunk_ta_path,"solarwind_input")
+    time.sleep(120)
+    search_string = "search index=main sourcetype=test_solarwind_checkpoint_empty"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    if os.path.exists(inputs_solarwinds_checkpoint_path):
+          logger.info("checkpoint folder exists")
+          inputs_solarwinds_checkpoint_name = os.path.join(inputs_solarwinds_checkpoint_path,"7c21dddec9ed578b78a6782473e55ce66a98dd7d4ea66c4d19ef4975d7a74847")
+          assert  os.path.exists(inputs_solarwinds_checkpoint_name)
+    else:
+         assert 0
+
+def test_exit_if_checkpoint_is_empty_during_datacollection():
+    ta_name = "Splunk_TA_mysnow"
+    snow_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(snow_ta_path)
+    json_file_path = "{}/snow_checkpoint_isempty_during_datacollection.cc.json".format(test_data.format("checkpoint"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"snow_inputs")
+    inputs_conf_file = "{}/snow_inputs_checkpoint_is_empty_during_datacollection.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    account_conf_file = "{}/snow_account.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(account_conf_file,splunk_ta_path,"account")
+    settings_conf_file = "{}/splunk_ta_mysnow_settings_debug.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(settings_conf_file,splunk_ta_path,"settings")
+    local_splunk.start()
+    searchutil = splunk_login(local_splunk,logger)
+    time.sleep(60)
+    searchstring = "search index=main sourcetype=test_checkpoint_empty_during_data_collection"
+    assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+    searchstring = "search index=_internal source=*splunk_ta_my* AssertionError: The value of token \"since_when\" extracted from response cannot be empty!"
+    assert searchutil.checkQueryCountIsGreaterThanZero(searchstring)
+    time.sleep(60)
+    searchstring = "search index=main sourcetype=test_checkpoint_empty_during_data_collection"
+    assert searchutil.checkQueryCount(searchstring,90)
+    searchstring = "search index=_internal source=*splunk_ta_my* \"Invoking request to\" "
+    assert searchutil.checkQueryCount(searchstring,5)
+    searchstring = "search index=_internal source=*splunk_ta_my* \"Invoking request to\" \"sys_updated_on%3E2016-11-02T22:58:47\""
+    assert searchutil.checkQueryCount(searchstring,2)
+
+# This is not enough to cover all the cases
+def test_exit_if_checkpoint_unchanged():
+    ta_name = "Splunk_TA_mysolarwinds"
+    mytest_ta_path = ta_orig_path_temp.format(ta_name)
+    splunk_ta_path = ta_dest_path_temp.format(ta_name)
+    clean_local_splunk()
+    cp_ta_to_splunk(mytest_ta_path)
+    json_file_path = "{}/solarwind_input_checkpoint_unchanged.cc.json".format(test_data.format("checkpoint"))
+    cp_cc_json_to_ta(json_file_path,splunk_ta_path,"solarwind_input")
+    inputs_conf_file =  "{}/solarwind_input_checkpoint_unchanged.conf".format(test_data.format("checkpoint"))
+    cp_conf_to_ta(inputs_conf_file,splunk_ta_path,"inputs")
+    local_splunk.start()
+    time.sleep(60)
+    searchutil = splunk_login(local_splunk,logger)
+    search_string = "search index=main sourcetype=test_solarwind_checkpoint_unchanged"
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*solarwinds* \"Stop iteration command in post process is received, exit job now.\""
+    assert searchutil.checkQueryCountIsGreaterThanZero(search_string)
+    search_string = "search index=_internal source=*solarwinds* splunk_xml INFO"
+    assert searchutil.checkQueryCount(search_string,1)
+
 
 def test_teardown():
     local_splunk.stop()

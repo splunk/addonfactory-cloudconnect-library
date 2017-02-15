@@ -27,9 +27,17 @@ time_fmt = "%Y-%m-%dT%H:%M:%S"
 utc_time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # system setting keys
-use_kv_store = "builtin_system_use_kv_store"
+checkpoint_storage_type = "builtin_system_checkpoint_storage_type"
+
+# Possible values for checkpoint storage type
+checkpoint_auto = 'auto'
+checkpoint_kv_storage = 'kv_store'
+checkpoint_file = 'file'
+
+# For cache file
 use_cache_file = "builtin_system_use_cache_file"
 max_cache_seconds = "builtin_system_max_cache_seconds"
+# For kv store
 collection_name = "builtin_system_kvstore_collection_name"
 
 settings = "__settings__"

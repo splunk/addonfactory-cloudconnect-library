@@ -76,9 +76,9 @@ class BasicAuthorization(BaseAuth):
     def __call__(self, headers, context):
         username = self._username.render(context)
         password = self._password.render(context)
-        headers['Authorization'] = 'Basic %s' % base64.encodestring(
+        headers['Authorization'] = 'Basic %s' % base64.b64encode(
             username + ':' + password
-        ).strip()
+        )
 
 
 class Request(object):

@@ -4,6 +4,7 @@ import traceback
 from .ext import lookup_method
 from .template import compile_template
 from ..common.log import get_cc_logger
+import sys
 
 _logger = get_cc_logger()
 
@@ -73,12 +74,34 @@ class BasicAuthorization(BaseAuth):
         self._username = _Token(username)
         self._password = _Token(password)
 
+    def to_native_string(self, string, encoding='ascii'):
+        """
+        According to rfc7230:
+            Historically, HTTP has allowed field content with text in the
+            ISO-8859-1 charset [ISO-8859-1], supporting other charsets only
+            through use of [RFC2047] encoding.  In practice, most HTTP header
+            field values use only a subset of the US-ASCII charset [USASCII].
+            Newly defined header fields SHOULD limit their field values to
+            US-ASCII octets.  A recipient SHOULD treat other octets in field
+            content (obs-text) as opaque data.
+        """
+        is_py2 = (sys.version_info[0] == 2)
+        if isinstance(string, str):
+            out = string
+        else:
+            if is_py2:
+                out = string.encode(encoding)
+            else:
+                out = string.decode(encoding)
+
+        return out
+
     def __call__(self, headers, context):
         username = self._username.render(context)
         password = self._password.render(context)
-        headers['Authorization'] = 'Basic %s' % base64.b64encode(
-            username + ':' + password
-        )
+        headers['Authorization'] = 'Basic %s' % self.to_native_string(
+            base64.b64encode((username + ':' + password).encode('latin1'))
+        ).strip()
 
 
 class Request(object):

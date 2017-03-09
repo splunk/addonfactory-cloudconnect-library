@@ -58,7 +58,13 @@ class CCEJob(object):
             task = self._tasks.get()
             result = task.perform(self._context)
 
+            no_more_tasks = self._tasks.empty()
+            if no_more_tasks:
+                logger.debug('There is no more task need to perform')
+
             for ctx in result:
+                if no_more_tasks:
+                    continue
                 cloned_tasks = copy.deepcopy(self._tasks)
                 yield CCEJob(context=ctx, tasks=cloned_tasks)
 

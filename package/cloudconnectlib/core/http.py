@@ -203,8 +203,8 @@ class HttpClient(object):
 
             return HTTPResponse(response, content)
 
-    def _prepare_url(self, url):
-        self._url_preparer.prepare(url)
+    def _prepare_url(self, url, params=None):
+        self._url_preparer.prepare_url(url, params)
         return self._url_preparer.url
 
     def send(self, request):

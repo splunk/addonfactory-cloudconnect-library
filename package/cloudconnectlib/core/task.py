@@ -23,8 +23,14 @@ class ProcessHandler(object):
 
     def execute(self, context):
         args = [arg.render(context) for arg in self.arguments]
-        logger.debug('% arguments found for method %s', len(args), self.method)
-        self.callable_method(*args)
+        logger.debug('%s arguments found for method %s', len(args), self.method)
+        result = self.callable_method(*args)
+
+        data = {}
+        if self.output:
+            data[self.output] = result
+
+        return data
 
 
 class Condition(object):
@@ -35,7 +41,7 @@ class Condition(object):
 
     def passed(self, context):
         args = [arg.render(context) for arg in self.arguments]
-        logger.debug('% arguments found for method %s', len(args), self.method)
+        logger.debug('%s arguments found for method %s', len(args), self.method)
         return self.callable_method(args)
 
 
@@ -206,7 +212,7 @@ class CCEHTTPRequestTask(BaseTask):
         self._stop_conditions = ConditionGroup()
         self._finished_iter_count = 0
         self._proxy_info = None
-        self._iteration_count = None
+        self._iteration_count = 0
         self._checkpoint_manager = None  # TODO
         self._checkpoint_conf = None
         self._auth_type = None
@@ -285,7 +291,7 @@ class CCEHTTPRequestTask(BaseTask):
         self._checkpoint_conf = CheckpointConfiguration(name.strip(), content)
 
     def _should_exit(self, context):
-        if self._finished_iter_count >= self._iteration_count:
+        if 0 < self._iteration_count <= self._finished_iter_count:
             logger.info('Iteration count reached %s', self._iteration_count)
             return True
         if self._stop_conditions.passed(context):
@@ -350,6 +356,9 @@ class CCEHTTPRequestTask(BaseTask):
 
             self._post_process(context)
             self._persist_checkpoint()
+
+            self._finished_iter_count += 1
+            
             if self._should_exit(context):
                 break
 

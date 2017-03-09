@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 from cloudconnectlib.common.log import get_cc_logger
+from cloudconnectlib.core.exceptions import StopCCEIteration
 from cloudconnectlib.core.http import get_proxy_info
 
 logger = get_cc_logger()
@@ -11,6 +12,9 @@ class ProcessHandler(object):
         self.method = method
         self.arguments = arguments
         self.output = output
+
+    def execute(self, context):
+        return {}
 
 
 class Condition(object):
@@ -106,21 +110,33 @@ class BaseTask(object):
         self._skip_post_conditions.add(Condition(method, input))
 
     def _execute_handlers(self, handlers, context):
-        pass
+        if not handlers:
+            logger.debug('No any handler found')
+            return
+        for handler in handlers:
+            try:
+                r = handler.execute(context)
+            except StopCCEIteration:
+                logger.info('Stop task signal received, stop executing handlers')
+                break
+            else:
+                if r:
+                    context.update(r)
+        logger.debug('Execute handlers finished successfully.')
 
     def _pre_process(self, context):
         if self._skip_pre_conditions.passed(context):
             logger.debug('Pre process skip condition is passed')
             return
         self._execute_handlers(self._pre_process_handler, context)
-        return context
+        return
 
     def _post_process(self, context):
         if self._skip_post_conditions.passed(context):
-            logger.debug('Pre process skip condition is passed')
+            logger.debug('Post process skip condition is passed')
             return
         self._execute_handlers(self._post_process_handler, context)
-        return context
+        return
 
     @abstractmethod
     def perform(self):

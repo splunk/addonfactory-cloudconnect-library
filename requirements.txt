@@ -7,3 +7,4 @@ munch==2.0.4
 splunktaucclib>=3.0.0-develop
 solnlib>=1.0.16-dev
 functools32==3.2.3-2
+futures>=3.0.5

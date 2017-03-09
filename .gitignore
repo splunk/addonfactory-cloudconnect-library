@@ -16,6 +16,7 @@
 /package/munch/
 /package/solnlib/
 /package/splunktaucclib/
+/package/concurrent/
 package/_pytest/
 package/coverage/
 package/py/

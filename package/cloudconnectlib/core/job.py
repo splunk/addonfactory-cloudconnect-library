@@ -1,4 +1,5 @@
 import Queue
+import copy
 import threading
 
 from cloudconnectlib.common.log import get_cc_logger
@@ -15,10 +16,17 @@ class CCEJob(object):
     So if there is no dependency among tasks, then suggest to create different Job for them to improve performance.
     """
 
-    def __init__(self):
+    def __init__(self, context, tasks=None):
+        self._context = context
         self._tasks = Queue.Queue()
+
         self._stop_signal_received = False
         self._stopped = threading.Event()
+
+        if tasks:
+            # FIXME
+            for task in tasks:
+                self._tasks.put(task)
 
     def add_task(self, task):
         """
@@ -31,7 +39,7 @@ class CCEJob(object):
             raise ValueError('Invalid task')
         self._tasks.put(task)
 
-    def run(self, context):
+    def run(self):
         """
         Run current job, which executes tasks in it sequentially..
 
@@ -48,10 +56,11 @@ class CCEJob(object):
                 self._stopped.set()
                 break
             task = self._tasks.get()
-            result = task.perform()
-            
-            for r in result:
-                pass
+            result = task.perform(self._context)
+
+            for ctx in result:
+                cloned_tasks = copy.deepcopy(self._tasks)
+                yield CCEJob(context=ctx, tasks=cloned_tasks)
 
         logger.debug('Job execution finished successfully.')
 

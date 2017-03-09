@@ -78,7 +78,7 @@ class RequestWithToken(object):
         self.body = DictToken(request.get('body', {}))
 
         method = request.get('method', 'GET')
-        if method not in ('GET', 'POST'):
+        if not method or method.upper() not in ('GET', 'POST'):
             raise ValueError('Unsupported value for request method: {}'.format(method))
         self.method = _Token(method)
 
@@ -160,32 +160,35 @@ class BaseTask(object):
         """
         self._skip_post_conditions.add(Condition(method, input))
 
-    def _execute_handlers(self, handlers, context):
-        if not handlers:
-            logger.debug('No any handler found')
+    def _execute_handlers(self, skip_conditions, handlers, context, phase):
+        if skip_conditions.passed(context):
+            logger.debug('%s skip condition is passed', phase.capitalize())
             return
+        if not handlers:
+            logger.debug('No handler found in %s', phase)
+            return
+
         for handler in handlers:
             try:
-                r = handler.execute(context)
+                data = handler.execute(context)
             except StopCCEIteration:
                 logger.info('Stop task signal received, stop executing handlers')
                 break
             else:
-                if r:
-                    context.update(r)
+                if data:
+                    # FIXME
+                    context.update(data)
         logger.debug('Execute handlers finished successfully.')
 
     def _pre_process(self, context):
-        if self._skip_pre_conditions.passed(context):
-            logger.debug('Pre process skip condition is passed')
-            return
-        self._execute_handlers(self._pre_process_handler, context)
+        self._execute_handlers(self._skip_pre_conditions,
+                               self._pre_process_handler,
+                               context, 'pre process')
 
     def _post_process(self, context):
-        if self._skip_post_conditions.passed(context):
-            logger.debug('Post process skip condition is passed')
-            return
-        self._execute_handlers(self._post_process_handler, context)
+        self._execute_handlers(self._skip_post_conditions,
+                               self._post_process_handler,
+                               context, 'post process')
 
     @abstractmethod
     def perform(self, context):
@@ -358,7 +361,7 @@ class CCEHTTPRequestTask(BaseTask):
             self._persist_checkpoint()
 
             self._finished_iter_count += 1
-            
+
             if self._should_exit(context):
                 break
 

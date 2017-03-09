@@ -1,4 +1,3 @@
-import Queue
 import copy
 import threading
 
@@ -18,15 +17,13 @@ class CCEJob(object):
 
     def __init__(self, context, tasks=None):
         self._context = context
-        self._tasks = Queue.Queue()
+        self._tasks = []
 
         self._stop_signal_received = False
         self._stopped = threading.Event()
 
         if tasks:
-            # FIXME
-            for task in tasks:
-                self._tasks.put(task)
+            self._tasks.extend(tasks)
 
     def add_task(self, task):
         """
@@ -36,8 +33,15 @@ class CCEJob(object):
         :type task: TBD
         """
         if not isinstance(task, BaseTask):
-            raise ValueError('Invalid task')
-        self._tasks.put(task)
+            raise ValueError('Unsupported task type: {}'.format(type(task)))
+        self._tasks.append(task)
+
+    def _check_if_stop_needed(self):
+        if self._stop_signal_received:
+            logger.info('Stop job signal received, stopping job.')
+            self._stopped.set()
+            return True
+        return False
 
     def run(self):
         """
@@ -48,29 +52,36 @@ class CCEJob(object):
         """
         logger.debug('Start to run job')
 
+        if not self._tasks:
+            logger.debug('No task found in job')
+            return
+
         self._stopped.clear()
 
-        while not self._stopped.is_set():
-            if self._stop_signal_received:
-                logger.info('Stop job signal received, stopping job.')
-                self._stopped.set()
-                break
-            task = self._tasks.get()
-            result = task.perform(self._context)
+        if self._check_if_stop_needed():
+            return
 
-            no_more_tasks = self._tasks.empty()
-            if no_more_tasks:
-                logger.debug('There is no more task need to perform')
+        task = self._tasks[0]
+        self._tasks = self._tasks[1:]
+        contexts = list(task.perform(self._context) or ())
 
-            for ctx in result:
-                if no_more_tasks:
-                    continue
-                cloned_tasks = copy.deepcopy(self._tasks)
-                yield CCEJob(context=ctx, tasks=cloned_tasks)
+        if self._check_if_stop_needed():
+            return
+
+        if not self._tasks:
+            logger.debug('No more task need to perform, exiting job')
+            return
+
+        for ctx in contexts:
+            yield CCEJob(context=copy.deepcopy(ctx),
+                         tasks=copy.deepcopy(self._tasks))
+
+            if self._check_if_stop_needed():
+                return
 
         logger.debug('Job execution finished successfully.')
 
-    def stop(self, block=True, timeout=30):
+    def stop(self, block=False, timeout=30):
         """
         Stop current job.
         """
@@ -82,5 +93,4 @@ class CCEJob(object):
         if not block:
             return
 
-        while not self._stopped.is_set():
-            self._stopped.wait(timeout)
+        self._stopped.wait(timeout)

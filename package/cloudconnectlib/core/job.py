@@ -56,8 +56,6 @@ class CCEJob(object):
             logger.debug('No task found in job')
             return
 
-        self._stopped.clear()
-
         if self._check_if_stop_needed():
             return
 

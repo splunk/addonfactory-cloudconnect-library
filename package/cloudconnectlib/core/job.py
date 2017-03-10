@@ -78,6 +78,7 @@ class CCEJob(object):
                 return
 
         logger.debug('Job execution finished successfully.')
+        self._stopped.set()
 
     def stop(self, block=False, timeout=30):
         """

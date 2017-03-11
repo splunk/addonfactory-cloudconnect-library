@@ -66,6 +66,7 @@ def test_run_split_jobs():
     cc_engine.start([HTTPJob(counter), SplitJob(split_counter)])
     assert counter.value() == 1
     assert split_counter.value() == 10
+    assert cc_engine._counter == 12
 
 
 def test_stop_jobs():

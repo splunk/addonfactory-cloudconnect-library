@@ -45,11 +45,3 @@ if __name__ == '__main__':
         pass
 
     print 'finished job'
-
-    # t = threading.Thread(target=job.run)
-    # t.start()
-    #
-    # time.sleep(10)
-    #
-    # job.stop()
-    # job.run()

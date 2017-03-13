@@ -42,7 +42,7 @@ class Condition(object):
         self.callable_method = lookup_method(method)
         self.arguments = [_Token(arg) for arg in arguments or ()]
 
-    def passed(self, context):
+    def is_meet(self, context):
         args = [arg.render(context) for arg in self.arguments]
         logger.debug('%s arguments found for method %s', len(args), self.method)
         return self.callable_method(args)
@@ -55,9 +55,9 @@ class ConditionGroup(object):
     def add(self, condition):
         self._conditions.append(condition)
 
-    def passed(self, context):
+    def is_meet(self, context):
         return any(
-            cdn.passed(context) for cdn in self._conditions
+            cdn.is_meet(context) for cdn in self._conditions
         )
 
 
@@ -163,9 +163,10 @@ class BaseTask(object):
         """
         self._skip_post_conditions.add(Condition(method, input))
 
-    def _execute_handlers(self, skip_conditions, handlers, context, phase):
-        if skip_conditions.passed(context):
-            logger.debug('%s skip condition is passed', phase.capitalize())
+    @staticmethod
+    def _execute_handlers(skip_conditions, handlers, context, phase):
+        if skip_conditions.is_meet(context):
+            logger.debug('%s skip conditions are met', phase.capitalize())
             return
         if not handlers:
             logger.debug('No handler found in %s', phase)
@@ -217,7 +218,7 @@ class CCEHTTPRequestTask(BaseTask):
         self._request = RequestWithToken(request)
         self._conf = conf
         self._stop_conditions = ConditionGroup()
-        self._finished_iter_count = 0
+        self._finished_iter_count = defaults.max_iteration_count
         self._proxy_info = None
         self._iteration_count = 0
         self._checkpoint_manager = None  # TODO
@@ -271,7 +272,10 @@ class CCEHTTPRequestTask(BaseTask):
         try:
             self._iteration_count = int(count)
         except ValueError:
-            raise ValueError('Invalid iteration count: {}'.format(count))
+            self._iteration_count = defaults.max_iteration_count
+            logger.warning(
+                'Invalid iteration count: %s, using default max iteration count: %s',
+                count, self._iteration_count)
 
     def add_stop_condition(self, method, input):
         """
@@ -304,10 +308,9 @@ class CCEHTTPRequestTask(BaseTask):
         if 0 < self._iteration_count <= self._finished_iter_count:
             logger.info('Iteration count reached %s', self._iteration_count)
             return True
-        if self._stop_conditions.passed(context):
-            logger.info('Stop conditions passed')
+        if self._stop_conditions.is_meet(context):
+            logger.info('Stop conditions are met')
             return True
-
         return False
 
     def _send_request(self, request):
@@ -358,7 +361,8 @@ class CCEHTTPRequestTask(BaseTask):
             self._pre_process(context)
 
             r = self._request.render_request(context)
-            self._authorizer(r.headers, context)
+            if self._authorizer:
+                self._authorizer(r.headers, context)
 
             response, need_exit = self._send_request(r)
             if need_exit:

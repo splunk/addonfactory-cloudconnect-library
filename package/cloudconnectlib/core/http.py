@@ -95,7 +95,7 @@ def _make_prepare_url_func():
 
 def get_proxy_info(proxy_config):
     if not proxy_config or not utils.is_true(proxy_config.get('proxy_enabled')):
-        _logger.debug('Proxy is not enabled')
+        _logger.info('Proxy is not enabled')
         return None
 
     host = proxy_config.get('proxy_host')

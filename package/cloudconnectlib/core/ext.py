@@ -12,6 +12,21 @@ from ..common import util, log
 _logger = log.get_cc_logger()
 
 
+def regex_search(pattern, source, flags=0):
+    """Search substring in source through regex"""
+    if not isinstance(source, basestring):
+        _logger.warning('Cannot apply regex search on non-string: %s', type(source))
+        return {}
+    try:
+        matches = re.search(pattern=pattern, string=source, flags=flags)
+    except Exception:
+        _logger.warning('Unable to search pattern=%s and flags=%s in string, error=%s',
+                        pattern, flags, traceback.format_exc())
+        return {}
+    else:
+        return matches.groupdict() if matches else {}
+
+
 def regex_match(pattern, source, flags=0):
     """
     Determine whether a string is match a regex pattern.
@@ -318,6 +333,7 @@ _extension_functions = {
     'is_true': is_true,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
+    'regex_search': regex_search,
     'set_var': set_var,
     'splunk_xml': splunk_xml,
     'std_output': std_output,

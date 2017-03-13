@@ -1,4 +1,5 @@
 import json
+import threading
 from abc import abstractmethod
 
 from cloudconnectlib.common.log import get_cc_logger
@@ -198,6 +199,9 @@ class BaseTask(object):
     def perform(self, context):
         pass
 
+    def stop(self, block=False, timeout=30):
+        pass
+
 
 class CCESplitTask(BaseTask):
     def perform(self, context):
@@ -225,6 +229,30 @@ class CCEHTTPRequestTask(BaseTask):
         self._checkpoint_conf = None
         self._http_client = None
         self._authorizer = None
+        self._stopped = threading.Event()
+        self._stop_signal_received = False
+
+    def stop(self, block=False, timeout=30):
+        """
+        Stop current task.
+        """
+        if self._stopped.is_set():
+            logger.info('Task is not running, cannot stop it.')
+            return
+        self._stop_signal_received = True
+
+        if not block:
+            return
+
+        if not self._stopped.wait(timeout):
+            logger.info('Waiting for stop task timeout')
+
+    def _check_if_stop_needed(self):
+        if self._stop_signal_received:
+            logger.info('Stop task signal received, stopping task.')
+            self._stopped.set()
+            return True
+        return False
 
     def set_proxy(self, proxy_setting):
         """
@@ -360,6 +388,9 @@ class CCEHTTPRequestTask(BaseTask):
         while True:
             self._pre_process(context)
 
+            if self._check_if_stop_needed():
+                break
+
             r = self._request.render_request(context)
             if self._authorizer:
                 self._authorizer(r.headers, context)
@@ -368,14 +399,18 @@ class CCEHTTPRequestTask(BaseTask):
             if need_exit:
                 logger.info('Task need been terminated due to request result')
                 break
+            if self._check_if_stop_needed():
+                break
 
             context[_RESPONSE_KEY] = response
 
             self._post_process(context)
             self._persist_checkpoint()
 
-            self._finished_iter_count += 1
+            if self._check_if_stop_needed():
+                break
 
+            self._finished_iter_count += 1
             if self._should_exit(context):
                 break
 

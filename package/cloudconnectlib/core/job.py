@@ -27,6 +27,7 @@ class CCEJob(object):
         if tasks:
             self._rest_tasks.extend(tasks)
         self._logger = CloudClientLogAdapter(log.logger, prefix=name)
+        self._running_task = None
 
     def add_task(self, task):
         """
@@ -62,9 +63,9 @@ class CCEJob(object):
         if self._check_if_stop_needed():
             return
 
-        current_task = self._rest_tasks[0]
+        self._running_task = self._rest_tasks[0]
         self._rest_tasks = self._rest_tasks[1:]
-        contexts = list(current_task.perform(self._context) or ())
+        contexts = list(self._running_task.perform(self._context) or ())
 
         if self._check_if_stop_needed():
             return
@@ -96,6 +97,8 @@ class CCEJob(object):
             return
         self._stop_signal_received = True
 
+        if self._running_task:
+            self._running_task.stop(block, timeout)
         if not block:
             return
 

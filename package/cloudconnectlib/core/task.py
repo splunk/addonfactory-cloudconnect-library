@@ -7,11 +7,14 @@ from cloudconnectlib.core.exceptions import HTTPError
 from cloudconnectlib.core.exceptions import StopCCEIteration
 from cloudconnectlib.core.ext import lookup_method
 from cloudconnectlib.core.http import get_proxy_info, HttpClient
-from cloudconnectlib.core.models import DictToken, _Token
+from cloudconnectlib.core.models import DictToken, _Token, BasicAuthorization
 
 logger = get_cc_logger()
 
 _RESPONSE_KEY = '__response__'
+_AUTH_TYPES = {
+    'basic_auth': BasicAuthorization
+}
 
 
 class ProcessHandler(object):
@@ -209,18 +212,18 @@ class CCEHTTPRequestTask(BaseTask):
      from context when executing.
     """
 
-    def __init__(self, request):
+    def __init__(self, request, conf=None):
         super(CCEHTTPRequestTask, self).__init__()
         self._request = RequestWithToken(request)
+        self._conf = conf
         self._stop_conditions = ConditionGroup()
         self._finished_iter_count = 0
         self._proxy_info = None
         self._iteration_count = 0
         self._checkpoint_manager = None  # TODO
         self._checkpoint_conf = None
-        self._auth_type = None
-        self._auth_settings = None
-        self._client = None
+        self._http_client = None
+        self._authorizer = None
 
     def set_proxy(self, proxy_setting):
         """
@@ -249,8 +252,12 @@ class CCEHTTPRequestTask(BaseTask):
             {"username": xxx, "password": xxx}
         :type settings: ``dict``
         """
-        self._auth_type = auth_type
-        self._auth_settings = settings
+        if not auth_type:
+            raise ValueError('Invalid auth type={}'.format(auth_type))
+        authorizer_cls = _AUTH_TYPES.get(auth_type.lower())
+        if not authorizer_cls:
+            raise ValueError('Unsupported auth type={}'.format(auth_type))
+        self._authorizer = authorizer_cls(settings)
 
     def set_iteration_count(self, count):
         """
@@ -264,7 +271,7 @@ class CCEHTTPRequestTask(BaseTask):
         try:
             self._iteration_count = int(count)
         except ValueError:
-            raise ValueError('Invalid iteration count: %s' % count)
+            raise ValueError('Invalid iteration count: {}'.format(count))
 
     def add_stop_condition(self, method, input):
         """
@@ -305,7 +312,7 @@ class CCEHTTPRequestTask(BaseTask):
 
     def _send_request(self, request):
         try:
-            response = self._client.send(request)
+            response = self._http_client.send(request)
         except HTTPError as error:
             logger.exception(
                 'Error occurred in request url=%s method=%s reason=%s',
@@ -338,18 +345,21 @@ class CCEHTTPRequestTask(BaseTask):
         return None, True
 
     def _persist_checkpoint(self):
-        # TODO storage checkpoint
-        pass
+        if not self._checkpoint_manager:
+            logger.info('Checkpoint is not configured. Skip persist checkpoint.')
+            # TODO
 
     def perform(self, context):
         logger.debug('Start to perform task')
 
-        self._client = HttpClient(self._proxy_info)
+        self._http_client = HttpClient(self._proxy_info)
 
         while True:
             self._pre_process(context)
 
             r = self._request.render_request(context)
+            self._authorizer(r.headers, context)
+
             response, need_exit = self._send_request(r)
             if need_exit:
                 logger.info('Task need been terminated due to request result')

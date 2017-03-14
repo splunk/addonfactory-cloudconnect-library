@@ -28,10 +28,13 @@ context = {
 if __name__ == '__main__':
     job = CCEJob(context=context)
 
-    task = CCEHTTPRequestTask(request={
-        "url": "http://ip.jsontest.com/",
-        "method": "GET",
-    })
+    task = CCEHTTPRequestTask(
+        request={
+            "url": "http://ip.jsontest.com/",
+            "method": "GET",
+        },
+        name='HttpTask'
+    )
 
     task.add_postprocess_handler('json_path', ['{{__response__.body}}', "$"], 'all_res')
     task.add_postprocess_handler('std_output', ['{{all_res}}'], None)

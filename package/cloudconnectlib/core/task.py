@@ -102,7 +102,8 @@ class CheckpointConfiguration(object):
 
 
 class BaseTask(object):
-    def __init__(self):
+    def __init__(self, name):
+        self._name = name
         self._pre_process_handler = []
         self._post_process_handler = []
         self._skip_pre_conditions = ConditionGroup()
@@ -217,8 +218,8 @@ class CCEHTTPRequestTask(BaseTask):
      from context when executing.
     """
 
-    def __init__(self, request, conf=None):
-        super(CCEHTTPRequestTask, self).__init__()
+    def __init__(self, request, name, conf=None):
+        super(CCEHTTPRequestTask, self).__init__(name)
         self._request = RequestWithToken(request)
         self._conf = conf
         self._stop_conditions = ConditionGroup()
@@ -416,4 +417,11 @@ class CCEHTTPRequestTask(BaseTask):
 
         yield context
 
+        self._stopped.set()
         logger.debug('Perform task finished')
+
+    def __str__(self):
+        return self._name
+
+    def __repr__(self):
+        return self.__str__()

@@ -1,8 +1,7 @@
 import copy
 import threading
 
-from cloudconnectlib.common.log import CloudClientLogAdapter
-from cloudconnectlib.splunktacollectorlib.common import log
+from cloudconnectlib.splunktacollectorlib.common.log import logger
 from task import BaseTask
 
 
@@ -17,7 +16,7 @@ class CCEJob(object):
     different Job for them to improve performance.
     """
 
-    def __init__(self, context, name=None, tasks=None):
+    def __init__(self, context, tasks=None):
         self._context = context
         self._rest_tasks = []
 
@@ -26,7 +25,6 @@ class CCEJob(object):
 
         if tasks:
             self._rest_tasks.extend(tasks)
-        self._logger = CloudClientLogAdapter(log.logger, prefix=name)
         self._running_task = None
 
     def add_task(self, task):
@@ -42,7 +40,7 @@ class CCEJob(object):
 
     def _check_if_stop_needed(self):
         if self._stop_signal_received:
-            self._logger.info('Stop job signal received, stopping job.')
+            logger.info('Stop job signal received, stopping job.')
             self._stopped.set()
             return True
         return False
@@ -54,10 +52,10 @@ class CCEJob(object):
         :param context:
         :type context: dict
         """
-        self._logger.debug('Start to run job')
+        logger.debug('Start to run job')
 
         if not self._rest_tasks:
-            self._logger.info('No task found in job')
+            logger.info('No task found in job')
             return
 
         if self._check_if_stop_needed():
@@ -71,7 +69,7 @@ class CCEJob(object):
             return
 
         if not self._rest_tasks:
-            self._logger.info('No more task need to perform, exiting job')
+            logger.info('No more task need to perform, exiting job')
             return
 
         count = 0
@@ -84,8 +82,8 @@ class CCEJob(object):
             if self._check_if_stop_needed():
                 break
 
-        self._logger.debug('Generated %s job in total', count)
-        self._logger.debug('Job execution finished successfully.')
+        logger.debug('Generated %s job in total', count)
+        logger.debug('Job execution finished successfully.')
         self._stopped.set()
 
     def stop(self, block=False, timeout=30):
@@ -93,7 +91,7 @@ class CCEJob(object):
         Stop current job.
         """
         if self._stopped.is_set():
-            self._logger.info('Job is not running, cannot stop it.')
+            logger.info('Job is not running, cannot stop it.')
             return
         self._stop_signal_received = True
 
@@ -103,4 +101,12 @@ class CCEJob(object):
             return
 
         if not self._stopped.wait(timeout):
-            self._logger.info('Waiting for stop job timeout')
+            logger.info('Waiting for stop job timeout')
+
+    def __str__(self):
+        if self._running_task:
+            return 'Job(running task={})'.format(self._running_task)
+        return 'Job(no running task)'
+
+    def __repr__(self):
+        return self.__str__()

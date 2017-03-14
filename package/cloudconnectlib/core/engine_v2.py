@@ -66,7 +66,7 @@ class CloudConnectEngine(object):
         result = self._executor.submit(self._invoke_job, job)
         self._pending_job_results.add(result)
         self._counter += 1
-        logger.debug("%d job(s) have been added to the engine now",
+        logger.debug("%s job(s) have been added to the engine now",
                      self._counter)
         return True
 
@@ -83,7 +83,7 @@ class CloudConnectEngine(object):
         try:
             invoke_result = job.run()
         except:
-            logger.exception("one job is invoked with exception")
+            logger.exception("job %s is invoked with exception", job)
         finally:
             # remove the job from pending_jobs when it's done
             with self._lock:

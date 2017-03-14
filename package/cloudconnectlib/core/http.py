@@ -4,10 +4,10 @@ import traceback
 from cloudconnectlib.common import util
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
+from cloudconnectlib.core.exceptions import HTTPError
 from httplib2 import Http, socks, ProxyInfo, SSLHandshakeError
-from solnlib import utils
 from solnlib.packages.requests import PreparedRequest, utils
-from .exceptions import HTTPError
+from solnlib.utils import is_true
 
 _logger = get_cc_logger()
 
@@ -94,24 +94,31 @@ def _make_prepare_url_func():
 
 
 def get_proxy_info(proxy_config):
-    if not proxy_config or not utils.is_true(proxy_config.get('proxy_enabled')):
+    if not proxy_config or not is_true(proxy_config.get('proxy_enabled')):
         _logger.info('Proxy is not enabled')
         return None
 
-    host = proxy_config.get('proxy_host')
+    url = proxy_config.get('proxy_url')
     port = proxy_config.get('proxy_port')
-    if host or port:
-        if not host:
-            raise ValueError('Proxy "host" must not be empty')
+
+    if url or port:
+        if not url:
+            raise ValueError('Proxy "url" must not be empty')
         if not util.is_valid_port(port):
             raise ValueError(
                 'Proxy "port" must be in range [1,65535]: %s' % port
             )
 
-    username = proxy_config.get('proxy_username') or None
-    password = proxy_config.get('proxy_password') or None
+    user = proxy_config.get('proxy_username')
+    password = proxy_config.get('proxy_password')
 
-    proxy_type = proxy_config.get('proxy_type', 'http')
+    if not all((user, password)):
+        _logger.info('Proxy has no credentials found')
+        user, password = None, None
+
+    proxy_type = proxy_config.get('proxy_type')
+    proxy_type = proxy_type.lower() if proxy_type else 'http'
+
     if proxy_type in _PROXY_TYPE_MAP:
         ptv = _PROXY_TYPE_MAP[proxy_type]
     elif proxy_type in _PROXY_TYPE_MAP.values():
@@ -120,13 +127,13 @@ def get_proxy_info(proxy_config):
         ptv = socks.PROXY_TYPE_HTTP
         _logger.info('Proxy type not found, set to "HTTP"')
 
-    rdns = utils.is_true(proxy_config.get('proxy_rdns'))
+    rdns = is_true(proxy_config.get('proxy_rdns'))
 
     proxy_info = ProxyInfo(
-        proxy_host=host,
+        proxy_host=url,
         proxy_port=int(port),
         proxy_type=ptv,
-        proxy_user=username,
+        proxy_user=user,
         proxy_pass=password,
         proxy_rdns=rdns
     )
@@ -134,23 +141,15 @@ def get_proxy_info(proxy_config):
 
 
 class HttpClient(object):
-    def __init__(self, proxy=None):
+    def __init__(self):
         """Constructs a `HTTPRequest` with a optional proxy setting.
-        :param proxy: Optional proxy settings.
-        :type proxy: ProxyInfo
         """
-        self._proxy_info = proxy
         self._connection = None
         self._url_preparer = PreparedRequest()
 
-    def _send_internal(self, uri, method, headers=None, body=None):
+    def _send_internal(self, uri, method, headers=None, body=None, proxy_info=None):
         """Do send request to target URL and validate SSL cert by default.
         If validation failed, disable it and try again."""
-        if self._connection is None:
-            self._connection = self._build_http_connection(
-                proxy_info=self._proxy_info,
-                disable_ssl_cert_validation=False)
-
         try:
             return self._connection.request(
                 uri, body=body, method=method, headers=headers
@@ -167,14 +166,14 @@ class HttpClient(object):
             )
 
             self._connection = self._build_http_connection(
-                proxy_info=self._proxy_info,
+                proxy_info=proxy_info,
                 disable_ssl_cert_validation=True
             )
             return self._connection.request(
                 uri, body=body, method=method, headers=headers
             )
 
-    def _retry_send_request_if_needed(self, uri, method='GET', headers=None, body=None):
+    def _retry_send_request_if_needed(self, uri, method='GET', headers=None, body=None, proxy_info=None):
         """Invokes request and auto retry with an exponential backoff
         if the response status is configured in defaults.retry_statuses."""
         retries = max(defaults.retries, 0)
@@ -182,7 +181,8 @@ class HttpClient(object):
         for i in xrange(retries + 1):
             try:
                 response, content = self._send_internal(
-                    uri, body=body, method=method, headers=headers
+                    uri=uri, body=body, method=method, headers=headers,
+                    proxy_info=proxy_info
                 )
             except Exception as err:
                 _logger.exception(
@@ -207,14 +207,21 @@ class HttpClient(object):
         self._url_preparer.prepare_url(url, params)
         return self._url_preparer.url
 
-    def send(self, request):
+    def _initialize_connection(self, proxy_info=None):
+        if proxy_info:
+            _logger.info('Proxy is enabled for http connection.')
+        else:
+            _logger.info('Proxy is not enabled for http connection.')
+        self._connection = self._build_http_connection(proxy_info)
+
+    def send(self, request, proxy_info=None):
         if not request:
             raise ValueError('The request is none')
         if request.body and not isinstance(request.body, str):
             raise TypeError('The request body must be str')
 
         if self._connection is None:
-            self._connection = self._build_http_connection(self._proxy_info)
+            self._initialize_connection(proxy_info)
 
         try:
             url = self._prepare_url(request.url)
@@ -225,7 +232,9 @@ class HttpClient(object):
             )
             url = request.url
 
-        return self._retry_send_request_if_needed(url, request.method, request.headers, request.body)
+        return self._retry_send_request_if_needed(
+            url, request.method, request.headers, request.body, proxy_info
+        )
 
     @staticmethod
     def _build_http_connection(

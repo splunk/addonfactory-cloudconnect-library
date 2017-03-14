@@ -66,7 +66,7 @@ def remove_file(target_dir, target_file):
         pass
 
 
-def test_plugin_init_error(capsys):
+def test_plugin_init_error_path(capsys):
     import_part = """
 from cloudconnectlib.core.plugin import cce_pipeline_plugin
 """
@@ -105,7 +105,7 @@ def cce_unit_test_func_without_decorator(msg):
         assert "cce_unit_test_func_with_arg1" not in _extension_functions.keys()
         assert "cce_unit_test_func_with_arg2" not in _extension_functions.keys()
 
-        # Don't with the right prefix
+        # Don't have the right prefix
         write_py_file(plugin_dir, test_plugin_file2, import_part+test_functions)
         init_pipeline_plugins(plugin_dir)
         assert "cce_unit_test_func_with_arg1" not in _extension_functions.keys()

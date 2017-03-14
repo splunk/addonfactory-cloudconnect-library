@@ -84,7 +84,7 @@ class CCEJob(object):
             if self._check_if_stop_needed():
                 break
 
-        self._logger.info('Generated %s job in total', count)
+        self._logger.debug('Generated %s job in total', count)
         self._logger.debug('Job execution finished successfully.')
         self._stopped.set()
 

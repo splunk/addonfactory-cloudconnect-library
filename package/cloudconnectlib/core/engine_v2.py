@@ -76,19 +76,19 @@ class CloudConnectEngine(object):
         :param job: job should have a 'run' method
         :return:
         """
-        # just return when the engine has shut down
-        if self._shutdown:
-            return
-        invoke_result = None
         try:
+            # just return when the engine has shut down
+            if self._shutdown:
+                return None
             invoke_result = job.run()
+            return invoke_result
         except:
             logger.exception("job %s is invoked with exception", job)
+            return None
         finally:
             # remove the job from pending_jobs when it's done
             with self._lock:
                 self._pending_jobs.remove(job)
-            return invoke_result
 
     def shutdown(self):
         """

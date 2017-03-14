@@ -83,5 +83,5 @@ def test_stop_jobs():
     thread.start()
     cc_engine.start([HTTPJob(counter), SplitJob(split_counter, stop_counter)])
     assert counter.value() == 1
-    assert stop_counter.value() + split_counter.value() == 10
+    assert stop_counter.value() + split_counter.value() <= 10
 

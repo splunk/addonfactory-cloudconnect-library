@@ -1,13 +1,22 @@
 import time
 import traceback
 
-from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
+from cloudconnectlib.common import util
+from cloudconnectlib.common.log import get_cc_logger
+from cloudconnectlib.core import defaults
+from httplib2 import Http, socks, ProxyInfo, SSLHandshakeError
+from solnlib import utils
 from solnlib.packages.requests import PreparedRequest, utils
-from . import defaults
 from .exceptions import HTTPError
-from ..common.log import get_cc_logger
 
 _logger = get_cc_logger()
+
+_PROXY_TYPE_MAP = {
+    'http': socks.PROXY_TYPE_HTTP,
+    'http_no_tunnel': socks.PROXY_TYPE_HTTP_NO_TUNNEL,
+    'socks4': socks.PROXY_TYPE_SOCKS4,
+    'socks5': socks.PROXY_TYPE_SOCKS5,
+}
 
 
 class HTTPResponse(object):
@@ -35,7 +44,7 @@ class HTTPResponse(object):
                 'Unable to find charset in response headers,'
                 ' set it to default "%s"', charset
             )
-       
+
         _logger.info('Decoding response content with charset=%s', charset)
 
         try:
@@ -84,25 +93,168 @@ def _make_prepare_url_func():
     return prepare_url
 
 
+def get_proxy_info(proxy_config):
+    if not proxy_config or not utils.is_true(proxy_config.get('proxy_enabled')):
+        _logger.info('Proxy is not enabled')
+        return None
+
+    host = proxy_config.get('proxy_host')
+    port = proxy_config.get('proxy_port')
+    if host or port:
+        if not host:
+            raise ValueError('Proxy "host" must not be empty')
+        if not util.is_valid_port(port):
+            raise ValueError(
+                'Proxy "port" must be in range [1,65535]: %s' % port
+            )
+
+    username = proxy_config.get('proxy_username') or None
+    password = proxy_config.get('proxy_password') or None
+
+    proxy_type = proxy_config.get('proxy_type', 'http')
+    if proxy_type in _PROXY_TYPE_MAP:
+        ptv = _PROXY_TYPE_MAP[proxy_type]
+    elif proxy_type in _PROXY_TYPE_MAP.values():
+        ptv = proxy_type
+    else:
+        ptv = socks.PROXY_TYPE_HTTP
+        _logger.info('Proxy type not found, set to "HTTP"')
+
+    rdns = utils.is_true(proxy_config.get('proxy_rdns'))
+
+    proxy_info = ProxyInfo(
+        proxy_host=host,
+        proxy_port=int(port),
+        proxy_type=ptv,
+        proxy_user=username,
+        proxy_pass=password,
+        proxy_rdns=rdns
+    )
+    return proxy_info
+
+
+class HttpClient(object):
+    def __init__(self, proxy=None):
+        """Constructs a `HTTPRequest` with a optional proxy setting.
+        :param proxy: Optional proxy settings.
+        :type proxy: ProxyInfo
+        """
+        self._proxy_info = proxy
+        self._connection = None
+        self._url_preparer = PreparedRequest()
+
+    def _send_internal(self, uri, method, headers=None, body=None):
+        """Do send request to target URL and validate SSL cert by default.
+        If validation failed, disable it and try again."""
+        if self._connection is None:
+            self._connection = self._build_http_connection(
+                proxy_info=self._proxy_info,
+                disable_ssl_cert_validation=False)
+
+        try:
+            return self._connection.request(
+                uri, body=body, method=method, headers=headers
+            )
+        except SSLHandshakeError:
+            _logger.warning(
+                "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verification failed. "
+                "The certificate of the https server [%s] is not trusted, "
+                "this add-on will proceed to connect with this certificate. "
+                "You may need to check the certificate and "
+                "refer to the documentation and add it to the trust list. %s",
+                uri,
+                traceback.format_exc()
+            )
+
+            self._connection = self._build_http_connection(
+                proxy_info=self._proxy_info,
+                disable_ssl_cert_validation=True
+            )
+            return self._connection.request(
+                uri, body=body, method=method, headers=headers
+            )
+
+    def _retry_send_request_if_needed(self, uri, method='GET', headers=None, body=None):
+        """Invokes request and auto retry with an exponential backoff
+        if the response status is configured in defaults.retry_statuses."""
+        retries = max(defaults.retries, 0)
+
+        for i in xrange(retries + 1):
+            try:
+                response, content = self._send_internal(
+                    uri, body=body, method=method, headers=headers
+                )
+            except Exception as err:
+                _logger.exception(
+                    'Could not send request url=%s method=%s', uri, method)
+                raise HTTPError('HTTP Error %s' % str(err))
+
+            status = response.status
+
+            if self._is_need_retry(status, i, retries):
+                delay = 2 ** i
+                _logger.warning(
+                    'The response status=%s of request which url=%s and'
+                    ' method=%s. Retry after %s seconds.',
+                    status, uri, method, delay,
+                )
+                time.sleep(delay)
+                continue
+
+            return HTTPResponse(response, content)
+
+    def _prepare_url(self, url, params=None):
+        self._url_preparer.prepare_url(url, params)
+        return self._url_preparer.url
+
+    def send(self, request):
+        if not request:
+            raise ValueError('The request is none')
+        if request.body and not isinstance(request.body, str):
+            raise TypeError('The request body must be str')
+
+        if self._connection is None:
+            self._connection = self._build_http_connection(self._proxy_info)
+
+        try:
+            url = self._prepare_url(request.url)
+        except Exception:
+            _logger.warning(
+                'Failed to encode url=%s: %s',
+                request.url, traceback.format_exc()
+            )
+            url = request.url
+
+        return self._retry_send_request_if_needed(url, request.method, request.headers, request.body)
+
+    @staticmethod
+    def _build_http_connection(
+            proxy_info=None,
+            timeout=defaults.timeout,
+            disable_ssl_cert_validation=defaults.disable_ssl_cert_validation):
+        return Http(
+            proxy_info=proxy_info,
+            timeout=timeout,
+            disable_ssl_certificate_validation=disable_ssl_cert_validation)
+
+    @staticmethod
+    def _is_need_retry(status, retried, maximum_retries):
+        return retried < maximum_retries \
+               and status in defaults.retry_statuses
+
+
 class HTTPRequest(object):
     """
     HTTPRequest class represents a single request to send HTTP request until
     reached it's stop condition.
     """
 
-    _PROXY_TYPE = {
-        'http': socks.PROXY_TYPE_HTTP,
-        'http_no_tunnel': socks.PROXY_TYPE_HTTP_NO_TUNNEL,
-        'socks4': socks.PROXY_TYPE_SOCKS4,
-        'socks5': socks.PROXY_TYPE_SOCKS5,
-    }
-
     def __init__(self, proxy=None):
         """Constructs a `HTTPRequest` with a optional proxy setting.
-        :param proxy: A optional `Proxy` object contains proxy related
-         settings.
+        :param proxy: Optional proxy settings.
+        :type proxy: ProxyInfo
         """
-        self._proxy_info = self._prepare_proxy_info(proxy)
+        self._proxy_info = proxy
         self._connection = None
         self._prepare_url_func = _make_prepare_url_func()
 
@@ -169,25 +321,6 @@ class HTTPRequest(object):
         _logger.info('Invoking request to [%s] finished', uri)
 
         return result
-
-    def _prepare_proxy_info(self, proxy):
-        if not proxy or not proxy.enabled:
-            _logger.debug('Proxy is not enabled')
-            return None
-
-        username = proxy.username \
-            if 'username' in proxy and proxy.username else None
-        password = proxy.password \
-            if 'password' in proxy and proxy.password else None
-
-        proxy_type = self._PROXY_TYPE.get(proxy.type) or self._PROXY_TYPE['http']
-
-        return ProxyInfo(proxy_host=proxy.host,
-                         proxy_port=int(proxy.port),
-                         proxy_type=proxy_type,
-                         proxy_user=username,
-                         proxy_pass=password,
-                         proxy_rdns=proxy.rdns)
 
     @staticmethod
     def _build_http_connection(

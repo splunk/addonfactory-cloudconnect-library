@@ -20,21 +20,13 @@ def test_split_task_for_empty_list():
     context = {"apps": []}
     splittask.configure_split("split_by", "{{apps}}", "app")
     results = splittask.perform(context)
-    try:
+    with pytest.raises(CCESplitError):
         results = list(results)
-    except CCESplitError:
-        assert True
-    else:
-        assert False
 
     context = {"apps_2": ["app1", "app2", "app3"]}
     results = splittask.perform(context)
-    try:
+    with pytest.raises(CCESplitError):
         results = list(results)
-    except CCESplitError:
-        assert True
-    else:
-        assert False
 
 
 def test_split_task_for_string():
@@ -58,9 +50,5 @@ def test_split_task_for_empty_string():
     splittask.configure_split("split_by", "{{apps}}", "app", ",")
     context = {"apps": ""}
     results = splittask.perform(context)
-    try:
+    with pytest.raises(CCESplitError):
         results = list(results)
-    except CCESplitError:
-        assert True
-    else:
-        assert False

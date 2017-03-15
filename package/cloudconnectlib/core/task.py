@@ -176,15 +176,10 @@ class BaseTask(object):
             return
 
         for handler in handlers:
-            try:
-                data = handler.execute(context)
-            except StopCCEIteration:
-                logger.info('Stop task signal received, stop executing handlers')
-                break
-            else:
-                if data:
-                    # FIXME
-                    context.update(data)
+            data = handler.execute(context)
+            if data:
+                # FIXME
+                context.update(data)
         logger.debug('Execute handlers finished successfully.')
 
     def _pre_process(self, context):
@@ -230,7 +225,7 @@ class CCESplitTask(BaseTask):
         try:
             self._pre_process(context)
         except StopCCEIteration:
-            logger.info('Task=%s exits because of pre process', self)
+            logger.info('Task=%s exits in pre_process stage', self)
             yield context
             return
 
@@ -432,7 +427,11 @@ class CCEHTTPRequestTask(BaseTask):
         self._http_client = HttpClient(self._proxy_info)
 
         while True:
-            self._pre_process(context)
+            try:
+                self._pre_process(context)
+            except StopCCEIteration:
+                logger.info("Task exits in pre_process stage")
+                break
 
             if self._check_if_stop_needed():
                 break
@@ -450,7 +449,12 @@ class CCEHTTPRequestTask(BaseTask):
 
             context[_RESPONSE_KEY] = response
 
-            self._post_process(context)
+            try:
+                self._post_process(context)
+            except StopCCEIteration:
+                logger.info("Task exits in post_process stage")
+                break
+
             self._persist_checkpoint()
 
             if self._check_if_stop_needed():

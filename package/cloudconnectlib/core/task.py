@@ -67,13 +67,8 @@ class ProxyTemplate(object):
         if not proxy_setting:
             raise ValueError('Invalid proxy setting: {}'.format(proxy_setting))
         self._enabled = _Token(proxy_setting.get('proxy_enabled', ''))
-
-        url, port = proxy_setting.get('proxy_url'), proxy_setting.get('proxy_port')
-        if not all((url, port)):
-            raise ValueError('Invalid proxy url={} or port={}'.format(url, port))
-        self._url = _Token(url)
-        self._port = _Token(port)
-
+        self._url = _Token(proxy_setting.get('proxy_url'))
+        self._port = _Token(proxy_setting.get('proxy_port'))
         self._rdns = _Token(proxy_setting.get('proxy_rdns', ''))
         self._user = _Token(proxy_setting.get('proxy_username', ''))
         self._password = _Token(proxy_setting.get('proxy_password', ''))

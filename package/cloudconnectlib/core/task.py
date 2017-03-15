@@ -1,11 +1,12 @@
 import json
 import threading
+import copy
 from abc import abstractmethod
 
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
 from cloudconnectlib.core.exceptions import HTTPError
-from cloudconnectlib.core.exceptions import StopCCEIteration
+from cloudconnectlib.core.exceptions import StopCCEIteration, CCESplitError
 from cloudconnectlib.core.ext import lookup_method
 from cloudconnectlib.core.http import get_proxy_info, HttpClient
 from cloudconnectlib.core.models import DictToken, _Token, BasicAuthorization
@@ -203,10 +204,54 @@ class BaseTask(object):
     def stop(self, block=False, timeout=30):
         pass
 
+    def __str__(self):
+        return self._name
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class CCESplitTask(BaseTask):
+    OUTPUT_KEY = "__cce_split_result__"
+
+    def __init__(self, name):
+        super(CCESplitTask, self).__init__(name)
+        self._process_handler = None
+        self._source = None
+
+    def configure_split(self, method, source, output, separator=None):
+        arguments = [source, output, separator]
+        self._source = source
+        self._process_handler = ProcessHandler(method, arguments,
+                                               CCESplitTask.OUTPUT_KEY)
+
     def perform(self, context):
-        pass
+        logger.debug('Task=%s start to run', self)
+        try:
+            self._pre_process(context)
+        except StopCCEIteration:
+            logger.info('Task=%s exits because of pre process', self)
+            yield context
+            return
+
+        if not self._process_handler:
+            logger.info('Task=%s has no split method', self)
+            raise CCESplitError
+
+        try:
+            invoke_results = self._process_handler.execute(context)
+        except:
+            logger.exception("Task=%s encountered exception", self)
+            raise CCESplitError
+        if not invoke_results or not \
+                invoke_results.get(CCESplitTask.OUTPUT_KEY):
+            raise CCESplitError
+        for invoke_result in invoke_results[CCESplitTask.OUTPUT_KEY]:
+            new_context = copy.deepcopy(context)
+            new_context.update(invoke_result)
+            yield new_context
+
+        logger.debug('Task=%s finished', self)
 
 
 class CCEHTTPRequestTask(BaseTask):
@@ -419,9 +464,3 @@ class CCEHTTPRequestTask(BaseTask):
 
         self._stopped.set()
         logger.debug('Perform task finished')
-
-    def __str__(self):
-        return self._name
-
-    def __repr__(self):
-        return self.__str__()

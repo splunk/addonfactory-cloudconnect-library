@@ -3,6 +3,7 @@ import json
 import re
 import traceback
 from datetime import datetime
+from collections import Iterable
 
 from jsonpath_rw import parse
 from .exceptions import FuncException, StopCCEIteration
@@ -312,6 +313,19 @@ def assert_true(value, message=None):
         )
 
 
+def split_by(source, target, separator=None):
+    """Split the source to multiple values by the separator"""
+    if not source:
+        return []
+    elif isinstance(source, basestring) and separator:
+        values = source.split(separator)
+        return [{target: value.strip()} for value in values]
+    elif isinstance(source, Iterable):
+        return [{target: value} for value in source]
+    else:
+        return [{target: source}]
+
+
 _extension_functions = {
     'assert_true': assert_true,
     'exit_if_true': exit_if_true,
@@ -325,6 +339,7 @@ _extension_functions = {
     'json_empty': json_empty,
     'json_not_empty': json_not_empty,
     'time_str2str': time_str2str,
+    'split_by': split_by
 }
 
 

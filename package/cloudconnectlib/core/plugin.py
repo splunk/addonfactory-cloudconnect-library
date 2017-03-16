@@ -4,6 +4,7 @@ from os import walk
 import sys
 from ..common import log
 import traceback
+import importlib
 
 logger = log.get_cc_logger()
 
@@ -23,13 +24,17 @@ def cce_pipeline_plugin(func):
         >>> def my_function(arg):
         >>>     do_work()
     """
-    if func.func_name in _extension_functions.keys():
-        logger.warning("Pipeline function %s already exists, please rename it!",
-                       func.func_name)
+    if not callable(func):
+        logger.debug("Function %s is not callable, don't add it as a pipeline"
+                     " function", func.func_name)
     else:
-        _extension_functions[func.func_name] = func
-        logger.debug("Added function %s to pipeline plugin system",
-                     func.func_name)
+        if func.func_name in _extension_functions.keys():
+            logger.warning("Pipeline function %s already exists, please rename"
+                           "it!", func.func_name)
+        else:
+            _extension_functions[func.func_name] = func
+            logger.debug("Added function %s to pipeline plugin system",
+                        func.func_name)
 
     def pipeline_func(*args, **kwargs):
         return func(*args, **kwargs)
@@ -57,7 +62,7 @@ def import_plugin_file(file_name):
         return
 
     try:
-        __import__(module_name)
+        importlib.import_module(module_name)
     except Exception:
         logger.warning("Failed to load module {}, {}".format(
             module_name, traceback.format_exc()))

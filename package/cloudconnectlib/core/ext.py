@@ -315,15 +315,19 @@ def assert_true(value, message=None):
 
 def split_by(source, target, separator=None):
     """Split the source to multiple values by the separator"""
-    if not source:
+    try:
+        if not source:
+            return []
+        elif isinstance(source, basestring) and separator:
+            values = source.split(separator)
+            return [{target: value.strip()} for value in values]
+        elif isinstance(source, Iterable):
+            return [{target: value} for value in source]
+        else:
+            return [{target: source}]
+    except:
+        _logger.exception("split_by method encountered exception")
         return []
-    elif isinstance(source, basestring) and separator:
-        values = source.split(separator)
-        return [{target: value.strip()} for value in values]
-    elif isinstance(source, Iterable):
-        return [{target: value} for value in source]
-    else:
-        return [{target: source}]
 
 
 _extension_functions = {

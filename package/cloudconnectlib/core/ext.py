@@ -321,6 +321,8 @@ def split_by(source, target, separator=None):
         elif isinstance(source, basestring) and separator:
             values = source.split(separator)
             return [{target: value.strip()} for value in values]
+        elif isinstance(source, basestring):
+            return [{target: source}]
         elif isinstance(source, Iterable):
             return [{target: value} for value in source]
         else:

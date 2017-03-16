@@ -372,9 +372,9 @@ class CCEHTTPRequestTask(BaseTask):
             return True
         return False
 
-    def _send_request(self, request, proxy_info=None):
+    def _send_request(self, request):
         try:
-            response = self._http_client.send(request, proxy_info)
+            response = self._http_client.send(request)
         except HTTPError as error:
             logger.exception(
                 'Error occurred in request url=%s method=%s reason=%s',
@@ -412,9 +412,10 @@ class CCEHTTPRequestTask(BaseTask):
             # TODO
 
     def perform(self, context):
-        logger.debug('Start to perform task')
+        logger.debug('Starting to perform task')
 
-        self._http_client = HttpClient()
+        proxy_info = self._proxy_info.render(context) if self._proxy_info else None
+        self._http_client = HttpClient(proxy_info)
 
         while True:
             self._pre_process(context)
@@ -426,8 +427,7 @@ class CCEHTTPRequestTask(BaseTask):
             if self._authorizer:
                 self._authorizer(r.headers, context)
 
-            proxy_info = self._proxy_info.render(context) if self._proxy_info else None
-            response, need_exit = self._send_request(r, proxy_info)
+            response, need_exit = self._send_request(r)
             if need_exit:
                 logger.info('Task need been terminated due to request result')
                 break

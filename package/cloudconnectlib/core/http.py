@@ -141,10 +141,11 @@ def get_proxy_info(proxy_config):
 
 
 class HttpClient(object):
-    def __init__(self):
+    def __init__(self, proxy_info=None):
         """Constructs a `HTTPRequest` with a optional proxy setting.
         """
         self._connection = None
+        self._proxy_info = proxy_info
         self._url_preparer = PreparedRequest()
 
     def _send_internal(self, uri, method, headers=None, body=None, proxy_info=None):
@@ -173,7 +174,7 @@ class HttpClient(object):
                 uri, body=body, method=method, headers=headers
             )
 
-    def _retry_send_request_if_needed(self, uri, method='GET', headers=None, body=None, proxy_info=None):
+    def _retry_send_request_if_needed(self, uri, method='GET', headers=None, body=None):
         """Invokes request and auto retry with an exponential backoff
         if the response status is configured in defaults.retry_statuses."""
         retries = max(defaults.retries, 0)
@@ -181,8 +182,7 @@ class HttpClient(object):
         for i in xrange(retries + 1):
             try:
                 response, content = self._send_internal(
-                    uri=uri, body=body, method=method, headers=headers,
-                    proxy_info=proxy_info
+                    uri=uri, body=body, method=method, headers=headers
                 )
             except Exception as err:
                 _logger.exception(
@@ -207,21 +207,21 @@ class HttpClient(object):
         self._url_preparer.prepare_url(url, params)
         return self._url_preparer.url
 
-    def _initialize_connection(self, proxy_info=None):
-        if proxy_info:
+    def _initialize_connection(self):
+        if self._proxy_info:
             _logger.info('Proxy is enabled for http connection.')
         else:
             _logger.info('Proxy is not enabled for http connection.')
-        self._connection = self._build_http_connection(proxy_info)
+        self._connection = self._build_http_connection(self._proxy_info)
 
-    def send(self, request, proxy_info=None):
+    def send(self, request):
         if not request:
             raise ValueError('The request is none')
         if request.body and not isinstance(request.body, str):
             raise TypeError('The request body must be str')
 
         if self._connection is None:
-            self._initialize_connection(proxy_info)
+            self._initialize_connection()
 
         try:
             url = self._prepare_url(request.url)
@@ -233,7 +233,7 @@ class HttpClient(object):
             url = request.url
 
         return self._retry_send_request_if_needed(
-            url, request.method, request.headers, request.body, proxy_info
+            url, request.method, request.headers, request.body
         )
 
     @staticmethod

@@ -325,8 +325,10 @@ def split_by(source, target, separator=None):
             return [{target: value} for value in source]
         else:
             return [{target: source}]
-    except:
-        _logger.warning("split_by method encountered exception")
+    except Exception as ex:
+        _logger.warning("split_by method encountered exception "
+                        "source=%s message=%s cause=%s", source, ex.message,
+                        traceback.format_exc())
         return []
 
 

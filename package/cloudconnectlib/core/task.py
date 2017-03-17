@@ -63,15 +63,45 @@ class ConditionGroup(object):
         )
 
 
+class ProxyTemplate(object):
+    def __init__(self, proxy_setting):
+        if not proxy_setting:
+            raise ValueError('Invalid proxy setting: {}'.format(proxy_setting))
+        self._enabled = _Token(proxy_setting.get('proxy_enabled', ''))
+        self._url = _Token(proxy_setting.get('proxy_url'))
+        self._port = _Token(proxy_setting.get('proxy_port'))
+        self._rdns = _Token(proxy_setting.get('proxy_rdns', ''))
+        self._user = _Token(proxy_setting.get('proxy_username', ''))
+        self._password = _Token(proxy_setting.get('proxy_password', ''))
+        self._proxy_type = _Token(proxy_setting.get('proxy_type', 'http'))
+
+    def render(self, context):
+        rendered_conf = {
+            'proxy_enabled': self._enabled.render(context),
+            'proxy_type': self._proxy_type.render(context),
+            'proxy_url': self._url.render(context),
+            'proxy_port': self._port.render(context),
+            'proxy_username': self._user.render(context),
+            'proxy_password': self._password.render(context),
+            'proxy_rdns': self._rdns.render(context)
+        }
+        return get_proxy_info(rendered_conf)
+
+
 class Request(object):
     def __init__(self, method, url, headers, body):
         self.method = method
         self.url = url
         self.headers = headers
-        self.body = json.dumps(body) if body else None
+        if not body:
+            self.body = None
+        elif not isinstance(body, basestring):
+            self.body = json.dumps(body)
+        else:
+            self.body = body
 
 
-class RequestWithToken(object):
+class RequestTemplate(object):
     def __init__(self, request):
         if not request:
             raise ValueError('The request is none')
@@ -87,7 +117,7 @@ class RequestWithToken(object):
             raise ValueError('Unsupported value for request method: {}'.format(method))
         self.method = _Token(method)
 
-    def render_request(self, context):
+    def render(self, context):
         return Request(
             url=self.url.render(context),
             method=self.method.render(context),
@@ -260,7 +290,7 @@ class CCEHTTPRequestTask(BaseTask):
 
     def __init__(self, request, name, conf=None):
         super(CCEHTTPRequestTask, self).__init__(name)
-        self._request = RequestWithToken(request)
+        self._request = RequestTemplate(request)
         self._conf = conf
         self._stop_conditions = ConditionGroup()
         self._finished_iter_count = defaults.max_iteration_count
@@ -309,7 +339,7 @@ class CCEHTTPRequestTask(BaseTask):
             "proxy_type": ,
         :type proxy_setting: ``dict``
         """
-        self._proxy_info = get_proxy_info(proxy_setting)
+        self._proxy_info = ProxyTemplate(proxy_setting)
 
     def set_auth(self, auth_type, settings):
         """
@@ -422,9 +452,10 @@ class CCEHTTPRequestTask(BaseTask):
             # TODO
 
     def perform(self, context):
-        logger.debug('Start to perform task')
+        logger.debug('Starting to perform task')
 
-        self._http_client = HttpClient(self._proxy_info)
+        proxy_info = self._proxy_info.render(context) if self._proxy_info else None
+        self._http_client = HttpClient(proxy_info)
 
         while True:
             try:
@@ -436,7 +467,7 @@ class CCEHTTPRequestTask(BaseTask):
             if self._check_if_stop_needed():
                 break
 
-            r = self._request.render_request(context)
+            r = self._request.render(context)
             if self._authorizer:
                 self._authorizer(r.headers, context)
 

@@ -1,4 +1,6 @@
+import json
 import logging
+import os.path as op
 import sys
 
 from cloudconnectlib.common.log import set_cc_logger
@@ -25,7 +27,17 @@ context = {
     'password': 'Splunk123$',
 }
 
+
+def _get_proxy_config():
+    fp = op.join(op.dirname(__file__), 'proxy.json')
+    with open(fp, 'r') as jfp:
+        return json.load(jfp)
+
+
 if __name__ == '__main__':
+
+    context.update(_get_proxy_config())
+    
     job = CCEJob(context=context)
 
     task = CCEHTTPRequestTask(
@@ -35,6 +47,16 @@ if __name__ == '__main__':
         },
         name='HttpTask'
     )
+
+    task.set_proxy(proxy_setting={
+        "proxy_enabled": True,
+        "proxy_type": "{{proxy_type}}",
+        "proxy_url": "{{proxy_url}}",
+        "proxy_port": "{{proxy_port}}",
+        "proxy_username": "{{proxy_username}}",
+        "proxy_password": "{{proxy_password}}",
+        "proxy_rdns": "{{proxy_rdns}}"
+    })
 
     task.add_postprocess_handler('json_path', ['{{__response__.body}}', "$"], 'all_res')
     task.add_postprocess_handler('std_output', ['{{all_res}}'], None)

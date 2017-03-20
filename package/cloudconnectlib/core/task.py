@@ -3,6 +3,7 @@ import json
 import threading
 from abc import abstractmethod
 
+import cloudconnectlib.splunktacollectorlib.data_collection.ta_checkpoint_manager as tacm
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
 from cloudconnectlib.core.exceptions import HTTPError
@@ -10,7 +11,6 @@ from cloudconnectlib.core.exceptions import StopCCEIteration, CCESplitError
 from cloudconnectlib.core.ext import lookup_method
 from cloudconnectlib.core.http import get_proxy_info, HttpClient
 from cloudconnectlib.core.models import DictToken, _Token, BasicAuthorization
-from cloudconnectlib.splunktacollectorlib.data_collection.ta_checkpoint_manager import TACheckPointMgr
 
 logger = get_cc_logger()
 
@@ -81,11 +81,10 @@ class Request(object):
         self.url = url
         self.headers = headers
         if not body:
-            self.body = None
+            body = None
         elif not isinstance(body, basestring):
-            self.body = json.dumps(body)
-        else:
-            self.body = body
+            body = json.dumps(body)
+        self.body = body
 
 
 class RequestTemplate(object):
@@ -97,7 +96,16 @@ class RequestTemplate(object):
             raise ValueError("The request doesn't contain a url or it's empty")
         self.url = _Token(url)
         self.headers = DictToken(request.get('headers', {}))
-        self.body = DictToken(request.get('body', {}))
+
+        # Request body could be string or dict
+        body = request.get('body')
+        if isinstance(body, dict):
+            self.body = DictToken(body)
+        elif isinstance(body, basestring):
+            self.body = _Token(body)
+        else:
+            logger.warning('Invalid request body: %s', body)
+            self.body = None
 
         method = request.get('method', 'GET')
         if not method or method.upper() not in ('GET', 'POST'):
@@ -109,7 +117,7 @@ class RequestTemplate(object):
             url=self.url.render(context),
             method=self.method.render(context),
             headers=self.headers.render(context),
-            body=self.body.render(context)
+            body=self.body.render(context) if self.body else None
         )
 
 
@@ -125,17 +133,21 @@ class CheckpointTemplate(object):
         }
 
 
-class CheckpointManagerAdapter(TACheckPointMgr):
+class CheckpointManagerAdapter(tacm.TACheckPointMgr):
     def __init__(self, name, content, meta_config, task_config):
         super(CheckpointManagerAdapter, self).__init__(meta_config, task_config)
         self._template = CheckpointTemplate(name, content)
 
-    def save_checkpoint(self, ctx):
+    def save(self, ctx):
         new_checkpoint = self._template.render(ctx)
         super(CheckpointManagerAdapter, self).update_ckpt(
             new_checkpoint['content'],
             new_checkpoint['name']
         )
+
+    def load(self, ctx):
+        name = self._template.name.render(ctx)
+        return super(CheckpointManagerAdapter, self).get_ckpt(namespaces=name)
 
 
 class BaseTask(object):
@@ -461,21 +473,32 @@ class CCEHTTPRequestTask(BaseTask):
 
     def _persist_checkpoint(self, context):
         if not self._checkpointer:
-            logger.info('Checkpoint is not configured. Skip persisting checkpoint.')
+            logger.debug('Checkpoint is not configured. Skip persisting checkpoint.')
             return
 
         try:
-            self._checkpointer.save_checkpoint(context)
+            self._checkpointer.save(context)
         except Exception:
             logger.exception('Error while persisting checkpoint')
         else:
             logger.debug('Checkpoint has been updated successfully.')
 
+    def _load_checkpoint(self, ctx):
+        if not self._checkpointer:
+            logger.debug('Checkpoint is not configured. Skip loading checkpoint.')
+            return {}
+        return self._checkpointer.load(ctx=ctx)
+
+    def _prepare_http_client(self, ctx):
+        proxy = self._proxy_info.render(ctx) if self._proxy_info else None
+        self._http_client = HttpClient(proxy)
+
     def perform(self, context):
         logger.debug('Starting to perform task')
 
-        proxy_info = self._proxy_info.render(context) if self._proxy_info else None
-        self._http_client = HttpClient(proxy_info)
+        self._prepare_http_client(context)
+        # Load checkpoint to context
+        context.update(self._load_checkpoint(context))
 
         while True:
             try:

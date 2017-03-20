@@ -1,6 +1,6 @@
+import copy
 import json
 import threading
-import copy
 from abc import abstractmethod
 
 from cloudconnectlib.common.log import get_cc_logger
@@ -10,6 +10,7 @@ from cloudconnectlib.core.exceptions import StopCCEIteration, CCESplitError
 from cloudconnectlib.core.ext import lookup_method
 from cloudconnectlib.core.http import get_proxy_info, HttpClient
 from cloudconnectlib.core.models import DictToken, _Token, BasicAuthorization
+from cloudconnectlib.splunktacollectorlib.data_collection.ta_checkpoint_manager import TACheckPointMgr
 
 logger = get_cc_logger()
 
@@ -67,25 +68,11 @@ class ProxyTemplate(object):
     def __init__(self, proxy_setting):
         if not proxy_setting:
             raise ValueError('Invalid proxy setting: {}'.format(proxy_setting))
-        self._enabled = _Token(proxy_setting.get('proxy_enabled', ''))
-        self._url = _Token(proxy_setting.get('proxy_url'))
-        self._port = _Token(proxy_setting.get('proxy_port'))
-        self._rdns = _Token(proxy_setting.get('proxy_rdns', ''))
-        self._user = _Token(proxy_setting.get('proxy_username', ''))
-        self._password = _Token(proxy_setting.get('proxy_password', ''))
-        self._proxy_type = _Token(proxy_setting.get('proxy_type', 'http'))
+        self._proxy = DictToken(proxy_setting)
 
     def render(self, context):
-        rendered_conf = {
-            'proxy_enabled': self._enabled.render(context),
-            'proxy_type': self._proxy_type.render(context),
-            'proxy_url': self._url.render(context),
-            'proxy_port': self._port.render(context),
-            'proxy_username': self._user.render(context),
-            'proxy_password': self._password.render(context),
-            'proxy_rdns': self._rdns.render(context)
-        }
-        return get_proxy_info(rendered_conf)
+        rendered = self._proxy.render(context)
+        return get_proxy_info(rendered)
 
 
 class Request(object):
@@ -126,10 +113,29 @@ class RequestTemplate(object):
         )
 
 
-class CheckpointConfiguration(object):
+class CheckpointTemplate(object):
     def __init__(self, name, content):
-        self.name = name
-        self.content = content
+        self.name = _Token(name)
+        self.content = DictToken(content)
+
+    def render(self, context):
+        return {
+            'name': self.name.render(context),
+            'content': self.content.render(context)
+        }
+
+
+class CheckpointManagerAdapter(TACheckPointMgr):
+    def __init__(self, name, content, meta_config, task_config):
+        super(CheckpointManagerAdapter, self).__init__(meta_config, task_config)
+        self._template = CheckpointTemplate(name, content)
+
+    def save_checkpoint(self, ctx):
+        new_checkpoint = self._template.render(ctx)
+        super(CheckpointManagerAdapter, self).update_ckpt(
+            new_checkpoint['content'],
+            new_checkpoint['name']
+        )
 
 
 class BaseTask(object):
@@ -288,16 +294,18 @@ class CCEHTTPRequestTask(BaseTask):
      from context when executing.
     """
 
-    def __init__(self, request, name, conf=None):
+    def __init__(self, request, name, meta_config=None, task_config=None):
         super(CCEHTTPRequestTask, self).__init__(name)
         self._request = RequestTemplate(request)
-        self._conf = conf
         self._stop_conditions = ConditionGroup()
         self._finished_iter_count = defaults.max_iteration_count
         self._proxy_info = None
         self._iteration_count = 0
-        self._checkpoint_manager = None  # TODO
-        self._checkpoint_conf = None
+
+        self._checkpointer = None
+        self._task_config = task_config
+        self._meta_config = meta_config
+
         self._http_client = None
         self._authorizer = None
         self._stopped = threading.Event()
@@ -401,7 +409,12 @@ class CCEHTTPRequestTask(BaseTask):
             raise ValueError('Invalid checkpoint name: "{}"'.format(name))
         if not content:
             raise ValueError('Invalid checkpoint content: {}'.format(content))
-        self._checkpoint_conf = CheckpointConfiguration(name.strip(), content)
+        self._checkpointer = CheckpointManagerAdapter(
+            name=name,
+            content=content,
+            meta_config=self._meta_config,
+            task_config=self._task_config
+        )
 
     def _should_exit(self, context):
         if 0 < self._iteration_count <= self._finished_iter_count:
@@ -446,10 +459,17 @@ class CCEHTTPRequestTask(BaseTask):
 
         return None, True
 
-    def _persist_checkpoint(self):
-        if not self._checkpoint_manager:
-            logger.info('Checkpoint is not configured. Skip persist checkpoint.')
-            # TODO
+    def _persist_checkpoint(self, context):
+        if not self._checkpointer:
+            logger.info('Checkpoint is not configured. Skip persisting checkpoint.')
+            return
+
+        try:
+            self._checkpointer.save_checkpoint(context)
+        except Exception:
+            logger.exception('Error while persisting checkpoint')
+        else:
+            logger.debug('Checkpoint has been updated successfully.')
 
     def perform(self, context):
         logger.debug('Starting to perform task')

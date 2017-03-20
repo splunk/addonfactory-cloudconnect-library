@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     task = CCEHTTPRequestTask(
         request={
-            "url": "http://ip.jsontest.com/",
+            "url": "https://httpbin.org/get",
             "method": "GET",
         },
         name='HttpTask'
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     })
 
     task.add_postprocess_handler('json_path', ['{{__response__.body}}', "$"], 'all_res')
-    task.add_postprocess_handler('std_output', ['{{all_res}}'], None)
+    task.add_postprocess_handler('std_output', ['{{all_res}}'], '')
     task.set_iteration_count(1)
 
     job.add_task(task)

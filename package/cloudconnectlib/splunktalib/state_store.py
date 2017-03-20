@@ -11,18 +11,18 @@ from ..splunktalib.common import util
 
 
 def get_state_store(meta_configs,
-                    app_name,
+                    appname,
                     collection_name="talib_states",
                     use_kv_store=False,
                     use_cache_file=True,
                     max_cache_seconds=5):
     if util.is_true(use_kv_store):
         # KV store based checkpoint
-        return StateStore(app_name, meta_configs['server_uri'], meta_configs['session_key'], collection_name)
+        return StateStore(appname, meta_configs['server_uri'], meta_configs['session_key'], collection_name)
     checkpoint_dir = meta_configs['checkpoint_dir']
     if util.is_true(use_cache_file):
-        return CachedFileStateStore(app_name, checkpoint_dir, max_cache_seconds)
-    return FileStateStore(app_name, checkpoint_dir)
+        return CachedFileStateStore(appname, checkpoint_dir, max_cache_seconds)
+    return FileStateStore(appname, checkpoint_dir)
 
 
 class BaseStateStore(object):

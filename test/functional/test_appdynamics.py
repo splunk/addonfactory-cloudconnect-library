@@ -20,7 +20,7 @@ def appd_application_task():
     task.add_postprocess_handler('json_path', ['{{__response__.body}}',
                                                "[*].name"],
                                  'apps')
-    task.add_postprocess_handler('std_output', ['{{applications}}'], None)
+    task.add_postprocess_handler('std_output', ['{{applications}}'], "")
 
     task.set_iteration_count(1)
     return task
@@ -30,7 +30,9 @@ def appd_metric_task():
     task = CCEHTTPRequestTask(
         request={
             "url": "{{appd_host}}/controller/rest/applications/{{app}}"
-                   "/metric-data?output=JSON&time-range-type=BEFORE_NOW&duration-in-mins=10&metric-path=Overall Application Performance|*",
+                   "/metric-data?output=JSON&time-range-type=BEFORE_NOW"
+                   "&duration-in-mins=10"
+                   "&metric-path=Overall Application Performance|*",
             "method": "GET",
         },
         name='AppdMetricTask'
@@ -41,7 +43,7 @@ def appd_metric_task():
 
     task.add_postprocess_handler('json_path', ['{{__response__.body}}', "$"],
                                  'all_res')
-    task.add_postprocess_handler('std_output', ['{{all_res}}'], None)
+    task.add_postprocess_handler('std_output', ['{{all_res}}'], "")
     task.set_iteration_count(1)
     return task
 
@@ -54,8 +56,8 @@ def split_task():
 
 def test_appd_applications():
     account = {"username": "ChinaPowerUp@ChinaPowerUp", "password": "123456"}
-    context = {"appd_host": "https://chinapowerup.saas.appdynamics.com"}
-    context["account"] = account
+    context = {"appd_host": "https://chinapowerup.saas.appdynamics.com",
+               "account": account}
     job = CCEJob(context=context)
     job.add_task(appd_application_task())
     engine = CloudConnectEngine()
@@ -65,9 +67,8 @@ def test_appd_applications():
 
 def test_appd_metrics():
     account = {"username": "ChinaPowerUp@ChinaPowerUp", "password": "123456"}
-    context = {"appd_host": "https://chinapowerup.saas.appdynamics.com"}
-    context["account"] = account
-    context["app"] = "SampleApp"
+    context = {"appd_host": "https://chinapowerup.saas.appdynamics.com",
+               "app": "SampleApp", "account": account}
     job = CCEJob(context=context)
     job.add_task(appd_metric_task())
     engine = CloudConnectEngine()
@@ -77,8 +78,8 @@ def test_appd_metrics():
 
 def test_appd_dual_step():
     account = {"username": "jing@anonymaous", "password": "111111"}
-    context = {"appd_host": "https://anonymaous.saas.appdynamics.com"}
-    context["account"] = account
+    context = {"appd_host": "https://anonymaous.saas.appdynamics.com",
+               "account": account}
     job = CCEJob(context=context)
     job.add_task(appd_application_task())
     job.add_task(split_task())

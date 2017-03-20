@@ -1,17 +1,21 @@
 """APP Cloud Connect errors"""
 
 
-class ConfigException(Exception):
+class CCEError(Exception):
+    pass
+
+
+class ConfigException(CCEError):
     """Config exception"""
     pass
 
 
-class FuncException(Exception):
+class FuncException(CCEError):
     """Ext function call exception"""
     pass
 
 
-class HTTPError(Exception):
+class HTTPError(CCEError):
     """ HTTPError raised when HTTP request returned a error."""
 
     def __init__(self, reason=None):
@@ -22,6 +26,10 @@ class HTTPError(Exception):
         super(HTTPError, self).__init__(reason)
 
 
-class StopCCEIteration(Exception):
+class StopCCEIteration(CCEError):
     """Exception to exit from the engine iteration."""
+    pass
+
+class CCESplitError(CCEError):
+    """Exception to exit the job in Split Task"""
     pass

@@ -22,13 +22,13 @@ _AUTH_TYPES = {
 class ProcessHandler(object):
     def __init__(self, method, arguments, output):
         self.method = method
-        self.callable_method = lookup_method(method)
         self.arguments = [_Token(arg) for arg in arguments or ()]
         self.output = output
 
     def execute(self, context):
         args = [arg.render(context) for arg in self.arguments]
         logger.debug('%s arguments found for method %s', len(args), self.method)
+        self.callable_method = lookup_method(self.method)
         result = self.callable_method(*args)
 
         data = {}
@@ -41,11 +41,11 @@ class ProcessHandler(object):
 class Condition(object):
     def __init__(self, method, arguments):
         self.method = method
-        self.callable_method = lookup_method(method)
         self.arguments = [_Token(arg) for arg in arguments or ()]
 
     def is_meet(self, context):
         args = [arg.render(context) for arg in self.arguments]
+        self.callable_method = lookup_method(self.method)
         logger.debug('%s arguments found for method %s', len(args), self.method)
         return self.callable_method(args)
 

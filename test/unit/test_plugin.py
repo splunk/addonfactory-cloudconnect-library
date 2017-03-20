@@ -17,12 +17,12 @@ logger.addHandler(ch)
 ccelog.set_cc_logger(logger)
 
 from cloudconnectlib.core.plugin import init_pipeline_plugins
-from cloudconnectlib.core.ext import _extension_functions
-from cloudconnectlib.core.ext import lookup_method
+from cloudconnectlib.core.ext import _extension_functions, lookup_method
 
 
 def test_decorator():
     from cloudconnectlib.core.plugin import cce_pipeline_plugin
+
     @cce_pipeline_plugin
     def func_with_arg1(msg):
         return msg
@@ -181,3 +181,70 @@ def cce_unit_test_func_without_decorator(msg):
     finally:
         remove_file(plugin_dir, test_plugin_file)
         remove_file(plugin_dir, test_plugin_file+"c")
+
+
+def test_plugin_in_engine_no_files(capsys):
+    from test_engine_v2 import HTTPJob, Counter
+    from cloudconnectlib.core.engine_v2 import CloudConnectEngine
+    counter = Counter()
+    cc_engine = CloudConnectEngine()
+    cc_engine.start([HTTPJob(counter)])
+    assert counter.value() == 1
+
+
+def test_plugin_in_engine_w_files(capsys):
+    from cloudconnectlib.core.engine_v2 import CloudConnectEngine
+    from cloudconnectlib.core.task import CCEHTTPRequestTask
+    from cloudconnectlib.core.job import CCEJob
+
+    plugin_dir = os.path.join(common.PROJECT_ROOT,
+                              "package",
+                              "cloudconnectlib",
+                              "plugin")
+    test_functions = """
+from cloudconnectlib.core.plugin import cce_pipeline_plugin
+
+@cce_pipeline_plugin
+def cce_unit_test_func_in_engine_arg1(msg):
+    return msg
+"""
+    error_test_functions = """
+from cloudconnectlib.core.plugin import cce_pipeline_plugin
+
+def cce_unit_test_func_in_engine_arg2(msg):
+    return msg
+"""
+    try:
+        test_plugin_file1 = "cce_plugin_test_plugin_file1.py"
+        write_py_file(plugin_dir, test_plugin_file1, test_functions)
+        task = CCEHTTPRequestTask(
+            request={
+                "url": "https://www.baidu.com/",
+                "method": "GET",
+            },
+            name='test_baidu'
+        )
+
+        context = {}
+        task.add_postprocess_handler('cce_unit_test_func_in_engine_arg1',
+                                     ['hello'],
+                                     '__hello__')
+        task.set_iteration_count(1)
+        job = CCEJob(context=context)
+        job.add_task(task)
+        cc_engine = CloudConnectEngine()
+        cc_engine.start([job])
+        assert context.get('__hello__') == 'hello'
+
+        test_plugin_file2 = "cce_plugin_test_plugin_file2.py"
+        write_py_file(plugin_dir, test_plugin_file2, error_test_functions)
+        task.add_postprocess_handler('cce_unit_test_func_in_engine_arg2',
+                                     ['world'],
+                                     '__world__')
+        cc_engine.start([job])
+        assert context.get('__world__') is None
+    finally:
+        remove_file(plugin_dir, test_plugin_file1)
+        remove_file(plugin_dir, test_plugin_file1+"c")
+        remove_file(plugin_dir, test_plugin_file2)
+        remove_file(plugin_dir, test_plugin_file2+"c")

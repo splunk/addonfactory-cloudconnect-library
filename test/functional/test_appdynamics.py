@@ -3,6 +3,7 @@ from cloudconnectlib.core.task import CCEHTTPRequestTask, CCESplitTask
 from cloudconnectlib.core.job import CCEJob
 from cloudconnectlib.core.engine_v2 import CloudConnectEngine
 
+
 def appd_application_task():
     task = CCEHTTPRequestTask(
         request={
@@ -11,8 +12,8 @@ def appd_application_task():
         },
         name='AppdApplicationsTask'
     )
-    task.set_auth('basic_auth',{"username": "{{account.username}}",
-                                "password": "{{account.password}}"})
+    task.set_auth('basic_auth', {"username": "{{account.username}}",
+                                 "password": "{{account.password}}"})
 
     task.add_postprocess_handler('json_path', ['{{__response__.body}}', "$"],
                                  'applications')
@@ -24,6 +25,7 @@ def appd_application_task():
     task.set_iteration_count(1)
     return task
 
+
 def appd_metric_task():
     task = CCEHTTPRequestTask(
         request={
@@ -34,10 +36,11 @@ def appd_metric_task():
         name='AppdMetricTask'
     )
 
-    task.set_auth('basic_auth',{"username": "{{account.username}}",
-                                "password": "{{account.password}}"})
+    task.set_auth('basic_auth', {"username": "{{account.username}}",
+                                 "password": "{{account.password}}"})
 
-    task.add_postprocess_handler('json_path', ['{{__response__.body}}', "$"], 'all_res')
+    task.add_postprocess_handler('json_path', ['{{__response__.body}}', "$"],
+                                 'all_res')
     task.add_postprocess_handler('std_output', ['{{all_res}}'], None)
     task.set_iteration_count(1)
     return task
@@ -57,6 +60,8 @@ def test_appd_applications():
     job.add_task(appd_application_task())
     engine = CloudConnectEngine()
     engine.start([job])
+    assert context["apps"] == "SampleApp"
+
 
 def test_appd_metrics():
     account = {"username": "ChinaPowerUp@ChinaPowerUp", "password": "123456"}
@@ -67,10 +72,12 @@ def test_appd_metrics():
     job.add_task(appd_metric_task())
     engine = CloudConnectEngine()
     engine.start([job])
+    assert len(context["all_res"]) > 1
+
 
 def test_appd_dual_step():
-    account = {"username": "ChinaPowerUp@ChinaPowerUp", "password": "123456"}
-    context = {"appd_host": "https://chinapowerup.saas.appdynamics.com"}
+    account = {"username": "jing@anonymaous", "password": "111111"}
+    context = {"appd_host": "https://anonymaous.saas.appdynamics.com"}
     context["account"] = account
     job = CCEJob(context=context)
     job.add_task(appd_application_task())
@@ -78,11 +85,12 @@ def test_appd_dual_step():
     job.add_task(appd_metric_task())
     engine = CloudConnectEngine()
     engine.start([job])
+    assert len(context["apps"]) > 1
 
 
 if __name__ == "__main__":
-    #test_appd_applications()
-    #test_appd_metrics()
-    #print "======= dual step start ======"
+    test_appd_applications()
+    test_appd_metrics()
+    print "======= dual step start ======"
     test_appd_dual_step()
-    #print "======= dual step end ======"
+    print "======= dual step end ======"

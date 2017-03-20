@@ -145,11 +145,17 @@ def std_output(candidates):
     for candidate in candidates:
         if all_str and not isinstance(candidate, basestring):
             all_str = False
-            _logger.warning(
+            _logger.debug(
                 'The type of data needs to print is "%s" rather than'
                 ' basestring',
                 type(candidate)
             )
+            try:
+                candidate = json.dumps(candidate)
+            except:
+                _logger.exception('The type of data needs to print is "%s"'
+                                  ' rather than basestring',
+                                  type(candidate))
 
         if not PipeManager().write_events(candidate):
             raise FuncException('Fail to output data to stdout. The event'

@@ -47,10 +47,7 @@ class CCEJob(object):
 
     def run(self):
         """
-        Run current job, which executes tasks in it sequentially..
-
-        :param context:
-        :type context: dict
+        Run current job, which executes tasks in it sequentially.
         """
         logger.debug('Start to run job')
 

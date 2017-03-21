@@ -529,7 +529,7 @@ class CCEHTTPRequestTask(BaseTask):
                 logger.info("Task exits in post_process stage")
                 break
 
-            self._persist_checkpoint()
+            self._persist_checkpoint(context)
 
             if self._check_if_stop_needed():
                 break

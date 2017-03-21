@@ -28,8 +28,8 @@ class ProcessHandler(object):
     def execute(self, context):
         args = [arg.render(context) for arg in self.arguments]
         logger.debug('%s arguments found for method %s', len(args), self.method)
-        self.callable_method = lookup_method(self.method)
-        result = self.callable_method(*args)
+        callable_method = lookup_method(self.method)
+        result = callable_method(*args)
 
         data = {}
         if self.output:
@@ -45,9 +45,9 @@ class Condition(object):
 
     def is_meet(self, context):
         args = [arg.render(context) for arg in self.arguments]
-        self.callable_method = lookup_method(self.method)
+        callable_method = lookup_method(self.method)
         logger.debug('%s arguments found for method %s', len(args), self.method)
-        return self.callable_method(args)
+        return callable_method(args)
 
 
 class ConditionGroup(object):

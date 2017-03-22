@@ -104,7 +104,8 @@ class RequestTemplate(object):
         elif isinstance(body, basestring):
             self.body = _Token(body)
         else:
-            logger.warning('Invalid request body: %s', body)
+            if body:
+                logger.warning('Invalid request body: %s', body)
             self.body = None
 
         method = request.get('method', 'GET')
@@ -158,7 +159,7 @@ class BaseTask(object):
         self._skip_pre_conditions = ConditionGroup()
         self._skip_post_conditions = ConditionGroup()
 
-    def add_preprocess_handler(self, method, input, output):
+    def add_preprocess_handler(self, method, input, output=None):
         """
         Add a preprocess handler. All handlers will be maintained and
         executed sequentially.
@@ -186,7 +187,7 @@ class BaseTask(object):
         """
         self._skip_pre_conditions.add(Condition(method, input))
 
-    def add_postprocess_handler(self, method, input, output):
+    def add_postprocess_handler(self, method, input, output=None):
         """
         Add a postprocess handler. All handlers will be maintained and
         executed sequentially.

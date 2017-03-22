@@ -73,8 +73,8 @@ class CCEJob(object):
 
         for ctx in contexts:
             count += 1
-            yield CCEJob(context=copy.deepcopy(ctx),
-                         tasks=copy.deepcopy(self._rest_tasks))
+            yield CCEJob(context=ctx,
+                         tasks=self._rest_tasks)
 
             if self._check_if_stop_needed():
                 break

@@ -7,6 +7,7 @@ from cloudconnectlib.core.ext import (
     lookup_method,
     regex_match,
     regex_not_match,
+    regex_search,
     std_output,
     splunk_xml,
     json_path,
@@ -309,3 +310,20 @@ def test_is_true():
 
     for nt in not_truth:
         assert not is_true(nt)
+
+
+def test_regex_search():
+    source = 'absbssd234455 222'
+    regex = 'ssd(?P<title>\d+)\s(?P<title2>\d+)'
+    s = regex_search(regex, source)
+    assert len(s) == 2
+    assert s['title'] == '234455'
+    assert s['title2'] == '222'
+
+    not_matched_regex = 'ssdddddddddd----'
+    s = regex_search(not_matched_regex, source)
+    assert len(s) == 0
+
+    non_string = ({}, [], (), 123, 123.4)
+
+    assert all(len(regex_search(regex, x)) == 0 for x in non_string)

@@ -46,4 +46,3 @@ def format_events(raw_events, time=None,
                                            stanza=stanza, unbroken=unbroken,
                                            done=done) for data in
                                   raw_events)
-

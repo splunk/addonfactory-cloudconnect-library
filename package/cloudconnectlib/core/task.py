@@ -140,6 +140,7 @@ class CheckpointManagerAdapter(tacm.TACheckPointMgr):
         self._template = CheckpointTemplate(name, content)
 
     def save(self, ctx):
+        """Save checkpoint"""
         new_checkpoint = self._template.render(ctx)
         super(CheckpointManagerAdapter, self).update_ckpt(
             new_checkpoint['content'],
@@ -147,8 +148,13 @@ class CheckpointManagerAdapter(tacm.TACheckPointMgr):
         )
 
     def load(self, ctx):
+        """Load checkpoint"""
         name = self._template.name.render(ctx)
-        return super(CheckpointManagerAdapter, self).get_ckpt(namespaces=name)
+        checkpoint = super(CheckpointManagerAdapter, self).get_ckpt(namespaces=name)
+        if checkpoint is None:
+            logger.info('No existing checkpoint found')
+            checkpoint = {}
+        return checkpoint
 
 
 class BaseTask(object):
@@ -171,7 +177,7 @@ class BaseTask(object):
         :type output: ``string``
         """
         handler = ProcessHandler(method, input, output)
-        self._post_process_handler.append(handler)
+        self._pre_process_handler.append(handler)
 
     def add_preprocess_skip_condition(self, method, input):
         """
@@ -218,10 +224,10 @@ class BaseTask(object):
     @staticmethod
     def _execute_handlers(skip_conditions, handlers, context, phase):
         if skip_conditions.is_meet(context):
-            logger.debug('%s skip conditions are met', phase.capitalize())
+            logger.debug('%s process skip conditions are met', phase.capitalize())
             return
         if not handlers:
-            logger.debug('No handler found in %s', phase)
+            logger.debug('No handler found in %s process', phase)
             return
 
         for handler in handlers:
@@ -234,12 +240,14 @@ class BaseTask(object):
     def _pre_process(self, context):
         self._execute_handlers(self._skip_pre_conditions,
                                self._pre_process_handler,
-                               context, 'pre process')
+                               context,
+                               'pre')
 
     def _post_process(self, context):
         self._execute_handlers(self._skip_post_conditions,
                                self._post_process_handler,
-                               context, 'post process')
+                               context,
+                               'post')
 
     @abstractmethod
     def perform(self, context):

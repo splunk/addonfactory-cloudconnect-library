@@ -510,6 +510,7 @@ class CCEHTTPRequestTask(BaseTask):
         self._prepare_http_client(context)
         # Load checkpoint to context
         context.update(self._load_checkpoint(context))
+        update_source = False if context.get("source") else True
 
         while True:
             try:
@@ -533,6 +534,8 @@ class CCEHTTPRequestTask(BaseTask):
                 break
 
             context[_RESPONSE_KEY] = response
+            if update_source:
+                context["source"] = r.url.split("?")[0]
 
             try:
                 self._post_process(context)

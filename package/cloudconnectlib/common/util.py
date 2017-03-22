@@ -1,8 +1,5 @@
 import json
 from ..splunktalib.common import util
-from ..splunktacollectorlib.common import log as stulog
-from ..splunktacollectorlib.data_collection import ta_helper as th
-from .lib_util import get_mod_input_script_name
 from solnlib.modular_input.event import XMLEvent
 
 
@@ -50,9 +47,3 @@ def format_events(raw_events, time=None,
                                            done=done) for data in
                                   raw_events)
 
-
-def reset_logger(stanza_name, logging_level, log_suffix="modinput"):
-    script_name = get_mod_input_script_name()
-    logger_name = script_name + "_" + th.format_name_for_file(stanza_name)
-    stulog.reset_logger(logger_name)
-    stulog.set_log_level(logging_level)

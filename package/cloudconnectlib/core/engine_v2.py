@@ -2,6 +2,8 @@ import concurrent.futures as cf
 import threading
 from collections import Iterable
 from ..common.log import get_cc_logger
+from os import path as op
+from .plugin import init_pipeline_plugins
 logger = get_cc_logger()
 
 
@@ -14,6 +16,8 @@ class CloudConnectEngine(object):
         self._pending_jobs = []
         self._counter = 0
         self._lock = threading.RLock()
+        init_pipeline_plugins(
+            op.join(op.dirname(op.dirname(__file__)), "plugin"))
 
     def start(self, jobs=None):
         """

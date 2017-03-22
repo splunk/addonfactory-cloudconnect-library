@@ -217,8 +217,8 @@ class HttpClient(object):
     def send(self, request):
         if not request:
             raise ValueError('The request is none')
-        if request.body and not isinstance(request.body, str):
-            raise TypeError('The request body must be str')
+        if request.body and not isinstance(request.body, basestring):
+            raise TypeError('Invalid request body type: {}'.format(request.body))
 
         if self._connection is None:
             self._initialize_connection()

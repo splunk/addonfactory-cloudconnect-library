@@ -27,6 +27,22 @@ class CCEJob(object):
             self._rest_tasks.extend(tasks)
         self._running_task = None
 
+    def set_proxy(self, proxy_setting):
+        """
+        Setup the proxy setting.
+
+        :param proxy_setting: Proxy setting should include the following fields
+            "proxy_enabled": ,
+            "proxy_url":,
+            "proxy_port": ,
+            "proxy_username": ,
+            "proxy_password": ,
+            "proxy_rdns": ,
+            "proxy_type": ,
+        :type proxy_setting: ``dict``
+        """
+        self._proxy_info = proxy_setting
+
     def add_task(self, task):
         """
         Add a task instance into a job.
@@ -36,6 +52,8 @@ class CCEJob(object):
         """
         if not isinstance(task, BaseTask):
             raise ValueError('Unsupported task type: {}'.format(type(task)))
+        if callable(getattr(task, "set_proxy", None)):
+            task.set_proxy(self._proxy_info)
         self._rest_tasks.append(task)
 
     def _check_if_stop_needed(self):

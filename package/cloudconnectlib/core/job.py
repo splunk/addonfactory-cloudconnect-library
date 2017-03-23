@@ -26,6 +26,7 @@ class CCEJob(object):
         if tasks:
             self._rest_tasks.extend(tasks)
         self._running_task = None
+        self._proxy_info = None
 
     def set_proxy(self, proxy_setting):
         """
@@ -52,7 +53,7 @@ class CCEJob(object):
         """
         if not isinstance(task, BaseTask):
             raise ValueError('Unsupported task type: {}'.format(type(task)))
-        if callable(getattr(task, "set_proxy", None)):
+        if callable(getattr(task, "set_proxy", None)) and self._proxy_info:
             task.set_proxy(self._proxy_info)
         self._rest_tasks.append(task)
 

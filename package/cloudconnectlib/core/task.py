@@ -332,9 +332,10 @@ class CCEHTTPRequestTask(BaseTask):
         super(CCEHTTPRequestTask, self).__init__(name)
         self._request = RequestTemplate(request)
         self._stop_conditions = ConditionGroup()
-        self._finished_iter_count = 0
         self._proxy_info = None
-        self._iteration_count = defaults.max_iteration_count
+
+        self._max_iteration_count = defaults.max_iteration_count
+        self._finished_iter_count = 0
 
         self._checkpointer = None
         self._task_config = task_config
@@ -411,12 +412,12 @@ class CCEHTTPRequestTask(BaseTask):
         :type count: ``integer``
         """
         try:
-            self._iteration_count = int(count)
+            self._max_iteration_count = int(count)
         except ValueError:
-            self._iteration_count = defaults.max_iteration_count
+            self._max_iteration_count = defaults.max_iteration_count
             logger.warning(
                 'Invalid iteration count: %s, using default max iteration count: %s',
-                count, self._iteration_count)
+                count, self._max_iteration_count)
 
     def add_stop_condition(self, method, input):
         """
@@ -451,9 +452,10 @@ class CCEHTTPRequestTask(BaseTask):
         )
 
     def _should_exit(self, context):
-        if 0 < self._iteration_count <= self._finished_iter_count:
-            logger.info('Iteration count reached %s', self._iteration_count)
+        if 0 < self._max_iteration_count <= self._finished_iter_count:
+            logger.info('Iteration count reached %s', self._max_iteration_count)
             return True
+
         if self._stop_conditions.is_meet(context):
             logger.info('Stop conditions are met')
             return True

@@ -48,7 +48,7 @@ class Condition(object):
         args = [arg.render(context) for arg in self.arguments]
         callable_method = lookup_method(self.method)
         logger.debug('%s arguments found for method %s', len(args), self.method)
-        return callable_method(args)
+        return callable_method(*args)
 
 
 class ConditionGroup(object):
@@ -95,6 +95,7 @@ class RequestTemplate(object):
         if not url:
             raise ValueError("The request doesn't contain a url or it's empty")
         self.url = _Token(url)
+        self.nextpage_url = _Token(request.get('nextpage_url'))
         self.headers = DictToken(request.get('headers', {}))
 
         # Request body could be string or dict
@@ -113,13 +114,25 @@ class RequestTemplate(object):
             raise ValueError('Unsupported value for request method: {}'.format(method))
         self.method = _Token(method)
 
+        self.count = 0
+
     def render(self, context):
-        return Request(
-            url=self.url.render(context),
-            method=self.method.render(context),
-            headers=self.headers.render(context),
-            body=self.body.render(context) if self.body else None
-        )
+        if self.count == 0 or not self.nextpage_url:
+            self.count += 1
+            return Request(
+                url=self.url.render(context),
+                method=self.method.render(context),
+                headers=self.headers.render(context),
+                body=self.body.render(context) if self.body else None
+            )
+        else :
+            self.count += 1
+            return Request(
+                url=self.nextpage_url.render(context),
+                method=self.method.render(context),
+                headers=self.headers.render(context),
+                body=self.body.render(context) if self.body else None
+            )
 
 
 class CheckpointTemplate(object):
@@ -442,7 +455,7 @@ class CCEHTTPRequestTask(BaseTask):
         if 0 < self._max_iteration_count <= self._finished_iter_count:
             logger.info('Iteration count reached %s', self._max_iteration_count)
             return True
-        
+
         if self._stop_conditions.is_meet(context):
             logger.info('Stop conditions are met')
             return True

@@ -351,7 +351,7 @@ class CCEHTTPRequestTask(BaseTask):
         Stop current task.
         """
         if self._stopped.is_set():
-            logger.info('Task is not running, cannot stop it.')
+            logger.info('Task=%s is not running, cannot stop it.', self)
             return
         self._stop_signal_received = True
 
@@ -359,11 +359,11 @@ class CCEHTTPRequestTask(BaseTask):
             return
 
         if not self._stopped.wait(timeout):
-            logger.info('Waiting for stop task timeout')
+            logger.info('Waiting for stop task %s timeout', self)
 
     def _check_if_stop_needed(self):
         if self._stop_signal_received:
-            logger.info('Stop task signal received, stopping task.')
+            logger.info('Stop task signal received, stopping task %s.', self)
             self._stopped.set()
             return True
         return False
@@ -518,18 +518,18 @@ class CCEHTTPRequestTask(BaseTask):
         self._http_client = HttpClient(proxy)
 
     def perform(self, context):
-        logger.debug('Starting to perform task')
+        logger.info('Starting to perform task=%s', self)
 
         self._prepare_http_client(context)
         # Load checkpoint to context
         context.update(self._load_checkpoint(context))
-        update_source = False if context.get("source") else True
+        update_source = False if context.get('source') else True
 
         while True:
             try:
                 self._pre_process(context)
             except StopCCEIteration:
-                logger.info("Task exits in pre_process stage")
+                logger.info("Task=%s exits in pre_process stage", self)
                 break
 
             if self._check_if_stop_needed():
@@ -541,19 +541,19 @@ class CCEHTTPRequestTask(BaseTask):
 
             response, need_exit = self._send_request(r)
             if need_exit:
-                logger.info('Task need been terminated due to request result')
+                logger.info('Task=%s need been terminated due to request response', self)
                 break
             if self._check_if_stop_needed():
                 break
 
             context[_RESPONSE_KEY] = response
             if update_source:
-                context["source"] = r.url.split("?")[0]
+                context['source'] = r.url.split('?')[0]
 
             try:
                 self._post_process(context)
             except StopCCEIteration:
-                logger.info("Task exits in post_process stage")
+                logger.info("Task=%s exits in post_process stage", self)
                 break
 
             self._persist_checkpoint(context)
@@ -568,4 +568,7 @@ class CCEHTTPRequestTask(BaseTask):
         yield context
 
         self._stopped.set()
-        logger.debug('Perform task finished')
+        if self._checkpointer:
+            # Flush checkpoint cache to disk
+            self._checkpointer.close()
+        logger.info('Perform task=%s finished', self)

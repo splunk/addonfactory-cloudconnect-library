@@ -564,7 +564,8 @@ class CCEHTTPRequestTask(BaseTask):
             self._finished_iter_count += 1
             if self._should_exit(context):
                 break
-
+        if update_source:
+            del context['source']
         yield context
 
         self._stopped.set()

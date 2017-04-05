@@ -81,3 +81,11 @@ def test_nextpage_url(capsys):
         pass
     assert isinstance(context.get("__stdout__"), list) and len(context.get("__stdout__")) > 0
     assert context["__nextpage_url__"].get("link") == "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=4"
+
+    context = {}
+    task.set_iteration_count(3)
+    task._finished_iter_count = 0
+    for x in task.perform(context):
+        pass
+    assert isinstance(context.get("__stdout__"), list) and len(context.get("__stdout__")) > 0
+    assert context["__nextpage_url__"].get("link") == "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=4"

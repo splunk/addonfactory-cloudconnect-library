@@ -95,7 +95,7 @@ class RequestTemplate(object):
         if not url:
             raise ValueError("The request doesn't contain a url or it's empty")
         self.url = _Token(url)
-        self.nextpage_url = _Token(request.get('nextpage_url'))
+        self.nextpage_url = _Token(request.get('nextpage_url', url))
         self.headers = DictToken(request.get('headers', {}))
 
         # Request body could be string or dict
@@ -114,6 +114,9 @@ class RequestTemplate(object):
             raise ValueError('Unsupported value for request method: {}'.format(method))
         self.method = _Token(method)
 
+        self.count = 0
+
+    def reset(self):
         self.count = 0
 
     def render(self, context):
@@ -524,6 +527,7 @@ class CCEHTTPRequestTask(BaseTask):
         # Load checkpoint to context
         context.update(self._load_checkpoint(context))
         update_source = False if context.get('source') else True
+        self._request.reset()
 
         while True:
             try:

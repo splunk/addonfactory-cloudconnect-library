@@ -178,7 +178,7 @@ class HttpClient(object):
         """Invokes request and auto retry with an exponential backoff
         if the response status is configured in defaults.retry_statuses."""
         retries = max(defaults.retries, 0)
-
+        _logger.info('Invoking request to [%s] using [%s] method', uri, method)
         for i in xrange(retries + 1):
             try:
                 response, content = self._send_internal(

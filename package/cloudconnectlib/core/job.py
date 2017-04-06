@@ -1,8 +1,10 @@
 import copy
 import threading
 
-from cloudconnectlib.splunktacollectorlib.common.log import logger
 from task import BaseTask
+from ..common import log
+
+logger = log.get_cc_logger()
 
 
 class CCEJob(object):

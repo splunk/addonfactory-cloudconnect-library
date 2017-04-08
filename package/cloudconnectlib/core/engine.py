@@ -1,9 +1,8 @@
-import json
 import threading
 
 from . import defaults
 from .exceptions import HTTPError, StopCCEIteration
-from .http import HTTPRequest
+from .http import HttpClient
 from ..common.log import get_cc_logger
 
 _logger = get_cc_logger()
@@ -92,7 +91,7 @@ class Job(object):
         self._request = request
         self._context = context
         self._checkpoint_mgr = checkpoint_mgr
-        self._client = HTTPRequest(proxy)
+        self._client = HttpClient(proxy)
         self._stopped = True
         self._should_stop = False
 
@@ -238,7 +237,6 @@ class Job(object):
 
     def _run(self):
         request = self._request.request
-        method = request.method
         authorizer = request.auth
         self._get_checkpoint()
 
@@ -252,19 +250,15 @@ class Job(object):
                 _logger.info('Stop iteration command in pre process is received, exit job now.')
                 return
 
-            url = request.normalize_url(self._context)
-            header = request.normalize_header(self._context)
-            body = request.normalize_body(self._context)
-            body_json = json.dumps(body) if body else None
+            r = self._request.render(self._context)
 
             if authorizer:
-                authorizer(header, self._context)
+                authorizer(r.headers, self._context)
 
             if self._check_should_stop():
                 return
 
-            response, need_terminate = \
-                self._send_request(url, method, header, body=body_json)
+            response, need_terminate = self._send_request(r)
 
             if need_terminate:
                 _logger.info('This job need to be terminated.')
@@ -289,17 +283,15 @@ class Job(object):
                 _logger.info('Stop condition reached, exit job now')
                 break
 
-    def _send_request(self, url, method, header, body):
+    def _send_request(self, request):
         """Do send request with a simple error handling strategy. Refer to
         https://confluence.splunk.com/display/PROD/CC+1.0+-+Detail+Design"""
         try:
-            response = self._client.request(
-                url, method, headers=header, body=body
-            )
+            response = self._client.send(request)
         except HTTPError as error:
             _logger.exception(
                 'HTTPError reason=%s when sending request to '
-                'url=%s method=%s', error.reason, url, method)
+                'url=%s method=%s', error.reason, request.url, request.method)
             return None, True
 
         status = response.status_code
@@ -309,14 +301,14 @@ class Job(object):
                 _logger.info(
                     'The response body of request which url=%s and'
                     ' method=%s is empty, status=%s.',
-                    url, method, status
+                    request.url, request.method, status
                 )
                 return None, True
             return response, False
 
         error_log = ('The response status=%s for request which url=%s and'
                      ' method=%s.') % (
-                        status, url, method
+                        status, request.url, request.method
                     )
 
         if status in defaults.warning_statuses:

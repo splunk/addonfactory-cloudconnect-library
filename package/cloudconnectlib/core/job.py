@@ -1,8 +1,9 @@
-import copy
 import threading
 
-from task import BaseTask
+from .exceptions import QuitJob
+from .task import BaseTask
 from ..common import log
+
 
 logger = log.get_cc_logger()
 
@@ -81,7 +82,12 @@ class CCEJob(object):
 
         self._running_task = self._rest_tasks[0]
         self._rest_tasks = self._rest_tasks[1:]
-        contexts = list(self._running_task.perform(self._context) or ())
+
+        try:
+            contexts = list(self._running_task.perform(self._context) or ())
+        except QuitJob:
+            logger.info('Quit job signal received, exiting job')
+            return
 
         if self._check_if_stop_needed():
             return

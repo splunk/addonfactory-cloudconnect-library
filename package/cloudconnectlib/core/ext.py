@@ -138,8 +138,7 @@ def splunk_xml(candidates,
                 time
             )
             time = None
-
-    return util.format_events(
+    xml_events = util.format_events(
         candidates,
         time=time,
         index=index,
@@ -147,6 +146,11 @@ def splunk_xml(candidates,
         source=source,
         sourcetype=sourcetype
     )
+    _logger.info(
+                "[%s] events are formated as splunk stream xml",
+                len(candidates)
+            )
+    return xml_events
 
 
 def std_output(candidates):

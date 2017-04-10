@@ -368,6 +368,7 @@ def split_by(source, target, separator=None):
 _extension_functions = {
     'assert_true': assert_true,
     'exit_if_true': exit_if_true,
+    'exit_job_if_true': exit_job_if_true,
     'is_true': is_true,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,

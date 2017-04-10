@@ -1,11 +1,11 @@
 import base64
+import json
 import sys
 import traceback
 
 from .ext import lookup_method
 from .template import compile_template
 from ..common.log import get_cc_logger
-from .task import Request
 
 _logger = get_cc_logger()
 
@@ -154,6 +154,18 @@ class RequestParams(object):
     def normalize_body(self, context):
         """Normalize body"""
         return self.body.render(context)
+
+
+class Request(object):
+    def __init__(self, method, url, headers, body):
+        self.method = method
+        self.url = url
+        self.headers = headers
+        if not body:
+            body = None
+        elif not isinstance(body, basestring):
+            body = json.dumps(body)
+        self.body = body
 
 
 class _Function(object):

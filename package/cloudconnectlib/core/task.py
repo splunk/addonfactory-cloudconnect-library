@@ -1,5 +1,4 @@
 import copy
-import json
 import threading
 from abc import abstractmethod
 
@@ -10,7 +9,7 @@ from cloudconnectlib.core.exceptions import HTTPError
 from cloudconnectlib.core.exceptions import StopCCEIteration, CCESplitError
 from cloudconnectlib.core.ext import lookup_method
 from cloudconnectlib.core.http import get_proxy_info, HttpClient
-from cloudconnectlib.core.models import DictToken, _Token, BasicAuthorization
+from cloudconnectlib.core.models import DictToken, _Token, BasicAuthorization, Request
 
 logger = get_cc_logger()
 
@@ -73,18 +72,6 @@ class ProxyTemplate(object):
     def render(self, context):
         rendered = self._proxy.render(context)
         return get_proxy_info(rendered)
-
-
-class Request(object):
-    def __init__(self, method, url, headers, body):
-        self.method = method
-        self.url = url
-        self.headers = headers
-        if not body:
-            body = None
-        elif not isinstance(body, basestring):
-            body = json.dumps(body)
-        self.body = body
 
 
 class RequestTemplate(object):

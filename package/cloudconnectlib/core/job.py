@@ -1,6 +1,6 @@
 import threading
 
-from .exceptions import QuitJob
+from .exceptions import QuitJobError
 from .task import BaseTask
 from ..common import log
 
@@ -85,7 +85,7 @@ class CCEJob(object):
 
         try:
             contexts = list(self._running_task.perform(self._context) or ())
-        except QuitJob:
+        except QuitJobError:
             logger.info('Quit job signal received, exiting job')
             return
 

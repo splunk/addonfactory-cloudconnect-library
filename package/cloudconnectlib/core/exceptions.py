@@ -36,5 +36,5 @@ class CCESplitError(CCEError):
     pass
 
 
-class QuitJob(CCEError):
+class QuitJobError(CCEError):
     pass

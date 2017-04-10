@@ -6,7 +6,7 @@ from collections import Iterable
 from datetime import datetime
 
 from jsonpath_rw import parse
-from .exceptions import FuncException, StopCCEIteration, QuitJob
+from .exceptions import FuncException, StopCCEIteration, QuitJobError
 from .pipemgr import PipeManager
 from ..common import util, log
 
@@ -329,7 +329,7 @@ def exit_if_true(value):
 def exit_job_if_true(value):
     """Raise a QuitJob exception if value is True"""
     if is_true(value):
-        raise QuitJob
+        raise QuitJobError
 
 
 def assert_true(value, message=None):

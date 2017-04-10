@@ -30,6 +30,11 @@ class StopCCEIteration(CCEError):
     """Exception to exit from the engine iteration."""
     pass
 
+
 class CCESplitError(CCEError):
     """Exception to exit the job in Split Task"""
+    pass
+
+
+class QuitJobError(CCEError):
     pass

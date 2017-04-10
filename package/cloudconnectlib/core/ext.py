@@ -2,11 +2,11 @@ import calendar
 import json
 import re
 import traceback
-from datetime import datetime
 from collections import Iterable
+from datetime import datetime
 
 from jsonpath_rw import parse
-from .exceptions import FuncException, StopCCEIteration
+from .exceptions import FuncException, StopCCEIteration, QuitJobError
 from .pipemgr import PipeManager
 from ..common import util, log
 
@@ -328,6 +328,12 @@ def exit_if_true(value):
     """Raise a StopCCEIteration exception if value is True"""
     if is_true(value):
         raise StopCCEIteration
+
+
+def exit_job_if_true(value):
+    """Raise a QuitJob exception if value is True"""
+    if is_true(value):
+        raise QuitJobError
 
 
 def assert_true(value, message=None):

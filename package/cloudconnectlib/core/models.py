@@ -1,10 +1,11 @@
 import base64
+import sys
 import traceback
 
 from .ext import lookup_method
 from .template import compile_template
 from ..common.log import get_cc_logger
-import sys
+from .task import Request
 
 _logger = get_cc_logger()
 
@@ -104,7 +105,7 @@ class BasicAuthorization(BaseAuth):
         ).strip()
 
 
-class Request(object):
+class RequestParams(object):
     def __init__(self, url, method, header=None, auth=None, body=None):
         self._header = DictToken(header)
         self._url = _Token(url)
@@ -132,11 +133,19 @@ class Request(object):
     def body(self):
         return self._body
 
+    def render(self, ctx):
+        return Request(
+            url=self._url.render(ctx),
+            method=self._method,
+            headers=self.normalize_headers(ctx),
+            body=self.body.render(ctx)
+        )
+
     def normalize_url(self, context):
         """Normalize url"""
         return self._url.render(context)
 
-    def normalize_header(self, context):
+    def normalize_headers(self, context):
         """Normalize headers which must be a dict which keys and values are
         string."""
         header = self.header.render(context)

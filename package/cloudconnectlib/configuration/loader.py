@@ -12,7 +12,7 @@ from ..common.util import (
 from ..core.exceptions import ConfigException
 from ..core.ext import lookup_method
 from ..core.models import (
-    BasicAuthorization, Request, Processor,
+    BasicAuthorization, RequestParams, Processor,
     Condition, Task, Checkpoint, IterationMode,
     DictToken
 )
@@ -169,7 +169,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         return _AUTH_TYPES[auth_type](candidate['options'])
 
     def _load_options(self, options):
-        return Request(
+        return RequestParams(
             auth=self._load_authorization(options.get('auth')),
             url=options['url'],
             method=options.get('method', 'GET'),

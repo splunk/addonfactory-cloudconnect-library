@@ -4,6 +4,7 @@ from abc import abstractmethod
 
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
+from cloudconnectlib.core.checkpoint import CheckpointManagerAdapter
 from cloudconnectlib.core.exceptions import HTTPError
 from cloudconnectlib.core.exceptions import StopCCEIteration, CCESplitError
 from cloudconnectlib.core.ext import lookup_method
@@ -113,10 +114,10 @@ class RequestTemplate(object):
 
         self.count += 1
         return Request(
-           url=url,
-           method=self.method.render(context),
-           headers=self.headers.render(context),
-           body=self.body.render(context) if self.body else None
+            url=url,
+            method=self.method.render(context),
+            headers=self.headers.render(context),
+            body=self.body.render(context) if self.body else None
         )
 
 
@@ -395,7 +396,7 @@ class CCEHTTPRequestTask(BaseTask):
         if not content:
             raise ValueError('Invalid checkpoint content: {}'.format(content))
         self._checkpointer = CheckpointManagerAdapter(
-            name=name,
+            namespaces=name,
             content=content,
             meta_config=self._meta_config,
             task_config=self._task_config

@@ -2,7 +2,6 @@ import copy
 import threading
 from abc import abstractmethod
 
-import cloudconnectlib.splunktacollectorlib.data_collection.ta_checkpoint_manager as tacm
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
 from cloudconnectlib.core.exceptions import HTTPError
@@ -108,56 +107,17 @@ class RequestTemplate(object):
 
     def render(self, context):
         if self.count == 0 or not self.nextpage_url:
-            self.count += 1
-            return Request(
-                url=self.url.render(context),
-                method=self.method.render(context),
-                headers=self.headers.render(context),
-                body=self.body.render(context) if self.body else None
-            )
-        else :
-            self.count += 1
-            return Request(
-                url=self.nextpage_url.render(context),
-                method=self.method.render(context),
-                headers=self.headers.render(context),
-                body=self.body.render(context) if self.body else None
-            )
+            url = self.url.render(context)
+        else:
+            url = self.nextpage_url.render(context)
 
-
-class CheckpointTemplate(object):
-    def __init__(self, name, content):
-        self.name = _Token(name)
-        self.content = DictToken(content)
-
-    def render(self, context):
-        return {
-            'name': self.name.render(context),
-            'content': self.content.render(context)
-        }
-
-
-class CheckpointManagerAdapter(tacm.TACheckPointMgr):
-    def __init__(self, name, content, meta_config, task_config):
-        super(CheckpointManagerAdapter, self).__init__(meta_config, task_config)
-        self._template = CheckpointTemplate(name, content)
-
-    def save(self, ctx):
-        """Save checkpoint"""
-        new_checkpoint = self._template.render(ctx)
-        super(CheckpointManagerAdapter, self).update_ckpt(
-            new_checkpoint['content'],
-            new_checkpoint['name']
+        self.count += 1
+        return Request(
+           url=url,
+           method=self.method.render(context),
+           headers=self.headers.render(context),
+           body=self.body.render(context) if self.body else None
         )
-
-    def load(self, ctx):
-        """Load checkpoint"""
-        name = self._template.name.render(ctx)
-        checkpoint = super(CheckpointManagerAdapter, self).get_ckpt(namespaces=name)
-        if checkpoint is None:
-            logger.info('No existing checkpoint found')
-            checkpoint = {}
-        return checkpoint
 
 
 class BaseTask(object):

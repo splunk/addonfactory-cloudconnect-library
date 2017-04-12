@@ -65,9 +65,7 @@ class ConditionGroup(object):
 
 class ProxyTemplate(object):
     def __init__(self, proxy_setting):
-        if not proxy_setting:
-            raise ValueError('Invalid proxy setting: {}'.format(proxy_setting))
-        self._proxy = DictToken(proxy_setting)
+        self._proxy = DictToken(proxy_setting or {})
 
     def render(self, context):
         rendered = self._proxy.render(context)

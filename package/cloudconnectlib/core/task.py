@@ -442,7 +442,7 @@ class CCEHTTPRequestTask(BaseTask):
         else:
             logger.error(error_log)
 
-        return None, True
+        return response, True
 
     def _persist_checkpoint(self, context):
         if not self._checkpointer:
@@ -490,13 +490,14 @@ class CCEHTTPRequestTask(BaseTask):
                 self._authorizer(r.headers, context)
 
             response, need_exit = self._send_request(r)
+            context[_RESPONSE_KEY] = response
+
             if need_exit:
                 logger.info('Task=%s need been terminated due to request response', self)
                 break
             if self._check_if_stop_needed():
                 break
 
-            context[_RESPONSE_KEY] = response
             if update_source:
                 context['source'] = r.url.split('?')[0]
 

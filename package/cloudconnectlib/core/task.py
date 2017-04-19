@@ -282,15 +282,12 @@ class CCEHTTPRequestTask(BaseTask):
         self._request = RequestTemplate(request)
         self._stop_conditions = ConditionGroup()
         self._proxy_info = None
-
         self._max_iteration_count = defaults.max_iteration_count
-        self._finished_iter_count = 0
 
         self._checkpointer = None
         self._task_config = task_config
         self._meta_config = meta_config
 
-        self._http_client = None
         self._authorizer = None
         self._stopped = threading.Event()
         self._stop_signal_received = False
@@ -400,8 +397,8 @@ class CCEHTTPRequestTask(BaseTask):
             task_config=self._task_config
         )
 
-    def _should_exit(self, context):
-        if 0 < self._max_iteration_count <= self._finished_iter_count:
+    def _should_exit(self, done_count, context):
+        if 0 < self._max_iteration_count <= done_count:
             logger.info('Iteration count reached %s', self._max_iteration_count)
             return True
 
@@ -410,9 +407,10 @@ class CCEHTTPRequestTask(BaseTask):
             return True
         return False
 
-    def _send_request(self, request):
+    @staticmethod
+    def _send_request(client, request):
         try:
-            response = self._http_client.send(request)
+            response = client.send(request)
         except HTTPError as error:
             logger.exception(
                 'Error occurred in request url=%s method=%s reason=%s',
@@ -448,7 +446,6 @@ class CCEHTTPRequestTask(BaseTask):
         if not self._checkpointer:
             logger.debug('Checkpoint is not configured. Skip persisting checkpoint.')
             return
-
         try:
             self._checkpointer.save(context)
         except Exception:
@@ -464,13 +461,14 @@ class CCEHTTPRequestTask(BaseTask):
 
     def _prepare_http_client(self, ctx):
         proxy = self._proxy_info.render(ctx) if self._proxy_info else None
-        self._http_client = HttpClient(proxy)
+        return HttpClient(proxy)
 
     def perform(self, context):
         logger.info('Starting to perform task=%s', self)
 
-        self._prepare_http_client(context)
-        # Load checkpoint to context
+        client = self._prepare_http_client(context)
+        done_count = 0
+
         context.update(self._load_checkpoint(context))
         update_source = False if context.get('source') else True
         self._request.reset()
@@ -489,7 +487,7 @@ class CCEHTTPRequestTask(BaseTask):
             if self._authorizer:
                 self._authorizer(r.headers, context)
 
-            response, need_exit = self._send_request(r)
+            response, need_exit = self._send_request(client, r)
             context[_RESPONSE_KEY] = response
 
             if need_exit:
@@ -512,8 +510,8 @@ class CCEHTTPRequestTask(BaseTask):
             if self._check_if_stop_needed():
                 break
 
-            self._finished_iter_count += 1
-            if self._should_exit(context):
+            done_count += 1
+            if self._should_exit(done_count, context):
                 break
         if update_source and context.get('source'):
             del context['source']

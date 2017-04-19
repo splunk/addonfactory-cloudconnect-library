@@ -290,7 +290,6 @@ class CCEHTTPRequestTask(BaseTask):
         self._task_config = task_config
         self._meta_config = meta_config
 
-        self._http_client = None
         self._authorizer = None
         self._stopped = threading.Event()
         self._stop_signal_received = False
@@ -410,9 +409,10 @@ class CCEHTTPRequestTask(BaseTask):
             return True
         return False
 
-    def _send_request(self, request):
+    @staticmethod
+    def _send_request(client, request):
         try:
-            response = self._http_client.send(request)
+            response = client.send(request)
         except HTTPError as error:
             logger.exception(
                 'Error occurred in request url=%s method=%s reason=%s',
@@ -464,12 +464,12 @@ class CCEHTTPRequestTask(BaseTask):
 
     def _prepare_http_client(self, ctx):
         proxy = self._proxy_info.render(ctx) if self._proxy_info else None
-        self._http_client = HttpClient(proxy)
+        return HttpClient(proxy)
 
     def perform(self, context):
         logger.info('Starting to perform task=%s', self)
 
-        self._prepare_http_client(context)
+        client = self._prepare_http_client(context)
         # Load checkpoint to context
         context.update(self._load_checkpoint(context))
         update_source = False if context.get('source') else True
@@ -489,7 +489,7 @@ class CCEHTTPRequestTask(BaseTask):
             if self._authorizer:
                 self._authorizer(r.headers, context)
 
-            response, need_exit = self._send_request(r)
+            response, need_exit = self._send_request(client, r)
             context[_RESPONSE_KEY] = response
 
             if need_exit:

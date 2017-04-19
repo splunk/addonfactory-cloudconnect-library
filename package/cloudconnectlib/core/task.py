@@ -282,9 +282,7 @@ class CCEHTTPRequestTask(BaseTask):
         self._request = RequestTemplate(request)
         self._stop_conditions = ConditionGroup()
         self._proxy_info = None
-
         self._max_iteration_count = defaults.max_iteration_count
-        self._finished_iter_count = 0
 
         self._checkpointer = None
         self._task_config = task_config
@@ -399,8 +397,8 @@ class CCEHTTPRequestTask(BaseTask):
             task_config=self._task_config
         )
 
-    def _should_exit(self, context):
-        if 0 < self._max_iteration_count <= self._finished_iter_count:
+    def _should_exit(self, done_count, context):
+        if 0 < self._max_iteration_count <= done_count:
             logger.info('Iteration count reached %s', self._max_iteration_count)
             return True
 
@@ -448,7 +446,6 @@ class CCEHTTPRequestTask(BaseTask):
         if not self._checkpointer:
             logger.debug('Checkpoint is not configured. Skip persisting checkpoint.')
             return
-
         try:
             self._checkpointer.save(context)
         except Exception:
@@ -470,7 +467,8 @@ class CCEHTTPRequestTask(BaseTask):
         logger.info('Starting to perform task=%s', self)
 
         client = self._prepare_http_client(context)
-        # Load checkpoint to context
+        done_count = 0
+
         context.update(self._load_checkpoint(context))
         update_source = False if context.get('source') else True
         self._request.reset()
@@ -512,8 +510,8 @@ class CCEHTTPRequestTask(BaseTask):
             if self._check_if_stop_needed():
                 break
 
-            self._finished_iter_count += 1
-            if self._should_exit(context):
+            done_count += 1
+            if self._should_exit(done_count, context):
                 break
         if update_source and context.get('source'):
             del context['source']

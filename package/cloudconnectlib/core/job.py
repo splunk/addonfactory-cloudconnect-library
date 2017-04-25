@@ -46,6 +46,15 @@ class CCEJob(object):
         :type proxy_setting: ``dict``
         """
         self._proxy_info = proxy_setting
+        logger.debug("CCEJob proxy info: proxy_enabled='%s', proxy_url='%s', "
+                     "proxy_port='%s', proxy_rdns='%s', proxy_type='%s', "
+                     "proxy_username='%s'",
+                     proxy_setting.get("proxy_enabled"),
+                     proxy_setting.get("proxy_url"), 
+                     proxy_setting.get("proxy_port"),
+                     proxy_setting.get("proxy_rdns"),
+                     proxy_setting.get("proxy_type"),
+                     proxy_setting.get("proxy_username"))
 
     def add_task(self, task):
         """

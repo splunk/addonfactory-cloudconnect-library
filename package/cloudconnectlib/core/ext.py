@@ -2,10 +2,11 @@ import calendar
 import json
 import re
 import traceback
+from collections import Iterable
 from datetime import datetime
 
 from jsonpath_rw import parse
-from .exceptions import FuncException, StopCCEIteration
+from .exceptions import FuncException, StopCCEIteration, QuitJobError
 from .pipemgr import PipeManager
 from ..common import util, log
 
@@ -137,8 +138,7 @@ def splunk_xml(candidates,
                 time
             )
             time = None
-
-    return util.format_events(
+    xml_events = util.format_events(
         candidates,
         time=time,
         index=index,
@@ -146,6 +146,11 @@ def splunk_xml(candidates,
         source=source,
         sourcetype=sourcetype
     )
+    _logger.info(
+                "[%s] events are formated as splunk stream xml",
+                len(candidates)
+            )
+    return xml_events
 
 
 def std_output(candidates):
@@ -159,11 +164,17 @@ def std_output(candidates):
     for candidate in candidates:
         if all_str and not isinstance(candidate, basestring):
             all_str = False
-            _logger.warning(
+            _logger.debug(
                 'The type of data needs to print is "%s" rather than'
                 ' basestring',
                 type(candidate)
             )
+            try:
+                candidate = json.dumps(candidate)
+            except:
+                _logger.exception('The type of data needs to print is "%s"'
+                                  ' rather than basestring',
+                                  type(candidate))
 
         if not PipeManager().write_events(candidate):
             raise FuncException('Fail to output data to stdout. The event'
@@ -319,6 +330,12 @@ def exit_if_true(value):
         raise StopCCEIteration
 
 
+def exit_job_if_true(value):
+    """Raise a QuitJob exception if value is True"""
+    if is_true(value):
+        raise QuitJobError
+
+
 def assert_true(value, message=None):
     """Assert value is True"""
     if not is_true(value):
@@ -327,9 +344,31 @@ def assert_true(value, message=None):
         )
 
 
+def split_by(source, target, separator=None):
+    """Split the source to multiple values by the separator"""
+    try:
+        if not source:
+            return []
+        elif isinstance(source, basestring) and separator:
+            values = source.split(separator)
+            return [{target: value.strip()} for value in values]
+        elif isinstance(source, basestring):
+            return [{target: source}]
+        elif isinstance(source, Iterable):
+            return [{target: value} for value in source]
+        else:
+            return [{target: source}]
+    except Exception as ex:
+        _logger.warning("split_by method encountered exception "
+                        "source=%s message=%s cause=%s", source, ex.message,
+                        traceback.format_exc())
+        return []
+
+
 _extension_functions = {
     'assert_true': assert_true,
     'exit_if_true': exit_if_true,
+    'exit_job_if_true': exit_job_if_true,
     'is_true': is_true,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
@@ -341,6 +380,7 @@ _extension_functions = {
     'json_empty': json_empty,
     'json_not_empty': json_not_empty,
     'time_str2str': time_str2str,
+    'split_by': split_by
 }
 
 

@@ -4,7 +4,7 @@ import pytest
 from cloudconnectlib.core.models import (
     _Token,
     DictToken,
-    Request,
+    RequestParams,
     BasicAuthorization,
     Condition
 )
@@ -67,9 +67,9 @@ def test_request():
         'params1': 123,
         'params2': '{{value2}}'
     }
-    option = Request('url_test', 'GET',
-                     header=header, auth=None,
-                     body=body)
+    option = RequestParams('url_test', 'GET',
+                           header=header, auth=None,
+                           body=body)
 
     htv = option.normalize_header({'value1': 'value_test'})
     assert htv['token1'] == '124'

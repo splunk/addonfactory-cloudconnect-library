@@ -250,7 +250,7 @@ class Job(object):
                 _logger.info('Stop iteration command in pre process is received, exit job now.')
                 return
 
-            r = self._request.render(self._context)
+            r = request.render(self._context)
 
             if authorizer:
                 authorizer(r.headers, self._context)

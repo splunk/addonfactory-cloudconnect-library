@@ -71,7 +71,7 @@ def test_request():
                            header=header, auth=None,
                            body=body)
 
-    htv = option.normalize_header({'value1': 'value_test'})
+    htv = option.normalize_headers({'value1': 'value_test'})
     assert htv['token1'] == '124'
     assert htv['token2'] == 'value_test'
 

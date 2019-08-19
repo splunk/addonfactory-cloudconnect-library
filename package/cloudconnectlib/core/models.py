@@ -1,7 +1,10 @@
+from builtins import str
+from builtins import object
 import base64
 import json
 import sys
 import traceback
+import six
 
 from .ext import lookup_method
 from .template import compile_template
@@ -19,7 +22,7 @@ class _Token(object):
         template must be a string."""
         self._source = source
         self._value_for = compile_template(source) \
-            if isinstance(source, basestring) else None
+            if isinstance(source, six.string_types) else None
 
     def render(self, variables):
         """Render value with variables if source is a string.
@@ -45,10 +48,10 @@ class DictToken(object):
 
     def __init__(self, template_expr):
         self._tokens = {k: _Token(v)
-                        for k, v in (template_expr or {}).iteritems()}
+                        for k, v in (template_expr or {}).items()}
 
     def render(self, variables):
-        return {k: v.render(variables) for k, v in self._tokens.iteritems()}
+        return {k: v.render(variables) for k, v in self._tokens.items()}
 
 
 class BaseAuth(object):
@@ -149,7 +152,7 @@ class RequestParams(object):
         """Normalize headers which must be a dict which keys and values are
         string."""
         header = self.header.render(context)
-        return {k: str(v) for k, v in header.iteritems()}
+        return {k: str(v) for k, v in header.items()}
 
     def normalize_body(self, context):
         """Normalize body"""
@@ -163,7 +166,7 @@ class Request(object):
         self.headers = headers
         if not body:
             body = None
-        elif not isinstance(body, basestring):
+        elif not isinstance(body, six.string_types):
             body = json.dumps(body)
         self.body = body
 

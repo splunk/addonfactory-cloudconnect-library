@@ -2,12 +2,15 @@
 Copyright (C) 2005-2015 Splunk Inc. All Rights Reserved.
 """
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import os
 import os.path as op
 import datetime
 import sys
 import gc
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 def handle_tear_down_signals(callback):
@@ -105,4 +108,4 @@ def disable_stdout_buffer():
 
 
 def format_stanza_name(name):
-    return urllib.quote(name.encode("utf-8"), "")
+    return urllib.parse.quote(name.encode("utf-8"), "")

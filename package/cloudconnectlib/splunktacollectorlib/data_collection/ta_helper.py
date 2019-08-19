@@ -1,3 +1,5 @@
+import six
+from builtins import object
 import hashlib
 import json
 import os.path as op
@@ -39,7 +41,7 @@ def get_md5(data):
     :return:
     """
     assert data is not None, "The input cannot be None"
-    if isinstance(data, (unicode, str)):
+    if isinstance(data, six.string_types):
         return hashlib.sha256(data.encode('utf-8')).hexdigest()
     elif isinstance(data, (list, tuple, dict)):
         return hashlib.sha256(json.dumps(data).encode('utf-8')).hexdigest()
@@ -98,7 +100,7 @@ class ConfigSchemaHandler(object):
     def _divide_settings(self):
         division_schema = self._client_schema[c.division]
         division_settings = dict()
-        for division_endpoint, division_contents in division_schema.iteritems():
+        for division_endpoint, division_contents in division_schema.items():
             division_settings[division_endpoint] = self._process_division(
                 division_endpoint, division_contents)
         return division_settings
@@ -109,7 +111,7 @@ class ConfigSchemaHandler(object):
     def _process_division(self, division_endpoint, division_contents):
         division_metrics = []
         assert isinstance(division_contents, dict)
-        for division_key, division_value in division_contents.iteritems():
+        for division_key, division_value in division_contents.items():
             try:
                 assert self.TYPE in division_value and \
                        division_value[self.TYPE] in \

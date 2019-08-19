@@ -1,4 +1,6 @@
-from ext import _extension_functions
+from __future__ import absolute_import
+from builtins import next
+from .ext import _extension_functions
 from os import path as op
 from os import walk
 import sys
@@ -26,15 +28,15 @@ def cce_pipeline_plugin(func):
     """
     if not callable(func):
         logger.debug("Function %s is not callable, don't add it as a pipeline"
-                     " function", func.func_name)
+                     " function", func.__name__)
     else:
-        if func.func_name in _extension_functions.keys():
+        if func.__name__ in list(_extension_functions.keys()):
             logger.warning("Pipeline function %s already exists, please rename"
-                           "it!", func.func_name)
+                           "it!", func.__name__)
         else:
-            _extension_functions[func.func_name] = func
+            _extension_functions[func.__name__] = func
             logger.debug("Added function %s to pipeline plugin system",
-                        func.func_name)
+                        func.__name__)
 
     def pipeline_func(*args, **kwargs):
         return func(*args, **kwargs)
@@ -55,7 +57,7 @@ def import_plugin_file(file_name):
                        "supported are py", file_name)
         return
 
-    if module_name in sys.modules.keys():
+    if module_name in list(sys.modules.keys()):
         logger.warning("Module %s aleady exists and it won't be reload, "
                        "please rename your plugin module if it is required.",
                        module_name)

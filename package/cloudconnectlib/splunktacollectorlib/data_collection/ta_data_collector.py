@@ -1,9 +1,11 @@
 #!/usr/bin/python
+from __future__ import absolute_import
+from builtins import object
 import threading
 import time
 from collections import namedtuple
 
-import ta_consts as c
+from . import ta_consts as c
 from ..common import log as stulog
 from ...splunktalib.common import util as scu
 

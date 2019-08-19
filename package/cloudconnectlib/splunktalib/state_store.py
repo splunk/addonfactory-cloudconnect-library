@@ -1,3 +1,4 @@
+from builtins import object
 import json
 import os
 import os.path as op
@@ -96,7 +97,7 @@ class StateStore(BaseStateStore):
         if key:
             self._delete_state(key)
         else:
-            for key in self._states_cache.keys():
+            for key in list(self._states_cache.keys()):
                 self._delete_state(key)
 
     def _delete_state(self, key):
@@ -243,7 +244,7 @@ class CachedFileStateStore(FileStateStore):
 
     def close(self, key=None):
         if not key:
-            for k, (t, s) in self._states_cache.iteritems():
+            for k, (t, s) in self._states_cache.items():
                 self._update_and_flush_state(t, k, s)
             self._states_cache.clear()
             self._states_cache_lmd.clear()

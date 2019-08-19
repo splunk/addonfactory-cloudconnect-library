@@ -1,3 +1,4 @@
+from builtins import str
 from .request import content_request
 from ..common import util
 from ..common import xml_dom_parser as xdp
@@ -47,7 +48,7 @@ def create_data_input(splunkd_uri, session_key, owner, app_name, input_type,
     :return: None on success else raise exception
     """
 
-    key_values["name"] = unicode(name).encode('utf-8')
+    key_values["name"] = str(name).encode('utf-8')
     uri = _input_endpoint_ns(splunkd_uri, owner, app_name, input_type)
     msg = "Failed to create data input in app=%s: %s://%s" % (
         app_name, input_type, name)

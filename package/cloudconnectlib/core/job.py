@@ -1,3 +1,4 @@
+from builtins import object
 import threading
 
 from .exceptions import QuitJobError

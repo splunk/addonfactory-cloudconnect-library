@@ -1,8 +1,10 @@
+from future import standard_library
+standard_library.install_aliases()
 import os
 import os.path as op
 import subprocess
-from ConfigParser import ConfigParser
-from cStringIO import StringIO
+from configparser import ConfigParser
+from io import StringIO
 
 from .common import util as scu
 

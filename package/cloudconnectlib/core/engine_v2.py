@@ -1,3 +1,4 @@
+from builtins import object
 import concurrent.futures as cf
 import threading
 from collections import Iterable

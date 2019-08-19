@@ -2,6 +2,9 @@
 Handles credentials related stuff
 """
 
+from builtins import str
+from builtins import range
+from builtins import object
 import re
 import xml.dom.minidom as xdm
 
@@ -103,9 +106,9 @@ class CredentialManager(object):
         :return: raise on failure
         """
 
-        for name, encr_dict in stanza.items():
+        for name, encr_dict in list(stanza.items()):
             encrypts = []
-            for key, val in encr_dict.items():
+            for key, val in list(encr_dict.items()):
                 encrypts.append(key)
                 encrypts.append(val)
             self._update(name, self._sep.join(encrypts))
@@ -233,7 +236,7 @@ class CredentialManager(object):
                 results[name] = stanza
 
         # merge the stanzas by index
-        for name, stanza in results.items():
+        for name, stanza in list(results.items()):
             field_clear = stanza.get('clears')
             field_encr = stanza.get('encrs')
             if isinstance(field_clear, dict):
@@ -247,7 +250,7 @@ class CredentialManager(object):
 
                 del stanza['clears']
                 del stanza['encrs']
-        return results.values()
+        return list(results.values())
 
     def _get_all_passwords(self):
         """

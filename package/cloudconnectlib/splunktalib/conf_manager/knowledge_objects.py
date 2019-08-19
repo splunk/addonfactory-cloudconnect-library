@@ -1,3 +1,4 @@
+from builtins import object
 from . import request as req
 from ..common import xml_dom_parser as xdp
 

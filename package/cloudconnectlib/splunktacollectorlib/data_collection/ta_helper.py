@@ -7,7 +7,12 @@ import re
 from calendar import timegm
 from datetime import datetime
 
-import functools32
+import sys
+if sys.version_info[0] >= 3:
+   from functools import lru_cache
+else:
+   from functools32 import lru_cache
+
 from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema
 from . import ta_consts as c
 from ...splunktacollectorlib import config as sc
@@ -58,7 +63,7 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
     return inputs, configs, settings
 
 
-@functools32.lru_cache(maxsize=64)
+@lru_cache(maxsize=64)
 def format_name_for_file(name):
     return hashlib.sha256(name).hexdigest()
 

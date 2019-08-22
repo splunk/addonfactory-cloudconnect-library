@@ -1,3 +1,5 @@
+from builtins import range
+from builtins import object
 import pytest
 from cloudconnectlib.core.exceptions import StopCCEIteration
 from cloudconnectlib.core.ext import (
@@ -273,9 +275,9 @@ def test_fix_microsecond_format():
 
 
 def _get_all_trues():
-    for x in xrange(1 << 4):
+    for x in range(1 << 4):
         text = ['t', 'r', 'u', 'e']
-        for j in xrange(4):
+        for j in range(4):
             if j & x:
                 text[j] = text[j].upper()
         yield ''.join(text)

@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import logging
 import os.path as op
 from os import listdir
 
-import common
+from . import common
 import pytest
 from cloudconnectlib.common.util import is_valid_port
 from cloudconnectlib.common.util import load_json_file

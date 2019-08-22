@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import os.path as op
 
 import pytest
 from cloudconnectlib.client import CloudConnectClient
 from cloudconnectlib.core.engine import CloudConnectEngine
 from cloudconnectlib.core.exceptions import ConfigException
-from common import TEST_DATA_DIR
+from .common import TEST_DATA_DIR
 
 
 def test_client(monkeypatch):

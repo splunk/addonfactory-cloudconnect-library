@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import json
 import os.path as op
 from os import listdir
 
-import common
+from . import common
 import pytest
 from jsonschema import ValidationError
 from jsonschema import validate

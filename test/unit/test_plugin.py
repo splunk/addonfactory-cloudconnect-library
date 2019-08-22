@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import pytest
 import sys
 import os
-import common
+from . import common
 import logging
 sys.path.append(os.path.join(common.PROJECT_ROOT, "package"))
 from cloudconnectlib.common import log as ccelog
@@ -31,11 +32,11 @@ def test_decorator():
     def func_with_arg2(msg, post=""):
         return msg+post
 
-    assert "func_with_arg1" in _extension_functions.keys()
+    assert "func_with_arg1" in list(_extension_functions.keys())
     ret = lookup_method("func_with_arg1")("hello")
     assert ret == "hello"
 
-    assert "func_with_arg2" in _extension_functions.keys()
+    assert "func_with_arg2" in list(_extension_functions.keys())
     ret = lookup_method("func_with_arg2")("hello")
     assert ret == "hello"
 
@@ -102,32 +103,32 @@ def cce_unit_test_func_without_decorator(msg):
         _extension_functions.pop("cce_unit_test_func_with_arg2", None)
         write_py_file(plugin_dir, test_plugin_file1, test_functions)
         init_pipeline_plugins(plugin_dir)
-        assert "cce_unit_test_func_with_arg1" not in _extension_functions.keys()
-        assert "cce_unit_test_func_with_arg2" not in _extension_functions.keys()
+        assert "cce_unit_test_func_with_arg1" not in list(_extension_functions.keys())
+        assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
         # Don't have the right prefix
         write_py_file(plugin_dir, test_plugin_file2, import_part+test_functions)
         init_pipeline_plugins(plugin_dir)
-        assert "cce_unit_test_func_with_arg1" not in _extension_functions.keys()
-        assert "cce_unit_test_func_with_arg2" not in _extension_functions.keys()
+        assert "cce_unit_test_func_with_arg1" not in list(_extension_functions.keys())
+        assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
         write_py_file(plugin_dir, test_plugin_file3, import_part+test_functions)
         init_pipeline_plugins(plugin_dir)
-        assert "cce_unit_test_func_with_arg1" not in _extension_functions.keys()
-        assert "cce_unit_test_func_with_arg2" not in _extension_functions.keys()
+        assert "cce_unit_test_func_with_arg1" not in list(_extension_functions.keys())
+        assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
         # The file name already exists
         write_py_file(plugin_dir, test_plugin_file4, import_part+test_functions)
         init_pipeline_plugins(plugin_dir)
-        assert "cce_unit_test_func_with_arg1" not in _extension_functions.keys()
-        assert "cce_unit_test_func_with_arg2" not in _extension_functions.keys()
+        assert "cce_unit_test_func_with_arg1" not in list(_extension_functions.keys())
+        assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
         # The function name already exists
         json_path_value = _extension_functions["json_path"]
         write_py_file(plugin_dir, test_plugin_file5, import_part+test_functions)
         init_pipeline_plugins(plugin_dir)
-        assert "cce_unit_test_func_with_arg1" in _extension_functions.keys()
-        assert "cce_unit_test_func_with_arg2" in _extension_functions.keys()
+        assert "cce_unit_test_func_with_arg1" in list(_extension_functions.keys())
+        assert "cce_unit_test_func_with_arg2" in list(_extension_functions.keys())
         assert _extension_functions["json_path"] == json_path_value
 
     finally:
@@ -169,22 +170,22 @@ def cce_unit_test_func_without_decorator(msg):
         write_py_file(plugin_dir, test_plugin_file, test_functions)
         init_pipeline_plugins(plugin_dir)
 
-        assert "cce_unit_test_func_with_arg1" in _extension_functions.keys()
+        assert "cce_unit_test_func_with_arg1" in list(_extension_functions.keys())
         ret = lookup_method("cce_unit_test_func_with_arg1")("hello")
         assert ret == "hello"
 
-        assert "cce_unit_test_func_with_arg2" in _extension_functions.keys()
+        assert "cce_unit_test_func_with_arg2" in list(_extension_functions.keys())
         ret = lookup_method("cce_unit_test_func_with_arg2")("hello", "you")
         assert ret == "hello"+"you"
 
-        assert "cce_unit_test_func_without_decorator" not in _extension_functions.keys()
+        assert "cce_unit_test_func_without_decorator" not in list(_extension_functions.keys())
     finally:
         remove_file(plugin_dir, test_plugin_file)
         remove_file(plugin_dir, test_plugin_file+"c")
 
 
 def test_plugin_in_engine_no_files(capsys):
-    from test_engine_v2 import HTTPJob, Counter
+    from .test_engine_v2 import HTTPJob, Counter
     from cloudconnectlib.core.engine_v2 import CloudConnectEngine
     counter = Counter()
     cc_engine = CloudConnectEngine()

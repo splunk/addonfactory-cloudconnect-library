@@ -90,7 +90,7 @@ class BasicAuthorization(BaseAuth):
             content (obs-text) as opaque data.
         """
         is_py2 = (sys.version_info[0] == 2)
-        if isinstance(string, str):
+        if isinstance(string, six.text_type):
             out = string
         else:
             if is_py2:

@@ -85,7 +85,7 @@ def json_path(source, json_path_expr):
             _logger.warning(
                 'Unable to load JSON from source: %s. '
                 'Attempt to apply JSONPATH "%s" on source directly.',
-                ex.message,
+                ex,
                 json_path_expr
             )
 
@@ -107,7 +107,7 @@ def json_path(source, json_path_expr):
             'Unable to apply JSONPATH expression "%s" on source,'
             ' message=%s cause=%s',
             json_path_expr,
-            ex.message,
+            ex,
             traceback.format_exc()
         )
     return ''
@@ -168,16 +168,17 @@ def std_output(candidates):
         if all_str and not isinstance(candidate, six.string_types):
             all_str = False
             _logger.debug(
-                'The type of data needs to print is "%s" rather than'
-                ' basestring',
-                type(candidate)
+                'The type of data needs to print is "%s" rather than %s',
+                type(candidate),
+                str(six.string_types)
             )
             try:
                 candidate = json.dumps(candidate)
             except:
                 _logger.exception('The type of data needs to print is "%s"'
-                                  ' rather than basestring',
-                                  type(candidate))
+                                  ' rather than %s',
+                                  type(candidate),
+                                  str(six.string_types))
 
         if not PipeManager().write_events(candidate):
             raise FuncException('Fail to output data to stdout. The event'
@@ -221,7 +222,7 @@ def json_empty(source, json_path_expr=None):
     except Exception as ex:
         _logger.warning(
             'Unable to determine whether source is json_empty, treat it as '
-            'not json_empty: %s', ex.message
+            'not json_empty: %s', ex
         )
         return False
 
@@ -244,7 +245,7 @@ def json_not_empty(source, json_path_expr=None):
         _logger.warning(
             'Unable to determine whether source is json_not_empty, '
             'treat it as not json_not_empty: %s',
-            ex.message
+            ex
         )
         return False
 
@@ -363,7 +364,7 @@ def split_by(source, target, separator=None):
             return [{target: source}]
     except Exception as ex:
         _logger.warning("split_by method encountered exception "
-                        "source=%s message=%s cause=%s", source, ex.message,
+                        "source=%s message=%s cause=%s", source, ex,
                         traceback.format_exc())
         return []
 

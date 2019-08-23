@@ -57,7 +57,7 @@ class HTTPResponse(object):
             _logger.warning(
                 'Failure decoding response content with charset=%s,'
                 ' decode it with utf-8: %s',
-                charset, ex.message
+                charset, ex
             )
 
         return content.decode('utf-8', errors='replace')

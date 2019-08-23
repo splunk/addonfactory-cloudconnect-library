@@ -20,7 +20,7 @@ from ...splunktalib.common import util
 
 
 def utc2timestamp(human_time):
-    regex1 = ur"\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
+    regex1 = "\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
     match = re.search(regex1, human_time)
     if match:
         formated = match.group()

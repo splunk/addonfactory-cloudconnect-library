@@ -37,7 +37,7 @@ class _Token(object):
                 ' a valid Jinja2 template and token is exist in variables. '
                 'message=%s cause=%s',
                 self._source,
-                ex.message,
+                ex,
                 traceback.format_exc()
             )
         return self._source

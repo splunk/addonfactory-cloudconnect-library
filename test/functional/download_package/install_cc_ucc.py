@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from distutils.version import StrictVersion
 
@@ -18,7 +19,7 @@ def install_cc_ucc_libs():
     if StrictVersion(pip_version) > StrictVersion("1.5.6"):
         install_cmd += " --trusted-host repo.splunk.com"
 
-    print "command: " + install_cmd
+    print("command: " + install_cmd)
     os.system(install_cmd)
     os.system("rm -rf " + target + "/*.egg-info")
     os.system("rm -rf " + target + "/_yaml.so")

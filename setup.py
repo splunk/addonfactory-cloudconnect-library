@@ -117,16 +117,18 @@ setup(
         'cloudconnectlib.splunktalib': ['setting.conf']
     },
     install_requires=[
-        "jsonschema==2.5.1",
-        "jinja2==2.8",
+        "jsonschema==3.0.2",
+        "jinja2==2.10.1",
         "jsonpath-rw==1.4.0",
-        "httplib2==0.9.2",
-        "splunk-sdk==1.6.0",
-        "sortedcontainers==1.5.2",
-        "munch==2.0.4",
+        "httplib2==0.13.1",
+        "splunk-sdk==1.6.6",
+        "sortedcontainers==2.1.0",
+        "munch==2.3.2",
         "splunktaucclib>=3.0.0-develop",
         "solnlib>=1.0.16-dev",
         "functools32==3.2.3-2",
+        "six==1.12.0",
+        "future==0.17.1",
     ],
 
     cmdclass={

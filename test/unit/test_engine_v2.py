@@ -1,3 +1,7 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import object
 import threading
 import time
 
@@ -46,7 +50,7 @@ class SplitJob(object):
         self._stop_counter = stop_counter
 
     def run(self):
-        return [HTTPJob(self._counter, self._stop_counter) for x in xrange(10)]
+        return [HTTPJob(self._counter, self._stop_counter) for x in range(10)]
 
     def stop(self):
         pass

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import logging
 import os.path as op
@@ -64,9 +65,9 @@ if __name__ == '__main__':
 
     job.add_task(task)
 
-    print 'run job'
+    print('run job')
 
     for x in job.run():
         pass
 
-    print 'finished job'
+    print('finished job')

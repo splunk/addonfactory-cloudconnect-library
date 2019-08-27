@@ -1,7 +1,10 @@
+from __future__ import absolute_import
+import six
+from builtins import object
 import os
 import sys
 
-import common
+from . import common
 
 sys.path.append(os.path.join(common.PROJECT_ROOT, "package"))
 
@@ -95,7 +98,7 @@ def test_nextpage_url(monkeypatch):
         pass
     assert isinstance(context.get("__stdout__"), list) and \
            len(context.get("__stdout__")) > 0
-    assert isinstance(context.get("__nextpage_url__"), basestring)
+    assert isinstance(context.get("__nextpage_url__"), six.string_types)
     assert context["__nextpage_url__"] == \
            "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=2"
     assert task._request.count == 1

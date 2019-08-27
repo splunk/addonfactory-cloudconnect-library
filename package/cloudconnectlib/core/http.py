@@ -1,5 +1,9 @@
+from builtins import str
+from builtins import range
+from builtins import object
 import time
 import traceback
+import six
 
 from cloudconnectlib.common import util
 from cloudconnectlib.common.log import get_cc_logger
@@ -53,7 +57,7 @@ class HTTPResponse(object):
             _logger.warning(
                 'Failure decoding response content with charset=%s,'
                 ' decode it with utf-8: %s',
-                charset, ex.message
+                charset, ex
             )
 
         return content.decode('utf-8', errors='replace')
@@ -121,7 +125,7 @@ def get_proxy_info(proxy_config):
 
     if proxy_type in _PROXY_TYPE_MAP:
         ptv = _PROXY_TYPE_MAP[proxy_type]
-    elif proxy_type in _PROXY_TYPE_MAP.values():
+    elif proxy_type in list(_PROXY_TYPE_MAP.values()):
         ptv = proxy_type
     else:
         ptv = socks.PROXY_TYPE_HTTP
@@ -179,7 +183,7 @@ class HttpClient(object):
         if the response status is configured in defaults.retry_statuses."""
         retries = max(defaults.retries, 0)
         _logger.info('Invoking request to [%s] using [%s] method', uri, method)
-        for i in xrange(retries + 1):
+        for i in range(retries + 1):
             try:
                 response, content = self._send_internal(
                     uri=uri, body=body, method=method, headers=headers
@@ -217,7 +221,7 @@ class HttpClient(object):
     def send(self, request):
         if not request:
             raise ValueError('The request is none')
-        if request.body and not isinstance(request.body, basestring):
+        if request.body and not isinstance(request.body, six.string_types):
             raise TypeError('Invalid request body type: {}'.format(request.body))
 
         if self._connection is None:

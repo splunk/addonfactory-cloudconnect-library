@@ -1,3 +1,4 @@
+from __future__ import print_function
 import base64
 
 import pytest
@@ -53,7 +54,7 @@ def test_dict_token():
     dt = DictToken(tokens_as_dict)
 
     dtv = dt.render({'xyz': 'abc_test', 'int': 124})
-    print dtv
+    print(dtv)
     assert dtv['abc'] == 'abc_test'
     assert dtv['int'] == 124
 

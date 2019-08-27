@@ -1,3 +1,4 @@
+from __future__ import print_function
 import pytest
 from cloudconnectlib.core.task import CCEHTTPRequestTask, CCESplitTask
 from cloudconnectlib.core.job import CCEJob
@@ -92,6 +93,6 @@ def test_appd_dual_step():
 if __name__ == "__main__":
     test_appd_applications()
     test_appd_metrics()
-    print "======= dual step start ======"
+    print("======= dual step start ======")
     test_appd_dual_step()
-    print "======= dual step end ======"
+    print("======= dual step end ======")

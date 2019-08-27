@@ -1,6 +1,8 @@
+from builtins import object
 import copy
 import threading
 from abc import abstractmethod
+import six
 
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
@@ -87,7 +89,7 @@ class RequestTemplate(object):
         body = request.get('body')
         if isinstance(body, dict):
             self.body = DictToken(body)
-        elif isinstance(body, basestring):
+        elif isinstance(body, six.string_types):
             self.body = _Token(body)
         else:
             if body:

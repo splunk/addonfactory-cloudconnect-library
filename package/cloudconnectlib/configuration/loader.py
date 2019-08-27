@@ -1,7 +1,10 @@
+from builtins import str
+from builtins import object
 import logging
 import re
 import traceback
 from abc import abstractmethod
+import six
 
 from jsonschema import validate, ValidationError
 from munch import munchify
@@ -63,8 +66,8 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     def _render_from_dict(source, ctx):
         rendered = DictToken(source).render(ctx)
 
-        return dict((k, v.strip() if isinstance(v, basestring) else v)
-                    for k, v in rendered.iteritems())
+        return dict((k, v.strip() if isinstance(v, six.string_types) else v)
+                    for k, v in rendered.items())
 
     def _load_proxy(self, candidate, variables):
         """
@@ -124,7 +127,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         if level_name:
             level_name = level_name.upper().strip()
 
-            for k, v in _LOGGING_LEVELS.iteritems():
+            for k, v in _LOGGING_LEVELS.items():
                 if k.startswith(level_name):
                     return v
 
@@ -164,7 +167,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         if auth_type not in _AUTH_TYPES:
             raise ValueError(
                 'Auth type expect to be one of [{}]: {}'.format(
-                    ','.join(_AUTH_TYPES.keys()), auth_type)
+                    ','.join(list(_AUTH_TYPES.keys())), auth_type)
             )
         return _AUTH_TYPES[auth_type](candidate['options'])
 

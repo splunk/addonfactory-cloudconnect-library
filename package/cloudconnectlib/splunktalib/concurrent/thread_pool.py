@@ -1,9 +1,14 @@
 """
 A simple thread pool implementation
 """
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import object
 import threading
-import Queue
+import queue
 import multiprocessing
 import traceback
 import exceptions
@@ -34,12 +39,12 @@ class ThreadPool(object):
         self._max_size = max_size
         self._daemon = daemon
 
-        self._work_queue = Queue.Queue(task_queue_size)
+        self._work_queue = queue.Queue(task_queue_size)
         self._thrs = []
         for _ in range(min_size):
             thr = threading.Thread(target=self._run)
             self._thrs.append(thr)
-        self._admin_queue = Queue.Queue()
+        self._admin_queue = queue.Queue()
         self._admin_thr = threading.Thread(target=self._do_admin)
         self._last_resize_time = time()
         self._last_size = min_size
@@ -156,13 +161,13 @@ class ThreadPool(object):
             size = self._last_size
             self._last_size = new_size
             if new_size > size:
-                for _ in xrange(new_size - size):
+                for _ in range(new_size - size):
                     thr = threading.Thread(target=self._run)
                     thr.daemon = self._daemon
                     thr.start()
                     self._thrs.append(thr)
             elif new_size < size:
-                for _ in xrange(size - new_size):
+                for _ in range(size - new_size):
                     self._work_queue.put(None)
         log.logger.info("Finished ThreadPool resizing. New size=%d", new_size)
 
@@ -207,7 +212,7 @@ class ThreadPool(object):
             free = free_thrs * 1.0
             if free / thr_size >= self._high_watermark and free_thrs >= 2:
                 # 20 % thrs are idle, tear down half of the idle ones
-                thr_size = thr_size - free_thrs / 2
+                thr_size = thr_size - int(free_thrs / 2)
                 if thr_size > self._min_size:
                     self.resize(thr_size)
         self._last_resize_time = time()
@@ -218,7 +223,7 @@ class ThreadPool(object):
         while 1:
             try:
                 wakup = admin_q.get(timeout=resize_win + 1)
-            except Queue.Empty:
+            except queue.Empty:
                 self._do_resize_according_to_loads()
                 continue
 
@@ -271,7 +276,7 @@ class AsyncResult(object):
         self._args = args
         self._kwargs = kwargs
         self._callback = callback
-        self._q = Queue.Queue()
+        self._q = queue.Queue()
 
     def __call__(self):
         try:
@@ -302,7 +307,7 @@ class AsyncResult(object):
 
         try:
             res = self._q.get(timeout=timeout)
-        except Queue.Empty:
+        except queue.Empty:
             raise multiprocessing.TimeoutError("Timed out")
 
         if isinstance(res, Exception):
@@ -316,7 +321,7 @@ class AsyncResult(object):
 
         try:
             res = self._q.get(timeout=timeout)
-        except Queue.Empty:
+        except queue.Empty:
             pass
         else:
             self._q.put(res)

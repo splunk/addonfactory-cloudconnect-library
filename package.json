@@ -14,7 +14,7 @@
         "time-grunt": "^1.2.1"
     },
     "name": "app-cloud-connect",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "main": "Gruntfile.js",
     "directories": {
         "example": "examples",

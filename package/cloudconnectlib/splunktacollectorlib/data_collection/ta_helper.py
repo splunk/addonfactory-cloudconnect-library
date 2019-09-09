@@ -65,7 +65,7 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
 
 @lru_cache(maxsize=64)
 def format_name_for_file(name):
-    return hashlib.sha256(name).hexdigest()
+    return hashlib.sha256(name.encode('utf-8')).hexdigest()
 
 
 class ConfigSchemaHandler(object):

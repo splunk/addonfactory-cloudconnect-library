@@ -72,7 +72,7 @@ def get_appname_from_path(absolute_path):
 
 def escape_cdata(data):
     # FIXME: This is a workaround for JIRA [addon-10459]
-    data = data.decode("utf-8", errors="replace").encode("utf-8", errors="xmlcharrefreplace")
+    data = data.decode("utf-8", errors="replace").encode("utf-8", errors="xmlcharrefreplace").decode("utf-8")
     data = data.replace("]]>", "]]&gt;")
     if data.endswith("]"):
         data = data[:-1] + "%5D"

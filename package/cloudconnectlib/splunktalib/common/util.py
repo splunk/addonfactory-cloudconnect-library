@@ -72,7 +72,7 @@ def get_appname_from_path(absolute_path):
 
 def escape_cdata(data):
     # FIXME: This is a workaround for JIRA [addon-10459]
-    data = data.decode("utf-8", errors="replace").encode("utf-8", errors="xmlcharrefreplace")
+    data = data.decode("utf-8", errors="replace").encode("utf-8", errors="xmlcharrefreplace").decode("utf-8")
     data = data.replace("]]>", "]]&gt;")
     if data.endswith("]"):
         data = data[:-1] + "%5D"
@@ -103,7 +103,7 @@ def escape_json_control_chars(json_str):
 
 def disable_stdout_buffer():
     os.environ["PYTHONUNBUFFERED"] = "1"
-    sys.stdout = os.fdopen(sys.stdout.fileno(), "w", 0)
+    sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
     gc.garbage.append(sys.stdout)
 
 

@@ -1,11 +1,16 @@
 import time
 import traceback
 
-from httplib2 import ProxyInfo, Http, socks, SSLHandshakeError
+from httplib2 import ProxyInfo, Http, socks
 from solnlib.packages.requests import PreparedRequest, utils
 from . import defaults
 from .exceptions import HTTPError
 from ..common.log import get_cc_logger
+
+try: # Python2 environment support
+    from httplib2 import SSLHandshakeError
+except: # Python3 environment support
+    from ssl import SSLError as SSLHandshakeError
 
 _logger = get_cc_logger()
 

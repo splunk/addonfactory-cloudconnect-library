@@ -61,9 +61,13 @@ class EventWriter(object):
                 event = event_queue.get(timeout=3)
                 if event is not None:
                     if isinstance(event, string_types):
+                        if sys.version_info[0] > 2:
+                            event = event.encode("utf-8")
                         write(event)
                     elif isinstance(event, Iterable):
                         for evt in event:
+                            if sys.version_info[0] > 2 and isinstance(evt, string_types):
+                                evt = evt.encode("utf-8")
                             write(evt)
                 else:
                     log.logger.info("Event writer got tear down signal")

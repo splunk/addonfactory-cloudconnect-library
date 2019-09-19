@@ -103,7 +103,7 @@ def escape_json_control_chars(json_str):
 
 def disable_stdout_buffer():
     os.environ["PYTHONUNBUFFERED"] = "1"
-    sys.stdout = os.fdopen(sys.stdout.fileno(), "w", 0)
+    sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
     gc.garbage.append(sys.stdout)
 
 

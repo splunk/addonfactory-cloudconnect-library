@@ -126,11 +126,15 @@ setup(
         "munch==2.3.2",
         "splunktaucclib>=3.0.0-develop",
         "solnlib>=1.0.16-dev",
-        "functools32==3.2.3-2",
         "six==1.12.0",
         "future==0.17.1",
     ],
-
+    extras_require={
+        ':python_version<="2.7"': [
+            'functools32>=3.2.3-2',
+            'futures>=3.0.5',
+        ]
+    },
     cmdclass={
         'test': TestCommand,
         'jtest': JTestCommand,

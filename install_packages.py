@@ -18,7 +18,7 @@ def install_3rdlibs():
     if StrictVersion(pip_version) > StrictVersion("1.5.6"):
         install_cmd += " --trusted-host repo.splunk.com"
 
-    print "command: " + install_cmd
+    print("command: {}".format(install_cmd))
     os.system(install_cmd)
     os.system("rm -rf " + target + "/*.egg-info")
     os.system("rm -rf " + target + "/_yaml.so")

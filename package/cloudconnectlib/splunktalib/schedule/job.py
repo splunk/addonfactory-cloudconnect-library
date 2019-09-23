@@ -81,6 +81,17 @@ class Job(object):
     def __eq__(self, other):
         return isinstance(other, Job) and (self.ident() == other.ident())
 
+    def __hash__(self):
+        return hash(self.ident())
+
+    def __lt__(self, other):
+        if other is None:
+            return 1
+
+        self_k = (self.get_expiration(), self.ident())
+        other_k = (other.get_expiration(), other.ident())
+        return self_k < other_k
+
     def __call__(self):
         self._func(self)
 

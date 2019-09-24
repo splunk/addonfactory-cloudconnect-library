@@ -128,6 +128,7 @@ setup(
         "solnlib>=1.0.16-dev",
         "six==1.12.0",
         "future==0.17.1",
+        "configparser==3.7.4"
     ],
     extras_require={
         ':python_version<="2.7"': [

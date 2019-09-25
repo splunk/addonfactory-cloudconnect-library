@@ -41,6 +41,8 @@ def splunkd_request(splunkd_uri, session_key, method="GET",
         try:
             resp, content = http.request(splunkd_uri, method=method,
                                          headers=headers, body=data)
+            if content:
+                content = content.decode()
         except Exception:
             log.logger.error(msg_temp, splunkd_uri, "unknown", format_exc())
         else:

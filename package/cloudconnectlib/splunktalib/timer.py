@@ -57,13 +57,20 @@ class Timer(object):
     def __hash__(self):
         return hash(self.ident())
 
-    def __lt__(self, other):
-        if other is None:
-            return 1
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
 
-        self_k = (self.get_expiration(), self.ident())
-        other_k = (other.get_expiration(), other.ident())
-        return self_k < other_k
+    def __gt__(self, other):
+        return self.__cmp__(other) > 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
+
+    def __ge__(self, other):
+        return self.__cmp__(other) >= 0
+
+    def __le__(self, other):
+        return self.__cmp__(other) <= 0
 
     def __call__(self):
         self._callback()

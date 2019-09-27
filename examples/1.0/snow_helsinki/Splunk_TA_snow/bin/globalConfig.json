@@ -1,0 +1,300 @@
+{
+    "meta": {
+        "name": "Splunk_TA_snow",
+        "displayName": "AOB Test",
+        "version": "1.0.0",
+        "apiVersion": "3.0.0",
+        "restRoot": "splunk_ta_snow"
+    },
+    "pages": {
+        "configuration": {
+            "title": "Configurations",
+            "description": "Configure your account, proxy and logging level.",
+            "tabs": [
+                {
+                    "name": "account",
+                    "title": "Account",
+                    "table": {
+                        "header": [
+                            {
+                                "field": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "field": "username",
+                                "label": "Username"
+                            },
+                            {
+                                "field": "password",
+                                "label": "Password"
+                            }
+                        ],
+                        "actions": [
+                            "edit",
+                            "delete",
+                            "clone"
+                        ]
+                    },
+                    "entity": [
+                        {
+                            "field": "name",
+                            "label": "Name",
+                            "type": "text",
+                            "required": true,
+                            "help": "Enter a unique name for each Crowdstrike falcon host account.",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 50,
+                                    "errorMsg": "Length of Name is restricted from 1 to 50."
+                                },
+                                {
+                                    "type": "regex",
+                                    "pattern": "^\\w+$",
+                                    "errorMsg": "Characters of Name should match regex ^\\w+$ ."
+                                }
+                            ]
+                        },
+                        {
+                            "field": "username",
+                            "label": "Username",
+                            "type": "text",
+                            "required": true,
+                            "help": "Enter a unique name for each snow host account."
+                        },
+                        {
+                            "field": "password",
+                            "label": "Password",
+                            "type": "text",
+                            "required": true,
+                            "help": "Enter a unique password for each snow host account."
+                        }
+                    ]
+                },
+                {
+                    "name": "logging",
+                    "title": "Logging",
+                    "entity": [
+                        {
+                            "field": "loglevel",
+                            "label": "Log Level",
+                            "type": "singleSelect",
+                            "options": {
+                                "disableSearch": true,
+                                "autoCompleteFields": [
+                                    {
+                                        "label": "INFO",
+                                        "value": "INFO"
+                                    },
+                                    {
+                                        "label": "DEBUG",
+                                        "value": "DEBUG"
+                                    },
+                                    {
+                                        "label": "ERROR",
+                                        "value": "ERROR"
+                                    }
+                                ]
+                            },
+                            "defaultValue": "INFO"
+                        }
+                    ]
+                },
+                {
+                    "name": "proxy",
+                    "title": "Proxy",
+                    "entity": [
+                        {
+                            "field": "proxy_enabled",
+                            "label": "Enable",
+                            "type": "checkbox"
+                        },
+                        {
+                            "field": "proxy_type",
+                            "label": "Proxy Type",
+                            "type": "singleSelect",
+                            "options": {
+                                "disableSearch": true,
+                                "autoCompleteFields": [
+                                    {
+                                        "label": "http",
+                                        "value": "http"
+                                    },
+                                    {
+                                        "label": "socks4",
+                                        "value": "socks4"
+                                    },
+                                    {
+                                        "label": "socks5",
+                                        "value": "socks5"
+                                    }
+                                ]
+                            },
+                            "defaultValue": "http"
+                        },
+                        {
+                            "field": "proxy_url",
+                            "label": "Host",
+                            "type": "text",
+                            "validators": [
+                                {
+                                    "type": "url"
+                                }
+                            ]
+                        },
+                        {
+                            "field": "proxy_port",
+                            "label": "Port",
+                            "type": "text"
+                        },
+                        {
+                            "field": "proxy_username",
+                            "label": "Username",
+                            "type": "text"
+                        },
+                        {
+                            "field": "proxy_password",
+                            "label": "Password",
+                            "type": "text",
+                            "encrypted": true
+                        }
+                    ],
+                    "options": {
+                        "saveValidator": "function(formData) { return (!formData.proxy_enabled || (!isNaN(Number(formData.proxy_port)) && Number(formData.proxy_port) < 65535 && Number(formData.proxy_port)) > 0) ? true : 'Input of Port should be in range of [0, 65535]'; }",
+                        "onLoad": "function(formData, formWidgetsIdDict) { var enabled = formData.proxy_enabled; $(formWidgetsIdDict['proxy_type']).hide(!enabled); }",
+                        "onChange": "function(formData, changedField, formWidgetsIdDict) { if(changedField === 'proxy_enabled') { var enabled = formData.proxy_enabled; $(formWidgetsIdDict['proxy_type']).hide(!enabled); } }"
+                    }
+                }
+            ]
+        },
+        "inputs": {
+            "title": "Inputs",
+            "description": "This is description",
+            "table": {
+                "header": [
+                    {
+                        "field": "name",
+                        "label": "Name"
+                    },
+                    {
+                        "field": "account",
+                        "label": "Account"
+                    },
+                    {
+                        "field": "interval",
+                        "label": "Interval"
+                    },
+                    {
+                        "field": "snow_host",
+                        "label": "Snow Host"
+                    },
+                    {
+                        "field": "sysparm_limit",
+                        "label": "Sysparm Limit"
+                    },
+                    {
+                        "field": "since_when",
+                        "label": "Since When"
+                    },
+                    {
+                        "field": "table_name",
+                        "label": "Table Name"
+                    },
+                    {
+                        "field": "disabled",
+                        "label": "Status"
+                    }
+                ],
+                "moreInfo": [
+                    {
+                        "field": "name",
+                        "label": "Name"
+                    },
+                    {
+                        "field": "account",
+                        "label": "Account"
+                    },
+                    {
+                        "field": "interval",
+                        "label": "Interval"
+                    },
+                    {
+                        "field": "snow_host",
+                        "label": "Snow Host"
+                    },
+                    {
+                        "field": "sysparm_limit",
+                        "label": "Sysparm Limit"
+                    },
+                    {
+                        "field": "since_when",
+                        "label": "Since When"
+                    },
+                    {
+                        "field": "table_name",
+                        "label": "Table Name"
+                    },
+                    {
+                        "field": "disabled",
+                        "label": "Status"
+                    }
+                ],
+                "actions": [
+                    "edit",
+                    "delete",
+                    "clone"
+                ]
+            },
+            "services": [
+                {
+                    "name": "snow_inputs",
+                    "title": "Snow Input test",
+                    "entity": [
+                        {
+                            "field": "name",
+                            "label": "Name",
+                            "type": "text",
+                            "help": "Enter a unique name for each crowdstrike falcon host data input."
+                        },
+                        {
+                            "field": "account",
+                            "label": "Account",
+                            "type": "singleSelect",
+                            "options": {
+                                "referenceName": "account"
+                            }
+                        },
+                        {
+                            "field": "interval",
+                            "label": "Interval",
+                            "type": "text",
+                            "defaultValue": "60",
+                            "help": "Time interval of input in seconds."
+                        },
+                        {
+                            "field": "snow_host",
+                            "label": "Snow Host",
+                            "type": "text"
+                        },
+                        {
+                            "field": "sysparm_limit",
+                            "label": "Sysparm Limit",
+                            "type": "text"
+                        },
+                        {
+                            "field": "since_when",
+                            "label": "Since When",
+                            "type": "text"
+                        },
+                        {
+                            "field": "table_name",
+                            "label": "Table Name",
+                            "type": "text"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

@@ -117,7 +117,7 @@ setup(
         'cloudconnectlib.splunktalib': ['setting.conf']
     },
     install_requires=[
-        "jsonschema==3.0.2",
+        "jsonschema==2.6.0",
         "jinja2==2.10.1",
         "jsonpath-rw==1.4.0",
         "httplib2==0.13.1",

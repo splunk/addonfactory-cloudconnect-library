@@ -7,4 +7,4 @@ from .common.lib_util import register_cacert_locater
 
 register_cacert_locater(os.path.join(os.path.dirname(__file__), 'core', 'cacerts'))
 
-__version__ = '2.0.1'
+__version__ = '2.0.2'

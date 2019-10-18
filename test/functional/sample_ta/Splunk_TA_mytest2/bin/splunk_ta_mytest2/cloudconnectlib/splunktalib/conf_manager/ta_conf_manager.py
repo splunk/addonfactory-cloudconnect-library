@@ -2,6 +2,7 @@
 This module hanles high level TA configuration related stuff
 """
 
+from builtins import object
 import copy
 import os.path as op
 
@@ -145,7 +146,7 @@ class TAConfManager(object):
         if self._keys is None:
             return False
 
-        for k in stanza.iterkeys():
+        for k in stanza.keys():
             if k in self._keys:
                 if stanza.get(k) == self.encrypted_token:
                     return True
@@ -168,7 +169,7 @@ class TAConfManager(object):
         if stanza_to_be_encrypted:
             self._cred_mgr.update({stanza["name"]: stanza_to_be_encrypted})
             encrypted_stanza = copy.deepcopy(stanza)
-            for key in stanza_to_be_encrypted.iterkeys():
+            for key in stanza_to_be_encrypted.keys():
                 encrypted_stanza[key] = self.encrypted_token
             return encrypted_stanza
         return stanza

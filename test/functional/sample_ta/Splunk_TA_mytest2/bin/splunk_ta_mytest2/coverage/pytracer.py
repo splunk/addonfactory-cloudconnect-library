@@ -3,6 +3,7 @@
 
 """Raw data collector for coverage.py."""
 
+import atexit
 import dis
 import sys
 
@@ -43,27 +44,51 @@ class PyTracer(object):
         # The threading module to use, if any.
         self.threading = None
 
-        self.cur_file_dict = []
-        self.last_line = [0]
+        self.cur_file_dict = None
+        self.last_line = 0          # int, but uninitialized.
+        self.cur_file_name = None
 
         self.data_stack = []
         self.last_exc_back = None
         self.last_exc_firstlineno = 0
         self.thread = None
         self.stopped = False
+        self._activity = False
+
+        self.in_atexit = False
+        # On exit, self.in_atexit = True
+        atexit.register(setattr, self, 'in_atexit', True)
 
     def __repr__(self):
-        return "<PyTracer at 0x{0:0x}: {1} lines in {2} files>".format(
+        return "<PyTracer at {0}: {1} lines in {2} files>".format(
             id(self),
             sum(len(v) for v in self.data.values()),
             len(self.data),
         )
 
+    def log(self, marker, *args):
+        """For hard-core logging of what this tracer is doing."""
+        with open("/tmp/debug_trace.txt", "a") as f:
+            f.write("{} {:x}.{:x}[{}] {:x} {}\n".format(
+                marker,
+                id(self),
+                self.thread.ident,
+                len(self.data_stack),
+                self.threading.currentThread().ident,
+                " ".join(map(str, args))
+            ))
+
     def _trace(self, frame, event, arg_unused):
         """The trace function passed to sys.settrace."""
 
-        if self.stopped:
-            return
+        #self.log(":", frame.f_code.co_filename, frame.f_lineno, event)
+
+        if (self.stopped and sys.gettrace() == self._trace):
+            # The PyTrace.stop() method has been called, possibly by another
+            # thread, let's deactivate ourselves now.
+            #self.log("X", frame.f_code.co_filename, frame.f_lineno)
+            sys.settrace(None)
+            return None
 
         if self.last_exc_back:
             if frame == self.last_exc_back:
@@ -71,14 +96,16 @@ class PyTracer(object):
                 if self.trace_arcs and self.cur_file_dict:
                     pair = (self.last_line, -self.last_exc_firstlineno)
                     self.cur_file_dict[pair] = None
-                self.cur_file_dict, self.last_line = self.data_stack.pop()
+                self.cur_file_dict, self.cur_file_name, self.last_line = self.data_stack.pop()
             self.last_exc_back = None
 
         if event == 'call':
             # Entering a new function context.  Decide if we should trace
             # in this file.
-            self.data_stack.append((self.cur_file_dict, self.last_line))
+            self._activity = True
+            self.data_stack.append((self.cur_file_dict, self.cur_file_name, self.last_line))
             filename = frame.f_code.co_filename
+            self.cur_file_name = filename
             disp = self.should_trace_cache.get(filename)
             if disp is None:
                 disp = self.should_trace(filename, frame)
@@ -94,7 +121,7 @@ class PyTracer(object):
             # function calls and re-entering generators.  The f_lasti field is
             # -1 for calls, and a real offset for generators.  Use <0 as the
             # line number for calls, and the real line number for generators.
-            if frame.f_lasti < 0:
+            if getattr(frame, 'f_lasti', -1) < 0:
                 self.last_line = -frame.f_code.co_firstlineno
             else:
                 self.last_line = frame.f_lineno
@@ -102,6 +129,8 @@ class PyTracer(object):
             # Record an executed line.
             if self.cur_file_dict is not None:
                 lineno = frame.f_lineno
+                #if frame.f_code.co_filename != self.cur_file_name:
+                #    self.log("*", frame.f_code.co_filename, self.cur_file_name, lineno)
                 if self.trace_arcs:
                     self.cur_file_dict[(self.last_line, lineno)] = None
                 else:
@@ -111,12 +140,13 @@ class PyTracer(object):
             if self.trace_arcs and self.cur_file_dict:
                 # Record an arc leaving the function, but beware that a
                 # "return" event might just mean yielding from a generator.
-                bytecode = frame.f_code.co_code[frame.f_lasti]
-                if bytecode != YIELD_VALUE:
+                # Jython seems to have an empty co_code, so just assume return.
+                code = frame.f_code.co_code
+                if (not code) or code[frame.f_lasti] != YIELD_VALUE:
                     first = frame.f_code.co_firstlineno
                     self.cur_file_dict[(self.last_line, -first)] = None
             # Leaving this function, pop the filename stack.
-            self.cur_file_dict, self.last_line = self.data_stack.pop()
+            self.cur_file_dict, self.cur_file_name, self.last_line = self.data_stack.pop()
         elif event == 'exception':
             self.last_exc_back = frame.f_back
             self.last_exc_firstlineno = frame.f_code.co_firstlineno
@@ -128,27 +158,57 @@ class PyTracer(object):
         Return a Python function suitable for use with sys.settrace().
 
         """
-        if self.threading:
-            self.thread = self.threading.currentThread()
-        sys.settrace(self._trace)
         self.stopped = False
+        if self.threading:
+            if self.thread is None:
+                self.thread = self.threading.currentThread()
+            else:
+                if self.thread.ident != self.threading.currentThread().ident:
+                    # Re-starting from a different thread!? Don't set the trace
+                    # function, but we are marked as running again, so maybe it
+                    # will be ok?
+                    #self.log("~", "starting on different threads")
+                    return self._trace
+
+        sys.settrace(self._trace)
         return self._trace
 
     def stop(self):
         """Stop this Tracer."""
+        # Get the activate tracer callback before setting the stop flag to be
+        # able to detect if the tracer was changed prior to stopping it.
+        tf = sys.gettrace()
+
+        # Set the stop flag. The actual call to sys.settrace(None) will happen
+        # in the self._trace callback itself to make sure to call it from the
+        # right thread.
         self.stopped = True
+
         if self.threading and self.thread.ident != self.threading.currentThread().ident:
             # Called on a different thread than started us: we can't unhook
             # ourselves, but we've set the flag that we should stop, so we
             # won't do any more tracing.
+            #self.log("~", "stopping on different threads")
             return
 
         if self.warn:
-            if sys.gettrace() != self._trace:
-                msg = "Trace function changed, measurement is likely wrong: %r"
-                self.warn(msg % (sys.gettrace(),))
+            # PyPy clears the trace function before running atexit functions,
+            # so don't warn if we are in atexit on PyPy and the trace function
+            # has changed to None.
+            dont_warn = (env.PYPY and env.PYPYVERSION >= (5, 4) and self.in_atexit and tf is None)
+            if (not dont_warn) and tf != self._trace:
+                self.warn(
+                    "Trace function changed, measurement is likely wrong: %r" % (tf,),
+                    slug="trace-changed",
+                )
 
-        sys.settrace(None)
+    def activity(self):
+        """Has there been any activity?"""
+        return self._activity
+
+    def reset_activity(self):
+        """Reset the activity() flag."""
+        self._activity = False
 
     def get_stats(self):
         """Return a dictionary of statistics, or None."""

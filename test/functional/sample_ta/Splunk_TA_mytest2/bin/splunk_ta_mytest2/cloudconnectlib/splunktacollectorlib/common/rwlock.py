@@ -2,6 +2,7 @@
 This module provides Read-Write lock.
 """
 
+from builtins import object
 import threading
 
 

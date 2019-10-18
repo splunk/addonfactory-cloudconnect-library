@@ -3,9 +3,12 @@ Data Loader main entry point
 """
 
 
-import Queue
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+import queue
 import os.path as op
-import ConfigParser
+import configparser
 
 from ...splunktalib.concurrent import concurrent_executor as ce
 from ...splunktalib import timer_queue as tq
@@ -30,7 +33,7 @@ class TADataLoader(object):
         self._settings = self._read_default_settings()
         self._settings["daemonize_thread"] = False
         self._event_writer = event_writer
-        self._wakeup_queue = Queue.Queue()
+        self._wakeup_queue = queue.Queue()
         self._scheduler = job_scheduler
         self._timer_queue = tq.TimerQueue()
         self._executor = ce.ConcurrentExecutor(self._settings)
@@ -73,7 +76,7 @@ class TADataLoader(object):
         while 1:
             try:
                 go_exit = wakeup_q.get(timeout=1)
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             else:
                 if go_exit:
@@ -118,7 +121,7 @@ class TADataLoader(object):
     def _read_default_settings():
         cur_dir = op.dirname(op.abspath(__file__))
         setting_file = op.join(cur_dir,"../../","splunktalib", "setting.conf")
-        parser = ConfigParser.ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(setting_file)
         settings = {}
         keys = ("process_size", "thread_min_size", "thread_max_size",
@@ -126,7 +129,7 @@ class TADataLoader(object):
         for option in keys:
             try:
                 settings[option] = parser.get("global", option)
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 settings[option] = -1
 
             try:

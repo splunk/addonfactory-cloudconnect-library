@@ -3,6 +3,7 @@
 
 """File wrangling."""
 
+import hashlib
 import fnmatch
 import ntpath
 import os
@@ -75,6 +76,9 @@ def canonical_filename(filename):
     return CANONICAL_FILENAME_CACHE[filename]
 
 
+MAX_FLAT = 200
+
+@contract(filename='unicode', returns='unicode')
 def flat_rootname(filename):
     """A base for a flat file name to correspond to this file.
 
@@ -86,7 +90,11 @@ def flat_rootname(filename):
 
     """
     name = ntpath.splitdrive(filename)[1]
-    return re.sub(r"[\\/.:]", "_", name)
+    name = re.sub(r"[\\/.:]", "_", name)
+    if len(name) > MAX_FLAT:
+        h = hashlib.sha1(name.encode('UTF-8')).hexdigest()
+        name = name[-(MAX_FLAT-len(h)-1):] + '_' + h
+    return name
 
 
 if env.WINDOWS:
@@ -191,25 +199,31 @@ def prep_patterns(patterns):
 
 
 class TreeMatcher(object):
-    """A matcher for files in a tree."""
-    def __init__(self, directories):
-        self.dirs = list(directories)
+    """A matcher for files in a tree.
+
+    Construct with a list of paths, either files or directories. Paths match
+    with the `match` method if they are one of the files, or if they are
+    somewhere in a subtree rooted at one of the directories.
+
+    """
+    def __init__(self, paths):
+        self.paths = list(paths)
 
     def __repr__(self):
-        return "<TreeMatcher %r>" % self.dirs
+        return "<TreeMatcher %r>" % self.paths
 
     def info(self):
         """A list of strings for displaying when dumping state."""
-        return self.dirs
+        return self.paths
 
     def match(self, fpath):
         """Does `fpath` indicate a file in one of our trees?"""
-        for d in self.dirs:
-            if fpath.startswith(d):
-                if fpath == d:
+        for p in self.paths:
+            if fpath.startswith(p):
+                if fpath == p:
                     # This is the same file!
                     return True
-                if fpath[len(d)] == os.sep:
+                if fpath[len(p)] == os.sep:
                     # This is a file in the directory
                     return True
         return False
@@ -246,18 +260,8 @@ class ModuleMatcher(object):
 class FnmatchMatcher(object):
     """A matcher for files by file name pattern."""
     def __init__(self, pats):
-        self.pats = pats[:]
-        # fnmatch is platform-specific. On Windows, it does the Windows thing
-        # of treating / and \ as equivalent. But on other platforms, we need to
-        # take care of that ourselves.
-        fnpats = (fnmatch.translate(p) for p in pats)
-        fnpats = (p.replace(r"\/", r"[\\/]") for p in fnpats)
-        if env.WINDOWS:
-            # Windows is also case-insensitive.  BTW: the regex docs say that
-            # flags like (?i) have to be at the beginning, but fnmatch puts
-            # them at the end, and having two there seems to work fine.
-            fnpats = (p + "(?i)" for p in fnpats)
-        self.re = re.compile(join_regex(fnpats))
+        self.pats = list(pats)
+        self.re = fnmatches_to_regex(self.pats, case_insensitive=env.WINDOWS)
 
     def __repr__(self):
         return "<FnmatchMatcher %r>" % self.pats
@@ -281,6 +285,39 @@ def sep(s):
     return the_sep
 
 
+def fnmatches_to_regex(patterns, case_insensitive=False, partial=False):
+    """Convert fnmatch patterns to a compiled regex that matches any of them.
+
+    Slashes are always converted to match either slash or backslash, for
+    Windows support, even when running elsewhere.
+
+    If `partial` is true, then the pattern will match if the target string
+    starts with the pattern. Otherwise, it must match the entire string.
+
+    Returns: a compiled regex object.  Use the .match method to compare target
+    strings.
+
+    """
+    regexes = (fnmatch.translate(pattern) for pattern in patterns)
+    # Python3.7 fnmatch translates "/" as "/". Before that, it translates as "\/",
+    # so we have to deal with maybe a backslash.
+    regexes = (re.sub(r"\\?/", r"[\\\\/]", regex) for regex in regexes)
+
+    if partial:
+        # fnmatch always adds a \Z to match the whole string, which we don't
+        # want, so we remove the \Z.  While removing it, we only replace \Z if
+        # followed by paren (introducing flags), or at end, to keep from
+        # destroying a literal \Z in the pattern.
+        regexes = (re.sub(r'\\Z(\(\?|$)', r'\1', regex) for regex in regexes)
+
+    flags = 0
+    if case_insensitive:
+        flags |= re.IGNORECASE
+    compiled = re.compile(join_regex(regexes), flags=flags)
+
+    return compiled
+
+
 class PathAliases(object):
     """A collection of aliases for paths.
 
@@ -295,6 +332,11 @@ class PathAliases(object):
     def __init__(self):
         self.aliases = []
 
+    def pprint(self):       # pragma: debugging
+        """Dump the important parts of the PathAliases, for debugging."""
+        for regex, result in self.aliases:
+            print("{0!r} --> {1!r}".format(regex.pattern, result))
+
     def add(self, pattern, result):
         """Add the `pattern`/`result` pair to the list of aliases.
 
@@ -308,8 +350,10 @@ class PathAliases(object):
         match an entire tree, and not just its root.
 
         """
+        if len(pattern) > 1:
+            pattern = pattern.rstrip(r"\/")
+
         # The pattern can't end with a wildcard component.
-        pattern = pattern.rstrip(r"\/")
         if pattern.endswith("*"):
             raise CoverageException("Pattern must not end with wildcards.")
         pattern_sep = sep(pattern)
@@ -318,25 +362,16 @@ class PathAliases(object):
         # unless it already is, or is meant to match any prefix.
         if not pattern.startswith('*') and not isabs_anywhere(pattern):
             pattern = abs_file(pattern)
-        pattern += pattern_sep
+        if not pattern.endswith(pattern_sep):
+            pattern += pattern_sep
 
-        # Make a regex from the pattern.  fnmatch always adds a \Z to
-        # match the whole string, which we don't want, so we remove the \Z.
-        # While removing it, we only replace \Z if followed by paren, or at
-        # end, to keep from destroying a literal \Z in the pattern.
-        regex_pat = fnmatch.translate(pattern)
-        regex_pat = re.sub(r'\\Z(\(|$)', r'\1', regex_pat)
-
-        # We want */a/b.py to match on Windows too, so change slash to match
-        # either separator.
-        regex_pat = regex_pat.replace(r"\/", r"[\\/]")
-        # We want case-insensitive matching, so add that flag.
-        regex = re.compile(r"(?i)" + regex_pat)
+        # Make a regex from the pattern.
+        regex = fnmatches_to_regex([pattern], case_insensitive=True, partial=True)
 
         # Normalize the result: it must end with a path separator.
         result_sep = sep(result)
         result = result.rstrip(r"\/") + result_sep
-        self.aliases.append((regex, result, pattern_sep, result_sep))
+        self.aliases.append((regex, result))
 
     def map(self, path):
         """Map `path` through the aliases.
@@ -354,12 +389,11 @@ class PathAliases(object):
         of `path` unchanged.
 
         """
-        for regex, result, pattern_sep, result_sep in self.aliases:
+        for regex, result in self.aliases:
             m = regex.match(path)
             if m:
                 new = path.replace(m.group(0), result)
-                if pattern_sep != result_sep:
-                    new = new.replace(pattern_sep, result_sep)
+                new = new.replace(sep(path), sep(result))
                 new = canonical_filename(new)
                 return new
         return path

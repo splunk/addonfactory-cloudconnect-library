@@ -1,3 +1,5 @@
+from builtins import range
+from builtins import object
 import re
 import json
 from xml.etree import cElementTree as et
@@ -189,7 +191,7 @@ def create_collection(kv_client, collection, appname):
         not_exists = True
 
     if not_exists or not res:
-        for i in xrange(3):
+        for i in range(3):
             try:
                 kv_client.create_collection(collection, appname)
             except KVAlreadyExists:

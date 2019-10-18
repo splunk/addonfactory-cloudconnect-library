@@ -8,9 +8,8 @@ import types
 import zipimport
 
 from coverage import env, files
-from coverage.misc import (
-    contract, CoverageException, expensive, NoSource, join_regex, isolate_module,
-)
+from coverage.misc import contract, expensive, isolate_module, join_regex
+from coverage.misc import CoverageException, NoSource
 from coverage.parser import PythonParser
 from coverage.phystokens import source_token_lines, source_encoding
 from coverage.plugin import FileReporter
@@ -26,7 +25,13 @@ def read_python_source(filename):
 
     """
     with open(filename, "rb") as f:
-        return f.read().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        source = f.read()
+
+    if env.IRONPYTHON:
+        # IronPython reads Unicode strings even for "rb" files.
+        source = bytes(source)
+
+    return source.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
 
 @contract(returns='unicode')
@@ -91,13 +96,46 @@ def get_zip_bytes(filename):
     return None
 
 
+def source_for_file(filename):
+    """Return the source file for `filename`.
+
+    Given a file name being traced, return the best guess as to the source
+    file to attribute it to.
+
+    """
+    if filename.endswith(".py"):
+        # .py files are themselves source files.
+        return filename
+
+    elif filename.endswith((".pyc", ".pyo")):
+        # Bytecode files probably have source files near them.
+        py_filename = filename[:-1]
+        if os.path.exists(py_filename):
+            # Found a .py file, use that.
+            return py_filename
+        if env.WINDOWS:
+            # On Windows, it could be a .pyw file.
+            pyw_filename = py_filename + "w"
+            if os.path.exists(pyw_filename):
+                return pyw_filename
+        # Didn't find source, but it's probably the .py file we want.
+        return py_filename
+
+    elif filename.endswith("$py.class"):
+        # Jython is easy to guess.
+        return filename[:-9] + ".py"
+
+    # No idea, just use the file name as-is.
+    return filename
+
+
 class PythonFileReporter(FileReporter):
     """Report support for a Python file."""
 
     def __init__(self, morf, coverage=None):
         self.coverage = coverage
 
-        if hasattr(morf, '__file__'):
+        if hasattr(morf, '__file__') and morf.__file__:
             filename = morf.__file__
         elif isinstance(morf, types.ModuleType):
             # A module should have had .__file__, otherwise we can't use it.
@@ -106,19 +144,15 @@ class PythonFileReporter(FileReporter):
         else:
             filename = morf
 
-        filename = files.unicode_filename(filename)
-
-        # .pyc files should always refer to a .py instead.
-        if filename.endswith(('.pyc', '.pyo')):
-            filename = filename[:-1]
-        elif filename.endswith('$py.class'):   # Jython
-            filename = filename[:-9] + ".py"
+        filename = source_for_file(files.unicode_filename(filename))
 
         super(PythonFileReporter, self).__init__(files.canonical_filename(filename))
 
         if hasattr(morf, '__name__'):
-            name = morf.__name__
-            name = name.replace(".", os.sep) + ".py"
+            name = morf.__name__.replace(".", os.sep)
+            if os.path.basename(filename).startswith('__init__.'):
+                name += os.sep + "__init__"
+            name += ".py"
             name = files.unicode_filename(name)
         else:
             name = files.relative_filename(filename)
@@ -128,6 +162,9 @@ class PythonFileReporter(FileReporter):
         self._parser = None
         self._statements = None
         self._excluded = None
+
+    def __repr__(self):
+        return "<PythonFileReporter {0!r}>".format(self.filename)
 
     @contract(returns='unicode')
     def relative_filename(self):

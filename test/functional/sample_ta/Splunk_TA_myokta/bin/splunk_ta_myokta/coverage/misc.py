@@ -38,6 +38,13 @@ def isolate_module(mod):
 os = isolate_module(os)
 
 
+def dummy_decorator_with_args(*args_unused, **kwargs_unused):
+    """Dummy no-op implementation of a decorator with arguments."""
+    def _decorator(func):
+        return func
+    return _decorator
+
+
 # Use PyContracts for assertion testing on parameters and returns, but only if
 # we are running our own test suite.
 if env.TESTING:
@@ -57,12 +64,22 @@ if env.TESTING:
     new_contract('bytes', lambda v: isinstance(v, bytes))
     if env.PY3:
         new_contract('unicode', lambda v: isinstance(v, unicode_class))
-else:                                           # pragma: not covered
-    # We aren't using real PyContracts, so just define a no-op decorator as a
-    # stunt double.
-    def contract(**unused):
-        """Dummy no-op implementation of `contract`."""
-        return lambda func: func
+
+    def one_of(argnames):
+        """Ensure that only one of the argnames is non-None."""
+        def _decorator(func):
+            argnameset = set(name.strip() for name in argnames.split(","))
+            def _wrapped(*args, **kwargs):
+                vals = [kwargs.get(name) for name in argnameset]
+                assert sum(val is not None for val in vals) == 1
+                return func(*args, **kwargs)
+            return _wrapped
+        return _decorator
+else:                                           # pragma: not testing
+    # We aren't using real PyContracts, so just define our decorators as
+    # stunt-double no-ops.
+    contract = dummy_decorator_with_args
+    one_of = dummy_decorator_with_args
 
     def new_contract(*args_unused, **kwargs_unused):
         """Dummy no-op implementation of `new_contract`."""
@@ -93,23 +110,28 @@ def format_lines(statements, lines):
     For example, if `statements` is [1,2,3,4,5,10,11,12,13,14] and
     `lines` is [1,2,5,10,11,13,14] then the result will be "1-2, 5-11, 13-14".
 
+    Both `lines` and `statements` can be any iterable. All of the elements of
+    `lines` must be in `statements`, and all of the values must be positive
+    integers.
+
     """
-    pairs = []
-    i = 0
-    j = 0
-    start = None
     statements = sorted(statements)
     lines = sorted(lines)
-    while i < len(statements) and j < len(lines):
-        if statements[i] == lines[j]:
-            if start is None:
-                start = lines[j]
-            end = lines[j]
-            j += 1
+
+    pairs = []
+    start = None
+    lidx = 0
+    for stmt in statements:
+        if lidx >= len(lines):
+            break
+        if stmt == lines[lidx]:
+            lidx += 1
+            if not start:
+                start = stmt
+            end = stmt
         elif start:
             pairs.append((start, end))
             start = None
-        i += 1
     if start:
         pairs.append((start, end))
     ret = ', '.join(map(nice_pair, pairs))
@@ -134,7 +156,7 @@ def expensive(fn):
             return fn(self)
         return _wrapped
     else:
-        return fn                   # pragma: not covered
+        return fn                   # pragma: not testing
 
 
 def bool_or_none(b):
@@ -237,8 +259,13 @@ class SimpleRepr(object):
             )
 
 
-class CoverageException(Exception):
-    """An exception specific to coverage.py."""
+class BaseCoverageException(Exception):
+    """The base of all Coverage exceptions."""
+    pass
+
+
+class CoverageException(BaseCoverageException):
+    """A run-of-the-mill exception specific to coverage.py."""
     pass
 
 
@@ -261,6 +288,16 @@ class ExceptionDuringRun(CoverageException):
     """An exception happened while running customer code.
 
     Construct it with three arguments, the values from `sys.exc_info`.
+
+    """
+    pass
+
+
+class StopEverything(BaseCoverageException):
+    """An exception that means everything should stop.
+
+    The CoverageTest class converts these to SkipTest, so that when running
+    tests, raising this exception will automatically skip the test.
 
     """
     pass

@@ -416,8 +416,12 @@ class CoverageData(object):
         self._runs[0].update(kwargs)
         self._validate()
 
-    def touch_file(self, filename):
-        """Ensure that `filename` appears in the data, empty if needed."""
+    def touch_file(self, filename, plugin_name=""):
+        """Ensure that `filename` appears in the data, empty if needed.
+
+        `plugin_name` is the name of the plugin resposible for this file. It is used
+        to associate the right filereporter, etc.
+        """
         if self._debug and self._debug.should('dataop'):
             self._debug.write("Touching %r" % (filename,))
         if not self._has_arcs() and not self._has_lines():
@@ -428,6 +432,9 @@ class CoverageData(object):
         else:
             where = self._lines
         where.setdefault(filename, [])
+        if plugin_name:
+            # Set the tracer for this file
+            self._file_tracers[filename] = plugin_name
 
         self._validate()
 
@@ -715,6 +722,7 @@ class CoverageDataFiles(object):
         if strict and not files_to_combine:
             raise CoverageException("No data to combine")
 
+        files_combined = 0
         for f in files_to_combine:
             new_data = CoverageData(debug=self.debug)
             try:
@@ -726,9 +734,13 @@ class CoverageDataFiles(object):
                     self.warn(str(exc))
             else:
                 data.update(new_data, aliases=aliases)
+                files_combined += 1
                 if self.debug and self.debug.should('dataio'):
                     self.debug.write("Deleting combined data file %r" % (f,))
                 file_be_gone(f)
+
+        if strict and not files_combined:
+            raise CoverageException("No usable data files")
 
 
 def canonicalize_json_data(data):

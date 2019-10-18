@@ -1,4 +1,6 @@
 #!/usr/bin/python
+from builtins import next
+from builtins import object
 from . import ta_checkpoint_manager as cp
 from . import ta_data_collector as tdc
 
@@ -78,7 +80,7 @@ def client_adatper(job_func):
                 self._gen.send(self.is_stopped())
                 raise StopIteration
             if self._execute_times == 1:
-                return self._gen.next()
+                return next(self._gen)
             return self._gen.send(self.is_stopped())
 
     return TaDataClientAdapter

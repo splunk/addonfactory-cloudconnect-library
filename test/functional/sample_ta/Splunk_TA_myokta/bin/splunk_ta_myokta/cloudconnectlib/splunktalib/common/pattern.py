@@ -4,6 +4,7 @@ Copyright (C) 2005-2015 Splunk Inc. All Rights Reserved.
 Commonly used design partten for python user, includes:
   - singleton (Decorator function used to build singleton)
 """
+from __future__ import print_function
 
 from functools import wraps
 
@@ -33,5 +34,5 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(
                 *args, **kwargs)
-            print cls
+            print(cls)
         return cls._instances[cls]

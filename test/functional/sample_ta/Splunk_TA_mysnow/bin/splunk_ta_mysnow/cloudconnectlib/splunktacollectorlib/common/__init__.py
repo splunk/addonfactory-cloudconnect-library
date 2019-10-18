@@ -12,11 +12,11 @@ def load_schema_file(schema_file):
 
     common = ret.get("_common_", dict())
     if common:
-        for k, v in ret.items():
+        for k, v in list(ret.items()):
             if k == "_common_" or not isinstance(v, dict):
                 continue
             # merge common into other values
-            for _k, _v in common.items():
+            for _k, _v in list(common.items()):
                 if _k not in v:
                     v[_k] = _v
             ret[k] = v

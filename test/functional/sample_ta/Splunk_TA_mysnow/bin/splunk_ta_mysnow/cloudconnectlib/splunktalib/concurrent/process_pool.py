@@ -2,6 +2,7 @@
 A wrapper of multiprocessing.pool
 """
 
+from builtins import object
 import multiprocessing
 from ..common import log
 

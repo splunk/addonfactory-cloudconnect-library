@@ -5,6 +5,7 @@
 
 import marshal
 import os
+import struct
 import sys
 import types
 
@@ -110,7 +111,15 @@ def run_python_module(modulename, args):
 
     pathname = os.path.abspath(pathname)
     args[0] = pathname
-    run_python_file(pathname, args, package=packagename, modulename=modulename, path0="")
+    # Python 3.7.0b3 changed the behavior of the sys.path[0] entry for -m. It
+    # used to be an empty string (meaning the current directory). It changed
+    # to be the actual path to the current directory, so that os.chdir wouldn't
+    # affect the outcome.
+    if sys.version_info >= (3, 7, 0, 'beta', 3):
+        path0 = os.getcwd()
+    else:
+        path0 = ""
+    run_python_file(pathname, args, package=packagename, modulename=modulename, path0=path0)
 
 
 def run_python_file(filename, args, package=None, modulename=None, path0=None):
@@ -253,11 +262,19 @@ def make_code_from_pyc(filename):
         if magic != PYC_MAGIC_NUMBER:
             raise NoCode("Bad magic number in .pyc file")
 
-        # Skip the junk in the header that we don't need.
-        fpyc.read(4)            # Skip the moddate.
-        if sys.version_info >= (3, 3):
-            # 3.3 added another long to the header (size), skip it.
-            fpyc.read(4)
+        date_based = True
+        if sys.version_info >= (3, 7, 0, 'alpha', 4):
+            flags = struct.unpack('<L', fpyc.read(4))[0]
+            hash_based = flags & 0x01
+            if hash_based:
+                fpyc.read(8)    # Skip the hash.
+                date_based = False
+        if date_based:
+            # Skip the junk in the header that we don't need.
+            fpyc.read(4)            # Skip the moddate.
+            if sys.version_info >= (3, 3):
+                # 3.3 added another long to the header (size), skip it.
+                fpyc.read(4)
 
         # The rest of the file is the code object we want.
         code = marshal.load(fpyc)

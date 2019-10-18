@@ -48,7 +48,7 @@ except ImportError:
 try:
     range = xrange      # pylint: disable=redefined-builtin
 except NameError:
-    range = range       # pylint: disable=redefined-variable-type
+    range = range
 
 # shlex.quote is new, but there's an undocumented implementation in "pipes",
 # who knew!?
@@ -59,17 +59,28 @@ except ImportError:
     # in Python versions earlier than 3.3.
     from pipes import quote as shlex_quote
 
-# A function to iterate listlessly over a dict's items.
+# A function to iterate listlessly over a dict's items, and one to get the
+# items as a list.
 try:
     {}.iteritems
 except AttributeError:
+    # Python 3
     def iitems(d):
         """Produce the items from dict `d`."""
         return d.items()
+
+    def litems(d):
+        """Return a list of items from dict `d`."""
+        return list(d.items())
 else:
+    # Python 2
     def iitems(d):
         """Produce the items from dict `d`."""
         return d.iteritems()
+
+    def litems(d):
+        """Return a list of items from dict `d`."""
+        return d.items()
 
 # Getting the `next` function from an iterator is different in 2 and 3.
 try:

@@ -4,6 +4,7 @@ Copyright (C) 2005-2015 Splunk Inc. All Rights Reserved.
 log utility for TA
 """
 
+from builtins import object
 import logging
 import logging.handlers as handlers
 import os
@@ -111,7 +112,7 @@ class Logs(object):
                 logger.setLevel(level)
         else:
             self._default_level = level
-            for logger in self._loggers.itervalues():
+            for logger in self._loggers.values():
                 logger.setLevel(level)
 
     def _get_log_name(self, name):

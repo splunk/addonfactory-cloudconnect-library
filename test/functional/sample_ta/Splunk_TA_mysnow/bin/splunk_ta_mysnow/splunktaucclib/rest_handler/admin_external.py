@@ -8,6 +8,17 @@ from solnlib.utils import is_true
 
 from .eai import EAI_FIELDS
 from .handler import RestHandler
+import os
+from .endpoint import (
+    SingleModel,
+    DataInputModel,
+    MultipleModel
+)
+
+try:
+    from custom_hook_mixin import CustomHookMixin as HookMixin
+except ImportError:
+    from .base_hook_mixin import BaseHookMixin as HookMixin
 
 
 __all__ = [
@@ -18,7 +29,7 @@ __all__ = [
 
 
 def make_conf_item(conf_item, content, eai):
-    for key, val in content.iteritems():
+    for key, val in content.items():
         conf_item[key] = val
 
     for eai_field in EAI_FIELDS:
@@ -46,8 +57,16 @@ def build_conf_info(meth):
 
     return wrapper
 
+def get_splunkd_endpoint():
+    if os.environ.get('SPLUNKD_URI'):
+        return os.environ['SPLUNKD_URI']
+    else:
+        splunkd_uri = get_splunkd_uri()
+        os.environ['SPLUNKD_URI'] = splunkd_uri
+        return splunkd_uri
 
-class AdminExternalHandler(admin.MConfigHandler, object):
+
+class AdminExternalHandler(HookMixin, admin.MConfigHandler, object):
 
     # Leave it for setting REST model
     endpoint = None
@@ -64,7 +83,7 @@ class AdminExternalHandler(admin.MConfigHandler, object):
             **kwargs
         )
         self.handler = RestHandler(
-            get_splunkd_uri(),
+            get_splunkd_endpoint(),
             self.getSessionKey(),
             self.endpoint,
         )
@@ -79,10 +98,7 @@ class AdminExternalHandler(admin.MConfigHandler, object):
         actions = (admin.ACTION_LIST, admin.ACTION_REMOVE)
         if self.requestedAction in actions:
             return
-        model = self.endpoint.model(
-            self.callerArgs.id,
-            self.payload,
-        )
+        model = self.endpoint.model(self.callerArgs.id)
         if self.requestedAction == admin.ACTION_CREATE:
             for field in model.fields:
                 if field.required:
@@ -115,6 +131,12 @@ class AdminExternalHandler(admin.MConfigHandler, object):
 
     @build_conf_info
     def handleCreate(self, confInfo):
+        self.create_hook(
+            session_key=self.getSessionKey(),
+            config_name=self._get_name(),
+            stanza_id=self.callerArgs.id,
+            payload=self.payload
+        )
         return self.handler.create(
             self.callerArgs.id,
             self.payload,
@@ -124,6 +146,12 @@ class AdminExternalHandler(admin.MConfigHandler, object):
     def handleEdit(self, confInfo):
         disabled = self.payload.get('disabled')
         if disabled is None:
+            self.edit_hook(
+                session_key=self.getSessionKey(),
+                config_name=self._get_name(),
+                stanza_id=self.callerArgs.id,
+                payload=self.payload
+            )
             return self.handler.update(
                 self.callerArgs.id,
                 self.payload,
@@ -135,7 +163,23 @@ class AdminExternalHandler(admin.MConfigHandler, object):
 
     @build_conf_info
     def handleRemove(self, confInfo):
+        self.delete_hook(
+            session_key=self.getSessionKey(),
+            config_name=self._get_name(),
+            stanza_id=self.callerArgs.id
+        )
         return self.handler.delete(self.callerArgs.id)
+
+    def _get_name(self):
+        name = None
+        if isinstance(self.handler.get_endpoint(), DataInputModel):
+            name = self.handler.get_endpoint().input_type
+        elif isinstance(self.handler.get_endpoint(), SingleModel):
+            name = self.handler.get_endpoint().config_name
+        elif isinstance(self.handler.get_endpoint(), MultipleModel):
+            # For multiple model, the configuraiton name is same with stanza id
+            name = self.callerArgs.id
+        return name
 
     def _convert_payload(self):
         check_actions = (admin.ACTION_CREATE, admin.ACTION_EDIT)
@@ -143,7 +187,7 @@ class AdminExternalHandler(admin.MConfigHandler, object):
             return None
 
         payload = {}
-        for filed, value in self.callerArgs.data.iteritems():
+        for filed, value in self.callerArgs.data.items():
             payload[filed] = value[0] if value and value[0] else ''
         return payload
 

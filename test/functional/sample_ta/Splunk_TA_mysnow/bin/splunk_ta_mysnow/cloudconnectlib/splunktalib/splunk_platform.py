@@ -1,11 +1,15 @@
+from future import standard_library
+standard_library.install_aliases()
 import os
 import os.path as op
 import subprocess
-from ConfigParser import ConfigParser
-from cStringIO import StringIO
+from configparser import ConfigParser
+from io import StringIO
 
 from .common import util as scu
 
+import sys
+PY_VERSION = (sys.version_info[0], sys.version_info[1])
 
 def make_splunkhome_path(parts):
     """
@@ -70,10 +74,14 @@ def _get_conf_stanzas(conf_name):
     """
 
     res = _get_merged_conf_raw(conf_name)
+    res = res.decode('utf-8')
     res = StringIO(res)
     parser = ConfigParser()
     parser.optionxform = str
-    parser.readfp(res)
+    if PY_VERSION >= (3, 2):
+        parser.read_file(res)
+    else:
+        parser.readfp(res)
     res = {}
     for section in parser.sections():
         res[section] = {item[0]: item[1] for item in parser.items(section)}

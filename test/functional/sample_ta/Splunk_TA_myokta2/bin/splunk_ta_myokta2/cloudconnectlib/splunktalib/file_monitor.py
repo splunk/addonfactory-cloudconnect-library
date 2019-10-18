@@ -1,3 +1,4 @@
+from builtins import object
 import os.path as op
 import traceback
 
@@ -36,7 +37,7 @@ class FileMonitor(object):
         log.logger.debug("Checking files=%s", self._files)
         file_mtimes = self.file_mtimes
         changed_files = []
-        for f, last_mtime in file_mtimes.iteritems():
+        for f, last_mtime in file_mtimes.items():
             try:
                 if not op.exists(f):
                     continue

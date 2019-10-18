@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from __future__ import absolute_import
 try:
     import xml.etree.cElementTree as ET
 except ImportError as ie:
@@ -103,5 +104,5 @@ class Event(object):
         if self.done:
             ET.SubElement(event, "done")
 
-        stream.write(ET.tostring(event))
+        stream.write(ET.tostring(event).decode())
         stream.flush()

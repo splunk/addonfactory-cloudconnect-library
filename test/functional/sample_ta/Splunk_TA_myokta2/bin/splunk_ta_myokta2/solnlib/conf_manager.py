@@ -68,7 +68,7 @@ class ConfFile(object):
     reserved_keys = ('userName', 'appName')
 
     def __init__(self, name, conf, session_key, app, owner='nobody',
-                 scheme=None, host=None, port=None, **context):
+                 scheme=None, host=None, port=None, realm=None,**context):
         self._name = name
         self._conf = conf
         self._session_key = session_key
@@ -79,6 +79,11 @@ class ConfFile(object):
         self._port = port
         self._context = context
         self._cred_manager = None
+        ### 'realm' is set to provided 'realm' argument otherwise as default behaviour it is set to 'APP_NAME'.
+        if realm is None:
+            self._realm = self._app
+        else:
+            self._realm = realm
 
     @property
     @retry(exceptions=[binding.HTTPError])
@@ -86,7 +91,7 @@ class ConfFile(object):
         if self._cred_manager is None:
             self._cred_manager = CredentialManager(
                 self._session_key, self._app, owner=self._owner,
-                realm=self._app, scheme=self._scheme, host=self._host,
+                realm=self._realm, scheme=self._scheme, host=self._host,
                 port=self._port, **self._context)
 
         return self._cred_manager
@@ -156,7 +161,7 @@ class ConfFile(object):
         return True
 
     @retry(exceptions=[binding.HTTPError])
-    def get(self, stanza_name):
+    def get(self, stanza_name, only_current_app=False):
         '''Get stanza from configuration file.
 
         :param stanza_name: Stanza name.
@@ -181,7 +186,12 @@ class ConfFile(object):
         '''
 
         try:
-            stanza_mgr = self._conf.list(name=stanza_name)[0]
+            if only_current_app:
+                stanza_mgrs = self._conf.list(
+                    search='eai:acl.app={} name={}'.format(
+                        self._app, stanza_name.replace('=', r'\=')))
+            else:
+                stanza_mgrs = self._conf.list(name=stanza_name)
         except binding.HTTPError as e:
             if e.status != 404:
                 raise
@@ -190,13 +200,18 @@ class ConfFile(object):
                 'Stanza: %s does not exist in %s.conf' %
                 (stanza_name, self._name))
 
-        stanza = self._decrypt_stanza(stanza_mgr.name, stanza_mgr.content)
-        stanza['eai:access'] = stanza_mgr.access
-        stanza['eai:appName'] = stanza_mgr.access.app
+        if len(stanza_mgrs) == 0:
+            raise ConfStanzaNotExistException(
+                'Stanza: %s does not exist in %s.conf' %
+                (stanza_name, self._name))
+
+        stanza = self._decrypt_stanza(stanza_mgrs[0].name, stanza_mgrs[0].content)
+        stanza['eai:access'] = stanza_mgrs[0].access
+        stanza['eai:appName'] = stanza_mgrs[0].access.app
         return stanza
 
     @retry(exceptions=[binding.HTTPError])
-    def get_all(self):
+    def get_all(self, only_current_app=False):
         '''Get all stanzas from configuration file.
 
         :returns: All stanzas, like: {'test': {
@@ -216,7 +231,10 @@ class ConfFile(object):
            >>> conf.get_all()
         '''
 
-        stanza_mgrs = self._conf.list()
+        if only_current_app:
+            stanza_mgrs = self._conf.list(search='eai:acl.app={}'.format(self._app))
+        else:
+            stanza_mgrs = self._conf.list()
         res = {}
         for stanza_mgr in stanza_mgrs:
             name = stanza_mgr.name
@@ -293,7 +311,7 @@ class ConfFile(object):
             self._conf.delete(stanza_name)
         except KeyError as e:
             logging.error('Delete stanza: %s error: %s.',
-                          stanza_name, traceback.format_exc(e))
+                          stanza_name, traceback.format_exc())
             raise ConfStanzaNotExistException(
                 'Stanza: %s does not exist in %s.conf' %
                 (stanza_name, self._name))
@@ -343,10 +361,19 @@ class ConfManager(object):
        >>> from solnlib import conf_manager
        >>> cfm = conf_manager.ConfManager(session_key,
                                           'Splunk_TA_test')
+
+       EXAMPLE:
+            If stanza in passwords.conf is formatted as below:
+
+            [credential:__REST_CREDENTIAL__#Splunk_TA_test#configs/conf-CONF_FILENAME:STANZA_NAME``splunk_cred_sep``1:]
+
+            >>> from solnlib import conf_manager
+            >>> cfm = conf_manager.ConfManager(session_key,
+                                              'Splunk_TA_test', realm='__REST_CREDENTIAL__#Splunk_TA_test#configs/conf-CONF_FILENAME')
     '''
 
     def __init__(self, session_key, app, owner='nobody',
-                 scheme=None, host=None, port=None, **context):
+                 scheme=None, host=None, port=None, realm=None, **context):
         self._session_key = session_key
         self._app = app
         self._owner = owner
@@ -363,6 +390,7 @@ class ConfManager(object):
             port=self._port,
             **self._context)
         self._confs = None
+        self._realm = realm
 
     @retry(exceptions=[binding.HTTPError])
     def get_conf(self, name, refresh=False):
@@ -393,7 +421,7 @@ class ConfManager(object):
 
         return ConfFile(name, conf,
                         self._session_key, self._app, self._owner,
-                        self._scheme, self._host, self._port, **self._context)
+                        self._scheme, self._host, self._port, self._realm, **self._context)
 
     @retry(exceptions=[binding.HTTPError])
     def create_conf(self, name):
@@ -411,4 +439,4 @@ class ConfManager(object):
         conf = self._confs.create(name)
         return ConfFile(name, conf,
                         self._session_key, self._app, self._owner,
-                        self._scheme, self._host, self._port, **self._context)
+                        self._scheme, self._host, self._port, self._realm, **self._context)

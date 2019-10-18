@@ -3,7 +3,9 @@
 """
 This is the main entry point for My TA
 """
+from __future__ import print_function
 
+from builtins import str
 import os.path as op
 import platform
 import sys
@@ -61,7 +63,7 @@ def do_scheme(
     description = ("Go to the add-on's configuration UI and configure"
                    " modular inputs under the Inputs menu.")
 
-    print """
+    print("""
     <scheme>
     <title>{data_input_title}</title>
     <description>{description}</description>
@@ -82,7 +84,7 @@ def do_scheme(
         data_input_title=mod_input_name,
         param_str=''.join(param_string_list),
         description=description,
-    )
+    ))
 
 
 def _setup_signal_handler(data_loader, ta_short_name):
@@ -216,7 +218,7 @@ def usage():
     """
 
     hlp = "%s --scheme|--validate-arguments|-h"
-    print >> sys.stderr, hlp % sys.argv[0]
+    print(hlp % sys.argv[0], file=sys.stderr)
     sys.exit(1)
 
 

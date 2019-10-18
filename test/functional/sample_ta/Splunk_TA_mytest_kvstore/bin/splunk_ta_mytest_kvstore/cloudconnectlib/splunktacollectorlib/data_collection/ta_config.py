@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+from builtins import object
 import os.path as op
 import socket
 
-import ta_consts as c
-import ta_helper as th
+from . import ta_consts as c
+from . import ta_helper as th
 from ..common import log as stulog
 from ...splunktalib import modinput as modinput
 from ...splunktalib import splunk_cluster as sc

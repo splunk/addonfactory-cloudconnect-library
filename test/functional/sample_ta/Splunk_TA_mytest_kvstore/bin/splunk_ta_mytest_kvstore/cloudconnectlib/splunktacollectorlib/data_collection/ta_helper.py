@@ -1,3 +1,5 @@
+import six
+from builtins import object
 import hashlib
 import json
 import os.path as op
@@ -5,7 +7,12 @@ import re
 from calendar import timegm
 from datetime import datetime
 
-import functools32
+import sys
+if sys.version_info[0] >= 3:
+   from functools import lru_cache
+else:
+   from functools32 import lru_cache
+
 from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema
 from . import ta_consts as c
 from ...splunktacollectorlib import config as sc
@@ -13,7 +20,7 @@ from ...splunktalib.common import util
 
 
 def utc2timestamp(human_time):
-    regex1 = ur"\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
+    regex1 = "\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
     match = re.search(regex1, human_time)
     if match:
         formated = match.group()
@@ -39,7 +46,7 @@ def get_md5(data):
     :return:
     """
     assert data is not None, "The input cannot be None"
-    if isinstance(data, (unicode, str)):
+    if isinstance(data, six.string_types):
         return hashlib.sha256(data.encode('utf-8')).hexdigest()
     elif isinstance(data, (list, tuple, dict)):
         return hashlib.sha256(json.dumps(data).encode('utf-8')).hexdigest()
@@ -56,9 +63,9 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
     return inputs, configs, settings
 
 
-@functools32.lru_cache(maxsize=64)
+@lru_cache(maxsize=64)
 def format_name_for_file(name):
-    return hashlib.sha256(name).hexdigest()
+    return hashlib.sha256(name.encode('utf-8')).hexdigest()
 
 
 class ConfigSchemaHandler(object):
@@ -98,7 +105,7 @@ class ConfigSchemaHandler(object):
     def _divide_settings(self):
         division_schema = self._client_schema[c.division]
         division_settings = dict()
-        for division_endpoint, division_contents in division_schema.iteritems():
+        for division_endpoint, division_contents in division_schema.items():
             division_settings[division_endpoint] = self._process_division(
                 division_endpoint, division_contents)
         return division_settings
@@ -109,7 +116,7 @@ class ConfigSchemaHandler(object):
     def _process_division(self, division_endpoint, division_contents):
         division_metrics = []
         assert isinstance(division_contents, dict)
-        for division_key, division_value in division_contents.iteritems():
+        for division_key, division_value in division_contents.items():
             try:
                 assert self.TYPE in division_value and \
                        division_value[self.TYPE] in \

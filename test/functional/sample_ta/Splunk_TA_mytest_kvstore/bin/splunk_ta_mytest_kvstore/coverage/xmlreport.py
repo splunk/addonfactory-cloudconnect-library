@@ -1,3 +1,4 @@
+# coding: utf-8
 # Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 # For details: https://bitbucket.org/ned/coveragepy/src/default/NOTICE.txt
 
@@ -5,6 +6,7 @@
 
 import os
 import os.path
+import re
 import sys
 import time
 import xml.dom.minidom
@@ -18,11 +20,7 @@ from coverage.report import Reporter
 os = isolate_module(os)
 
 
-DTD_URL = (
-    'https://raw.githubusercontent.com/cobertura/web/'
-    'f0366e5e2cf18f111cbd61fc34ef720a6584ba02'
-    '/htdocs/xml/coverage-03.dtd'
-)
+DTD_URL = 'https://raw.githubusercontent.com/cobertura/web/master/htdocs/xml/coverage-04.dtd'
 
 
 def rate(hit, num):
@@ -114,18 +112,21 @@ class XmlReporter(Reporter):
             bnum_tot += bnum
             bhits_tot += bhits
 
+        xcoverage.setAttribute("lines-valid", str(lnum_tot))
+        xcoverage.setAttribute("lines-covered", str(lhits_tot))
         xcoverage.setAttribute("line-rate", rate(lhits_tot, lnum_tot))
         if self.has_arcs:
-            branch_rate = rate(bhits_tot, bnum_tot)
+            xcoverage.setAttribute("branches-valid", str(bnum_tot))
+            xcoverage.setAttribute("branches-covered", str(bhits_tot))
+            xcoverage.setAttribute("branch-rate", rate(bhits_tot, bnum_tot))
         else:
-            branch_rate = "0"
-        xcoverage.setAttribute("branch-rate", branch_rate)
+            xcoverage.setAttribute("branches-covered", "0")
+            xcoverage.setAttribute("branches-valid", "0")
+            xcoverage.setAttribute("branch-rate", "0")
+        xcoverage.setAttribute("complexity", "0")
 
-        # Use the DOM to write the output file.
-        out = self.xml_out.toprettyxml()
-        if env.PY2:
-            out = out.encode("utf8")
-        outfile.write(out)
+        # Write the output file.
+        outfile.write(serialize_xml(self.xml_out))
 
         # Return the total percentage.
         denom = lnum_tot + bnum_tot
@@ -148,7 +149,7 @@ class XmlReporter(Reporter):
         else:
             rel_name = fr.relative_filename()
 
-        dirname = os.path.dirname(rel_name) or "."
+        dirname = os.path.dirname(rel_name) or u"."
         dirname = "/".join(dirname.split("/")[:self.config.xml_package_depth])
         package_name = dirname.replace("/", ".")
 
@@ -164,7 +165,7 @@ class XmlReporter(Reporter):
         xclass.appendChild(xlines)
 
         xclass.setAttribute("name", os.path.relpath(rel_name, dirname))
-        xclass.setAttribute("filename", fr.relative_filename().replace("\\", "/"))
+        xclass.setAttribute("filename", rel_name.replace("\\", "/"))
         xclass.setAttribute("complexity", "0")
 
         branch_stats = analysis.branch_stats()
@@ -216,3 +217,23 @@ class XmlReporter(Reporter):
         package[2] += class_lines
         package[3] += class_br_hits
         package[4] += class_branches
+
+
+def serialize_xml(dom):
+    """Serialize a minidom node to XML."""
+    out = dom.toprettyxml()
+    if env.PY2:
+        out = out.encode("utf8")
+    # In Python 3.8, minidom lost the sorting of attributes: https://bugs.python.org/issue34160
+    # For the limited kinds of XML we produce, this re-sorts them.
+    if env.PYVERSION >= (3, 8):
+        rx_attr = r' [\w-]+="[^"]*"'
+        rx_attrs = r'(' + rx_attr + ')+'
+        fixed_lines = []
+        for line in out.splitlines(True):
+            hollow_line = re.sub(rx_attrs, u"☺", line)
+            attrs = sorted(re.findall(rx_attr, line))
+            new_line = hollow_line.replace(u"☺", "".join(attrs))
+            fixed_lines.append(new_line)
+        out = "".join(fixed_lines)
+    return out

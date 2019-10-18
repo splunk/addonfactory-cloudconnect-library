@@ -88,7 +88,7 @@ def parse_modinput_configs(config_str):
     }
     root = xdm.parseString(config_str)
     doc = root.documentElement
-    for tag in meta_configs.iterkeys():
+    for tag in meta_configs.keys():
         nodes = doc.getElementsByTagName(tag)
         if not nodes:
             log.logger.error("Invalid config, missing %s section", tag)

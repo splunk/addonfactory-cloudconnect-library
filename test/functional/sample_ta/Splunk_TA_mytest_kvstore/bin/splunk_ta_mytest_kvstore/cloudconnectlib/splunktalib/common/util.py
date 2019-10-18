@@ -2,12 +2,15 @@
 Copyright (C) 2005-2015 Splunk Inc. All Rights Reserved.
 """
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import os
 import os.path as op
 import datetime
 import sys
 import gc
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 def handle_tear_down_signals(callback):
@@ -69,7 +72,7 @@ def get_appname_from_path(absolute_path):
 
 def escape_cdata(data):
     # FIXME: This is a workaround for JIRA [addon-10459]
-    data = data.decode("utf-8", errors="replace").encode("utf-8", errors="xmlcharrefreplace")
+    data = data.decode("utf-8", errors="replace").encode("utf-8", errors="xmlcharrefreplace").decode("utf-8")
     data = data.replace("]]>", "]]&gt;")
     if data.endswith("]"):
         data = data[:-1] + "%5D"
@@ -100,9 +103,9 @@ def escape_json_control_chars(json_str):
 
 def disable_stdout_buffer():
     os.environ["PYTHONUNBUFFERED"] = "1"
-    sys.stdout = os.fdopen(sys.stdout.fileno(), "w", 0)
+    sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
     gc.garbage.append(sys.stdout)
 
 
 def format_stanza_name(name):
-    return urllib.quote(name.encode("utf-8"), "")
+    return urllib.parse.quote(name.encode("utf-8"), "")

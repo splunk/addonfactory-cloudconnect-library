@@ -1,15 +1,34 @@
+from builtins import str
+from builtins import range
 import calendar
 import json
 import re
 import traceback
+from collections import Iterable
 from datetime import datetime
+import six
 
 from jsonpath_rw import parse
-from .exceptions import FuncException, StopCCEIteration
+from .exceptions import FuncException, StopCCEIteration, QuitJobError
 from .pipemgr import PipeManager
 from ..common import util, log
 
 _logger = log.get_cc_logger()
+
+
+def regex_search(pattern, source, flags=0):
+    """Search substring in source through regex"""
+    if not isinstance(source, six.string_types):
+        _logger.warning('Cannot apply regex search on non-string: %s', type(source))
+        return {}
+    try:
+        matches = re.search(pattern=pattern, string=source, flags=flags)
+    except Exception:
+        _logger.warning('Unable to search pattern=%s and flags=%s in string, error=%s',
+                        pattern, flags, traceback.format_exc())
+        return {}
+    else:
+        return matches.groupdict() if matches else {}
 
 
 def regex_match(pattern, source, flags=0):
@@ -54,7 +73,7 @@ def json_path(source, json_path_expr):
         _logger.debug('source to apply JSONPATH is empty, return empty.')
         return ''
 
-    if isinstance(source, basestring):
+    if isinstance(source, six.string_types):
         _logger.debug(
             'source expected is a JSON, not %s. Attempt to'
             ' convert it to JSON',
@@ -66,7 +85,7 @@ def json_path(source, json_path_expr):
             _logger.warning(
                 'Unable to load JSON from source: %s. '
                 'Attempt to apply JSONPATH "%s" on source directly.',
-                ex.message,
+                ex,
                 json_path_expr
             )
 
@@ -88,7 +107,7 @@ def json_path(source, json_path_expr):
             'Unable to apply JSONPATH expression "%s" on source,'
             ' message=%s cause=%s',
             json_path_expr,
-            ex.message,
+            ex,
             traceback.format_exc()
         )
     return ''
@@ -122,8 +141,7 @@ def splunk_xml(candidates,
                 time
             )
             time = None
-
-    return util.format_events(
+    xml_events = util.format_events(
         candidates,
         time=time,
         index=index,
@@ -131,24 +149,36 @@ def splunk_xml(candidates,
         source=source,
         sourcetype=sourcetype
     )
+    _logger.info(
+                "[%s] events are formated as splunk stream xml",
+                len(candidates)
+            )
+    return xml_events
 
 
 def std_output(candidates):
     """ Output a string to stdout.
     :param candidates: List of string to output to stdout or a single string.
     """
-    if isinstance(candidates, basestring):
+    if isinstance(candidates, six.string_types):
         candidates = [candidates]
 
     all_str = True
     for candidate in candidates:
-        if all_str and not isinstance(candidate, basestring):
+        if all_str and not isinstance(candidate, six.string_types):
             all_str = False
-            _logger.warning(
-                'The type of data needs to print is "%s" rather than'
-                ' basestring',
-                type(candidate)
+            _logger.debug(
+                'The type of data needs to print is "%s" rather than %s',
+                type(candidate),
+                str(six.string_types)
             )
+            try:
+                candidate = json.dumps(candidate)
+            except:
+                _logger.exception('The type of data needs to print is "%s"'
+                                  ' rather than %s',
+                                  type(candidate),
+                                  str(six.string_types))
 
         if not PipeManager().write_events(candidate):
             raise FuncException('Fail to output data to stdout. The event'
@@ -170,7 +200,7 @@ def _parse_json(source, json_path_expr=None):
         )
         source = json_path(source, json_path_expr)
 
-    elif isinstance(source, basestring):
+    elif isinstance(source, six.string_types):
         source = json.loads(source)
 
     return source
@@ -192,7 +222,7 @@ def json_empty(source, json_path_expr=None):
     except Exception as ex:
         _logger.warning(
             'Unable to determine whether source is json_empty, treat it as '
-            'not json_empty: %s', ex.message
+            'not json_empty: %s', ex
         )
         return False
 
@@ -215,7 +245,7 @@ def json_not_empty(source, json_path_expr=None):
         _logger.warning(
             'Unable to determine whether source is json_not_empty, '
             'treat it as not json_not_empty: %s',
-            ex.message
+            ex
         )
         return False
 
@@ -262,7 +292,7 @@ def time_str2str(date_string, from_format, to_format):
     """Convert a date string with given format to another format. Return
     the original date string if it's type is not string or failed to parse or
     convert it with format."""
-    if not isinstance(date_string, basestring):
+    if not isinstance(date_string, six.string_types):
         _logger.warning(
             '"date_string" must be a string type, found %s,'
             ' return the original date_string directly.',
@@ -304,6 +334,12 @@ def exit_if_true(value):
         raise StopCCEIteration
 
 
+def exit_job_if_true(value):
+    """Raise a QuitJob exception if value is True"""
+    if is_true(value):
+        raise QuitJobError
+
+
 def assert_true(value, message=None):
     """Assert value is True"""
     if not is_true(value):
@@ -312,12 +348,35 @@ def assert_true(value, message=None):
         )
 
 
+def split_by(source, target, separator=None):
+    """Split the source to multiple values by the separator"""
+    try:
+        if not source:
+            return []
+        elif isinstance(source, six.string_types) and separator:
+            values = source.split(separator)
+            return [{target: value.strip()} for value in values]
+        elif isinstance(source, six.string_types):
+            return [{target: source}]
+        elif isinstance(source, Iterable):
+            return [{target: value} for value in source]
+        else:
+            return [{target: source}]
+    except Exception as ex:
+        _logger.warning("split_by method encountered exception "
+                        "source=%s message=%s cause=%s", source, ex,
+                        traceback.format_exc())
+        return []
+
+
 _extension_functions = {
     'assert_true': assert_true,
     'exit_if_true': exit_if_true,
+    'exit_job_if_true': exit_job_if_true,
     'is_true': is_true,
     'regex_match': regex_match,
     'regex_not_match': regex_not_match,
+    'regex_search': regex_search,
     'set_var': set_var,
     'splunk_xml': splunk_xml,
     'std_output': std_output,
@@ -325,6 +384,7 @@ _extension_functions = {
     'json_empty': json_empty,
     'json_not_empty': json_not_empty,
     'time_str2str': time_str2str,
+    'split_by': split_by
 }
 
 

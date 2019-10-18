@@ -1,4 +1,7 @@
-import urllib
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+import urllib.request, urllib.parse, urllib.error
 import json
 from traceback import format_exc
 
@@ -29,7 +32,7 @@ def splunkd_request(splunkd_uri, session_key, method="GET",
         if content_type == "application/json":
             data = json.dumps(data)
         else:
-            data = urllib.urlencode(data)
+            data = urllib.parse.urlencode(data)
 
     http = Http(timeout=timeout, disable_ssl_certificate_validation=True)
     msg_temp = "Failed to send rest request=%s, errcode=%s, reason=%s"
@@ -38,6 +41,8 @@ def splunkd_request(splunkd_uri, session_key, method="GET",
         try:
             resp, content = http.request(splunkd_uri, method=method,
                                          headers=headers, body=data)
+            if content:
+                content = content.decode()
         except Exception:
             log.logger.error(msg_temp, splunkd_uri, "unknown", format_exc())
         else:

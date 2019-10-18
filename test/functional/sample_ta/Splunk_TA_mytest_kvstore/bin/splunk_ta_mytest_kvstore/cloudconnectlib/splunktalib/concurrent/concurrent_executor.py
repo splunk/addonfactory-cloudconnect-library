@@ -3,6 +3,7 @@ Concurrent executor provides concurrent executing function either in
 a thread pool or a process pool
 """
 
+from builtins import object
 from ..concurrent import thread_pool as tp
 from ..concurrent import process_pool as pp
 

@@ -8,9 +8,8 @@ import types
 import zipimport
 
 from coverage import env, files
-from coverage.misc import (
-    contract, CoverageException, expensive, NoSource, join_regex, isolate_module,
-)
+from coverage.misc import contract, expensive, isolate_module, join_regex
+from coverage.misc import CoverageException, NoSource
 from coverage.parser import PythonParser
 from coverage.phystokens import source_token_lines, source_encoding
 from coverage.plugin import FileReporter
@@ -26,7 +25,13 @@ def read_python_source(filename):
 
     """
     with open(filename, "rb") as f:
-        return f.read().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        source = f.read()
+
+    if env.IRONPYTHON:
+        # IronPython reads Unicode strings even for "rb" files.
+        source = bytes(source)
+
+    return source.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
 
 @contract(returns='unicode')
@@ -130,7 +135,7 @@ class PythonFileReporter(FileReporter):
     def __init__(self, morf, coverage=None):
         self.coverage = coverage
 
-        if hasattr(morf, '__file__'):
+        if hasattr(morf, '__file__') and morf.__file__:
             filename = morf.__file__
         elif isinstance(morf, types.ModuleType):
             # A module should have had .__file__, otherwise we can't use it.
@@ -144,8 +149,10 @@ class PythonFileReporter(FileReporter):
         super(PythonFileReporter, self).__init__(files.canonical_filename(filename))
 
         if hasattr(morf, '__name__'):
-            name = morf.__name__
-            name = name.replace(".", os.sep) + ".py"
+            name = morf.__name__.replace(".", os.sep)
+            if os.path.basename(filename).startswith('__init__.'):
+                name += os.sep + "__init__"
+            name += ".py"
             name = files.unicode_filename(name)
         else:
             name = files.relative_filename(filename)
@@ -155,6 +162,9 @@ class PythonFileReporter(FileReporter):
         self._parser = None
         self._statements = None
         self._excluded = None
+
+    def __repr__(self):
+        return "<PythonFileReporter {0!r}>".format(self.filename)
 
     @contract(returns='unicode')
     def relative_filename(self):

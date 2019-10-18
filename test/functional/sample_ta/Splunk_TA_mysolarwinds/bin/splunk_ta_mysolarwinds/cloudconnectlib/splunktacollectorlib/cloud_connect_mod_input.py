@@ -1,4 +1,6 @@
-import ConfigParser
+from future import standard_library
+standard_library.install_aliases()
+import configparser
 import os.path as op
 
 from .data_collection import ta_mod_input as ta_input
@@ -15,9 +17,9 @@ def _load_options_from_inputs_spec(app_root, stanza_name):
     if not op.isfile(file_path):
         raise RuntimeError("README/%s doesn't exist" % input_spec_file)
 
-    parser = ConfigParser.RawConfigParser(allow_no_value=True)
+    parser = configparser.RawConfigParser(allow_no_value=True)
     parser.read(file_path)
-    options = parser.defaults().keys()
+    options = list(parser.defaults().keys())
     stanza_prefix = '%s://' % stanza_name
 
     stanza_exist = False

@@ -13,7 +13,6 @@ import types
 
 from coverage import env
 from coverage.backward import to_bytes, unicode_class
-from coverage.backunittest import unittest
 
 ISOLATED_MODULES = {}
 
@@ -76,7 +75,7 @@ if env.TESTING:
                 return func(*args, **kwargs)
             return _wrapped
         return _decorator
-else:                                           # pragma: not covered
+else:                                           # pragma: not testing
     # We aren't using real PyContracts, so just define our decorators as
     # stunt-double no-ops.
     contract = dummy_decorator_with_args
@@ -111,23 +110,28 @@ def format_lines(statements, lines):
     For example, if `statements` is [1,2,3,4,5,10,11,12,13,14] and
     `lines` is [1,2,5,10,11,13,14] then the result will be "1-2, 5-11, 13-14".
 
+    Both `lines` and `statements` can be any iterable. All of the elements of
+    `lines` must be in `statements`, and all of the values must be positive
+    integers.
+
     """
-    pairs = []
-    i = 0
-    j = 0
-    start = None
     statements = sorted(statements)
     lines = sorted(lines)
-    while i < len(statements) and j < len(lines):
-        if statements[i] == lines[j]:
-            if start is None:
-                start = lines[j]
-            end = lines[j]
-            j += 1
+
+    pairs = []
+    start = None
+    lidx = 0
+    for stmt in statements:
+        if lidx >= len(lines):
+            break
+        if stmt == lines[lidx]:
+            lidx += 1
+            if not start:
+                start = stmt
+            end = stmt
         elif start:
             pairs.append((start, end))
             start = None
-        i += 1
     if start:
         pairs.append((start, end))
     ret = ', '.join(map(nice_pair, pairs))
@@ -152,7 +156,7 @@ def expensive(fn):
             return fn(self)
         return _wrapped
     else:
-        return fn                   # pragma: not covered
+        return fn                   # pragma: not testing
 
 
 def bool_or_none(b):
@@ -255,8 +259,13 @@ class SimpleRepr(object):
             )
 
 
-class CoverageException(Exception):
-    """An exception specific to coverage.py."""
+class BaseCoverageException(Exception):
+    """The base of all Coverage exceptions."""
+    pass
+
+
+class CoverageException(BaseCoverageException):
+    """A run-of-the-mill exception specific to coverage.py."""
     pass
 
 
@@ -284,20 +293,11 @@ class ExceptionDuringRun(CoverageException):
     pass
 
 
-# unittest.SkipTest doesn't exist in Python 2.6. We backport it with
-# unittest2 in the coverage.py test suite.  But for production, we don't need
-# to derive from SkipTest, so if it doesn't exist, just use Exception.
-
-class StopEverything(getattr(unittest, 'SkipTest', Exception)):
+class StopEverything(BaseCoverageException):
     """An exception that means everything should stop.
 
-    This derives from SkipTest so that tests that spring this trap will be
-    skipped automatically, without a lot of boilerplate all over the place.
+    The CoverageTest class converts these to SkipTest, so that when running
+    tests, raising this exception will automatically skip the test.
 
     """
-    pass
-
-
-class IncapablePython(CoverageException, StopEverything):
-    """An operation is attempted that this version of Python cannot do."""
     pass

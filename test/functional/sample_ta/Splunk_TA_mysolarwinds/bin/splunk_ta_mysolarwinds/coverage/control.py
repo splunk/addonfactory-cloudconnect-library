@@ -3,23 +3,27 @@
 
 """Core control stuff for coverage.py."""
 
+
 import atexit
 import inspect
+import itertools
 import os
 import platform
 import re
 import sys
+import time
 import traceback
 
-from coverage import env, files
+from coverage import env
 from coverage.annotate import AnnotateReporter
 from coverage.backward import string_class, iitems
 from coverage.collector import Collector
 from coverage.config import read_coverage_config
 from coverage.data import CoverageData, CoverageDataFiles
-from coverage.debug import DebugControl
+from coverage.debug import DebugControl, write_formatted_info
 from coverage.files import TreeMatcher, FnmatchMatcher
 from coverage.files import PathAliases, find_python_files, prep_patterns
+from coverage.files import canonical_filename, set_relative_directory
 from coverage.files import ModuleMatcher, abs_file
 from coverage.html import HtmlReporter
 from coverage.misc import CoverageException, bool_or_none, join_regex
@@ -135,17 +139,19 @@ class Coverage(object):
             The `concurrency` parameter can now be a list of strings.
 
         """
-        # Build our configuration from a number of sources:
-        # 1: defaults:
+        # Build our configuration from a number of sources.
         self.config_file, self.config = read_coverage_config(
             config_file=config_file,
             data_file=data_file, cover_pylib=cover_pylib, timid=timid,
             branch=branch, parallel=bool_or_none(data_suffix),
-            source=source, omit=omit, include=include, debug=debug,
+            source=source, run_omit=omit, run_include=include, debug=debug,
+            report_omit=omit, report_include=include,
             concurrency=concurrency,
             )
 
+        # This is injectable by tests.
         self._debug_file = None
+
         self._auto_load = self._auto_save = auto_data
         self._data_suffix = data_suffix
 
@@ -168,7 +174,7 @@ class Coverage(object):
         self.source_pkgs = None
         self.data = self.data_files = self.collector = None
         self.plugins = None
-        self.pylib_dirs = self.cover_dirs = None
+        self.pylib_paths = self.cover_paths = None
         self.data_suffix = self.run_suffix = None
         self._exclude_re = None
         self.debug = None
@@ -178,8 +184,6 @@ class Coverage(object):
         self._inited = False
         # Have we started collecting and not stopped it?
         self._started = False
-        # Have we measured some data and not harvested it?
-        self._measured = False
 
         # If we have sub-process measurement happening automatically, then we
         # want any explicit creation of a Coverage object to mean, this process
@@ -200,6 +204,8 @@ class Coverage(object):
         if self._inited:
             return
 
+        self._inited = True
+
         # Create and configure the debugging controller. COVERAGE_DEBUG_FILE
         # is an environment variable, the name of a file to append debug logs
         # to.
@@ -211,28 +217,34 @@ class Coverage(object):
                 self._debug_file = sys.stderr
         self.debug = DebugControl(self.config.debug, self._debug_file)
 
+        # _exclude_re is a dict that maps exclusion list names to compiled regexes.
+        self._exclude_re = {}
+
+        set_relative_directory()
+
         # Load plugins
         self.plugins = Plugins.load_plugins(self.config.plugins, self.config, self.debug)
 
-        # _exclude_re is a dict that maps exclusion list names to compiled
-        # regexes.
-        self._exclude_re = {}
-        self._exclude_regex_stale()
-
-        files.set_relative_directory()
+        # Run configuring plugins.
+        for plugin in self.plugins.configurers:
+            # We need an object with set_option and get_option. Either self or
+            # self.config will do. Choosing randomly stops people from doing
+            # other things with those objects, against the public API.  Yes,
+            # this is a bit childish. :)
+            plugin.configure([self, self.config][int(time.time()) % 2])
 
         # The source argument can be directories or package names.
         self.source = []
         self.source_pkgs = []
         for src in self.config.source or []:
             if os.path.isdir(src):
-                self.source.append(files.canonical_filename(src))
+                self.source.append(canonical_filename(src))
             else:
                 self.source_pkgs.append(src)
         self.source_pkgs_unmatched = self.source_pkgs[:]
 
-        self.omit = prep_patterns(self.config.omit)
-        self.include = prep_patterns(self.config.include)
+        self.omit = prep_patterns(self.config.run_omit)
+        self.include = prep_patterns(self.config.run_include)
 
         concurrency = self.config.concurrency or []
         if "multiprocessing" in concurrency:
@@ -290,7 +302,7 @@ class Coverage(object):
         )
 
         # The directories for files considered "installed with the interpreter".
-        self.pylib_dirs = set()
+        self.pylib_paths = set()
         if not self.config.cover_pylib:
             # Look at where some standard modules are located. That's the
             # indication for "installed with the interpreter". In some
@@ -299,7 +311,7 @@ class Coverage(object):
             # we've imported, and take all the different ones.
             for m in (atexit, inspect, os, platform, _pypy_irc_topic, re, _structseq, traceback):
                 if m is not None and hasattr(m, "__file__"):
-                    self.pylib_dirs.add(self._canonical_dir(m))
+                    self.pylib_paths.add(self._canonical_path(m, directory=True))
 
             if _structseq and not hasattr(_structseq, '__file__'):
                 # PyPy 2.4 has no __file__ in the builtin modules, but the code
@@ -310,64 +322,77 @@ class Coverage(object):
                     structseq_file = structseq_new.func_code.co_filename
                 except AttributeError:
                     structseq_file = structseq_new.__code__.co_filename
-                self.pylib_dirs.add(self._canonical_dir(structseq_file))
+                self.pylib_paths.add(self._canonical_path(structseq_file))
 
         # To avoid tracing the coverage.py code itself, we skip anything
         # located where we are.
-        self.cover_dirs = [self._canonical_dir(__file__)]
+        self.cover_paths = [self._canonical_path(__file__, directory=True)]
         if env.TESTING:
+            # Don't include our own test code.
+            self.cover_paths.append(os.path.join(self.cover_paths[0], "tests"))
+
             # When testing, we use PyContracts, which should be considered
             # part of coverage.py, and it uses six. Exclude those directories
             # just as we exclude ourselves.
             import contracts
             import six
             for mod in [contracts, six]:
-                self.cover_dirs.append(self._canonical_dir(mod))
+                self.cover_paths.append(self._canonical_path(mod))
 
         # Set the reporting precision.
         Numbers.set_precision(self.config.precision)
 
         atexit.register(self._atexit)
 
-        self._inited = True
-
         # Create the matchers we need for _should_trace
         if self.source or self.source_pkgs:
             self.source_match = TreeMatcher(self.source)
             self.source_pkgs_match = ModuleMatcher(self.source_pkgs)
         else:
-            if self.cover_dirs:
-                self.cover_match = TreeMatcher(self.cover_dirs)
-            if self.pylib_dirs:
-                self.pylib_match = TreeMatcher(self.pylib_dirs)
+            if self.cover_paths:
+                self.cover_match = TreeMatcher(self.cover_paths)
+            if self.pylib_paths:
+                self.pylib_match = TreeMatcher(self.pylib_paths)
         if self.include:
             self.include_match = FnmatchMatcher(self.include)
         if self.omit:
             self.omit_match = FnmatchMatcher(self.omit)
 
         # The user may want to debug things, show info if desired.
+        self._write_startup_debug()
+
+    def _write_startup_debug(self):
+        """Write out debug info at startup if needed."""
         wrote_any = False
         with self.debug.without_callers():
             if self.debug.should('config'):
                 config_info = sorted(self.config.__dict__.items())
-                self.debug.write_formatted_info("config", config_info)
+                write_formatted_info(self.debug, "config", config_info)
                 wrote_any = True
 
             if self.debug.should('sys'):
-                self.debug.write_formatted_info("sys", self.sys_info())
+                write_formatted_info(self.debug, "sys", self.sys_info())
                 for plugin in self.plugins:
                     header = "sys: " + plugin._coverage_plugin_name
                     info = plugin.sys_info()
-                    self.debug.write_formatted_info(header, info)
+                    write_formatted_info(self.debug, header, info)
                 wrote_any = True
 
         if wrote_any:
-            self.debug.write_formatted_info("end", ())
+            write_formatted_info(self.debug, "end", ())
 
-    def _canonical_dir(self, morf):
-        """Return the canonical directory of the module or file `morf`."""
-        morf_filename = PythonFileReporter(morf, self).filename
-        return os.path.split(morf_filename)[0]
+    def _canonical_path(self, morf, directory=False):
+        """Return the canonical path of the module or file `morf`.
+
+        If the module is a package, then return its directory. If it is a
+        module, then return its file, unless `directory` is True, in which
+        case return its enclosing directory.
+
+        """
+        morf_path = PythonFileReporter(morf, self).filename
+        if morf_path.endswith("__init__.py") or directory:
+            morf_path = os.path.split(morf_path)[0]
+        return morf_path
 
     def _name_for_module(self, module_globals, filename):
         """Get the name of the module for a set of globals and file name.
@@ -381,6 +406,10 @@ class Coverage(object):
         can't be determined, None is returned.
 
         """
+        if module_globals is None:          # pragma: only ironpython
+            # IronPython doesn't provide globals: https://github.com/IronLanguages/main/issues/1296
+            module_globals = {}
+
         dunder_name = module_globals.get('__name__', None)
 
         if isinstance(dunder_name, str) and dunder_name != '__main__':
@@ -429,7 +458,7 @@ class Coverage(object):
         # .pyc files can be moved after compilation (for example, by being
         # installed), we look for __file__ in the frame and prefer it to the
         # co_filename value.
-        dunder_file = frame.f_globals.get('__file__')
+        dunder_file = frame.f_globals and frame.f_globals.get('__file__')
         if dunder_file:
             filename = source_for_file(dunder_file)
             if original_filename and not original_filename.startswith('<'):
@@ -463,7 +492,7 @@ class Coverage(object):
         if filename.endswith("$py.class"):
             filename = filename[:-9] + ".py"
 
-        canonical = files.canonical_filename(filename)
+        canonical = canonical_filename(filename)
         disp.canonical_filename = canonical
 
         # Try the plugins, see if they have an opinion about the file.
@@ -481,13 +510,13 @@ class Coverage(object):
                     if file_tracer.has_dynamic_source_filename():
                         disp.has_dynamic_filename = True
                     else:
-                        disp.source_filename = files.canonical_filename(
+                        disp.source_filename = canonical_filename(
                             file_tracer.source_filename()
                         )
                     break
             except Exception:
                 self._warn(
-                    "Disabling plugin %r due to an exception:" % (
+                    "Disabling plug-in %r due to an exception:" % (
                         plugin._coverage_plugin_name
                     )
                 )
@@ -530,9 +559,7 @@ class Coverage(object):
             if self.source_pkgs_match.match(modulename):
                 if modulename in self.source_pkgs_unmatched:
                     self.source_pkgs_unmatched.remove(modulename)
-                return None  # There's no reason to skip this file.
-
-            if not self.source_match.match(filename):
+            elif not self.source_match.match(filename):
                 return "falls outside the --source trees"
         elif self.include_match:
             if not self.include_match.match(filename):
@@ -582,9 +609,18 @@ class Coverage(object):
 
         return not reason
 
-    def _warn(self, msg):
-        """Use `msg` as a warning."""
+    def _warn(self, msg, slug=None):
+        """Use `msg` as a warning.
+
+        For warning suppression, use `slug` as the shorthand.
+        """
+        if slug in self.config.disable_warnings:
+            # Don't issue the warning
+            return
+
         self._warnings.append(msg)
+        if slug:
+            msg = "%s (%s)" % (msg, slug)
         if self.debug.should('pid'):
             msg = "[%d] %s" % (os.getpid(), msg)
         sys.stderr.write("Coverage.py warning: %s\n" % msg)
@@ -610,8 +646,8 @@ class Coverage(object):
         option name.  For example, the ``branch`` option in the ``[run]``
         section of the config file would be indicated with ``"run:branch"``.
 
-        `value` is the new value for the option.  This should be a Python
-        value where appropriate.  For example, use True for booleans, not the
+        `value` is the new value for the option.  This should be an
+        appropriate Python value.  For example, use True for booleans, not the
         string ``"True"``.
 
         As an example, calling::
@@ -652,6 +688,9 @@ class Coverage(object):
 
         """
         self._init()
+        if self.include:
+            if self.source or self.source_pkgs:
+                self._warn("--include is ignored because --source is set", slug="include-ignored")
         if self.run_suffix:
             # Calling start() means we're running code, so use the run_suffix
             # as the data_suffix when we eventually save the data.
@@ -661,7 +700,6 @@ class Coverage(object):
 
         self.collector.start()
         self._started = True
-        self._measured = True
 
     def stop(self):
         """Stop measuring code coverage."""
@@ -671,6 +709,8 @@ class Coverage(object):
 
     def _atexit(self):
         """Clean up on process shutdown."""
+        if self.debug.should("process"):
+            self.debug.write("atexit: {0!r}".format(self))
         if self._started:
             self.stop()
         if self._auto_save:
@@ -779,7 +819,7 @@ class Coverage(object):
         )
 
     def get_data(self):
-        """Get the collected data and reset the collector.
+        """Get the collected data.
 
         Also warn about various problems collecting data.
 
@@ -789,43 +829,36 @@ class Coverage(object):
 
         """
         self._init()
-        if not self._measured:
-            return self.data
 
-        self.collector.save_data(self.data)
+        if self.collector.save_data(self.data):
+            self._post_save_work()
 
+        return self.data
+
+    def _post_save_work(self):
+        """After saving data, look for warnings, post-work, etc.
+
+        Warn about things that should have happened but didn't.
+        Look for unexecuted files.
+
+        """
         # If there are still entries in the source_pkgs_unmatched list,
         # then we never encountered those packages.
         if self._warn_unimported_source:
             for pkg in self.source_pkgs_unmatched:
-                if pkg not in sys.modules:
-                    self._warn("Module %s was never imported." % pkg)
-                elif not (
-                    hasattr(sys.modules[pkg], '__file__') and
-                    os.path.exists(sys.modules[pkg].__file__)
-                ):
-                    self._warn("Module %s has no Python source." % pkg)
-                else:
-                    self._warn("Module %s was previously imported, but not measured." % pkg)
+                self._warn_about_unmeasured_code(pkg)
 
         # Find out if we got any data.
         if not self.data and self._warn_no_data:
-            self._warn("No data was collected.")
+            self._warn("No data was collected.", slug="no-data-collected")
 
         # Find files that were never executed at all.
         for pkg in self.source_pkgs:
             if (not pkg in sys.modules or
-                not hasattr(sys.modules[pkg], '__file__') or
-                not os.path.exists(sys.modules[pkg].__file__)):
+                not module_has_file(sys.modules[pkg])):
                 continue
             pkg_file = source_for_file(sys.modules[pkg].__file__)
-
-            if not pkg_file.endswith('__init__.py'):
-                # We only want to explore the source tree of packages.
-                # For instance if pkg_file is /lib/python2.7/site-packages/args.pyc,
-                # we do not want to explore all of /lib/python2.7/site-packages.
-                continue
-            self._find_unexecuted_files(self._canonical_dir(pkg_file))
+            self._find_unexecuted_files(self._canonical_path(pkg_file))
 
         for src in self.source:
             self._find_unexecuted_files(src)
@@ -833,8 +866,39 @@ class Coverage(object):
         if self.config.note:
             self.data.add_run_info(note=self.config.note)
 
-        self._measured = False
-        return self.data
+    def _warn_about_unmeasured_code(self, pkg):
+        """Warn about a package or module that we never traced.
+
+        `pkg` is a string, the name of the package or module.
+
+        """
+        mod = sys.modules.get(pkg)
+        if mod is None:
+            self._warn("Module %s was never imported." % pkg, slug="module-not-imported")
+            return
+
+        if module_is_namespace(mod):
+            # A namespace package. It's OK for this not to have been traced,
+            # since there is no code directly in it.
+            return
+
+        if not module_has_file(mod):
+            self._warn("Module %s has no Python source." % pkg, slug="module-not-python")
+            return
+
+        # The module was in sys.modules, and seems like a module with code, but
+        # we never measured it. I guess that means it was imported before
+        # coverage even started.
+        self._warn(
+            "Module %s was previously imported, but not measured" % pkg,
+            slug="module-not-measured",
+        )
+
+    def _find_plugin_files(self, src_dir):
+        """Get executable files from the plugins."""
+        for plugin in self.plugins.file_tracers:
+            for x_file in plugin.find_executable_files(src_dir):
+                yield x_file, plugin._coverage_plugin_name
 
     def _find_unexecuted_files(self, src_dir):
         """Find unexecuted files in `src_dir`.
@@ -843,15 +907,16 @@ class Coverage(object):
         and add them as unexecuted files in `self.data`.
 
         """
-        for py_file in find_python_files(src_dir):
-            py_file = files.canonical_filename(py_file)
+        py_files = ((py_file, None) for py_file in find_python_files(src_dir))
+        plugin_files = self._find_plugin_files(src_dir)
 
-            if self.omit_match and self.omit_match.match(py_file):
+        for file_path, plugin_name in itertools.chain(py_files, plugin_files):
+            file_path = canonical_filename(file_path)
+            if self.omit_match and self.omit_match.match(file_path):
                 # Turns out this file was omitted, so don't pull it back
                 # in as unexecuted.
                 continue
-
-            self.data.touch_file(py_file)
+            self.data.touch_file(file_path, plugin_name)
 
     # Backward compatibility with version 1.
     def analysis(self, morf):
@@ -919,7 +984,6 @@ class Coverage(object):
                 )
 
         if file_reporter == "python":
-            # pylint: disable=redefined-variable-type
             file_reporter = PythonFileReporter(morf, self)
 
         return file_reporter
@@ -970,7 +1034,7 @@ class Coverage(object):
         """
         self.get_data()
         self.config.from_args(
-            ignore_errors=ignore_errors, omit=omit, include=include,
+            ignore_errors=ignore_errors, report_omit=omit, report_include=include,
             show_missing=show_missing, skip_covered=skip_covered,
             )
         reporter = SummaryReporter(self, self.config)
@@ -992,7 +1056,7 @@ class Coverage(object):
         """
         self.get_data()
         self.config.from_args(
-            ignore_errors=ignore_errors, omit=omit, include=include
+            ignore_errors=ignore_errors, report_omit=omit, report_include=include
             )
         reporter = AnnotateReporter(self, self.config)
         reporter.report(morfs, directory=directory)
@@ -1019,7 +1083,7 @@ class Coverage(object):
         """
         self.get_data()
         self.config.from_args(
-            ignore_errors=ignore_errors, omit=omit, include=include,
+            ignore_errors=ignore_errors, report_omit=omit, report_include=include,
             html_dir=directory, extra_css=extra_css, html_title=title,
             skip_covered=skip_covered,
             )
@@ -1044,7 +1108,7 @@ class Coverage(object):
         """
         self.get_data()
         self.config.from_args(
-            ignore_errors=ignore_errors, omit=omit, include=include,
+            ignore_errors=ignore_errors, report_omit=omit, report_include=include,
             xml_output=outfile,
             )
         file_to_close = None
@@ -1084,20 +1148,24 @@ class Coverage(object):
 
         self._init()
 
-        ft_plugins = []
-        for ft in self.plugins.file_tracers:
-            ft_name = ft._coverage_plugin_name
-            if not ft._coverage_enabled:
-                ft_name += " (disabled)"
-            ft_plugins.append(ft_name)
+        def plugin_info(plugins):
+            """Make an entry for the sys_info from a list of plug-ins."""
+            entries = []
+            for plugin in plugins:
+                entry = plugin._coverage_plugin_name
+                if not plugin._coverage_enabled:
+                    entry += " (disabled)"
+                entries.append(entry)
+            return entries
 
         info = [
             ('version', covmod.__version__),
             ('coverage', covmod.__file__),
-            ('cover_dirs', self.cover_dirs),
-            ('pylib_dirs', self.pylib_dirs),
+            ('cover_paths', self.cover_paths),
+            ('pylib_paths', self.pylib_paths),
             ('tracer', self.collector.tracer_name()),
-            ('plugins.file_tracers', ft_plugins),
+            ('plugins.file_tracers', plugin_info(self.plugins.file_tracers)),
+            ('plugins.configurers', plugin_info(self.plugins.configurers)),
             ('config_files', self.config.attempted_config_files),
             ('configs_read', self.config.config_files),
             ('data_path', self.data_files.filename),
@@ -1130,6 +1198,19 @@ class Coverage(object):
             info.append((matcher_name, matcher_info))
 
         return info
+
+
+def module_is_namespace(mod):
+    """Is the module object `mod` a PEP420 namespace module?"""
+    return hasattr(mod, '__path__') and getattr(mod, '__file__', None) is None
+
+
+def module_has_file(mod):
+    """Does the module object `mod` have an existing __file__ ?"""
+    mod__file__ = getattr(mod, '__file__', None)
+    if mod__file__ is None:
+        return False
+    return os.path.exists(mod__file__)
 
 
 # FileDisposition "methods": FileDisposition is a pure value object, so it can

@@ -3,6 +3,8 @@
 
 """Command-line support for coverage.py."""
 
+from __future__ import print_function
+
 import glob
 import optparse
 import os.path
@@ -12,9 +14,10 @@ import traceback
 
 from coverage import env
 from coverage.collector import CTracer
-from coverage.execfile import run_python_file, run_python_module
-from coverage.misc import CoverageException, ExceptionDuringRun, NoSource
 from coverage.debug import info_formatter, info_header
+from coverage.execfile import run_python_file, run_python_module
+from coverage.misc import BaseCoverageException, ExceptionDuringRun, NoSource
+from coverage.results import should_fail_under
 
 
 class Opts(object):
@@ -48,7 +51,7 @@ class Opts(object):
         help="Write the output files to DIR.",
     )
     fail_under = optparse.make_option(
-        '', '--fail-under', action='store', metavar="MIN", type="int",
+        '', '--fail-under', action='store', metavar="MIN", type="float",
         help="Exit with a status of 2 if the total coverage is less than MIN.",
     )
     help = optparse.make_option(
@@ -112,7 +115,10 @@ class Opts(object):
     )
     rcfile = optparse.make_option(
         '', '--rcfile', action='store',
-        help="Specify configuration file.  Defaults to '.coveragerc'",
+        help=(
+            "Specify configuration file.  "
+            "By default '.coveragerc', 'setup.cfg' and 'tox.ini' are tried."
+        ),
     )
     source = optparse.make_option(
         '', '--source', action='store', metavar="SRC1,SRC2,...",
@@ -401,9 +407,11 @@ class CoverageScript(object):
 
         self.coverage = None
 
-        self.program_name = os.path.basename(sys.argv[0])
-        if self.program_name == '__main__.py':
-            self.program_name = 'coverage'
+        program_path = sys.argv[0]
+        if program_path.endswith(os.path.sep + '__main__.py'):
+            # The path is the main module of a package; get that path instead.
+            program_path = os.path.dirname(program_path)
+        self.program_name = os.path.basename(program_path)
         if env.WINDOWS:
             # entry_points={'console_scripts':...} on Windows makes files
             # called coverage.exe, coverage3.exe, and coverage-3.5.exe. These
@@ -459,7 +467,7 @@ class CoverageScript(object):
         debug = unshell_list(options.debug)
 
         # Do something.
-        self.coverage = self.covpkg.coverage(
+        self.coverage = self.covpkg.Coverage(
             data_suffix=options.parallel_mode,
             cover_pylib=options.pylib,
             timid=options.timid,
@@ -522,18 +530,10 @@ class CoverageScript(object):
             if options.fail_under is not None:
                 self.coverage.set_option("report:fail_under", options.fail_under)
 
-            if self.coverage.get_option("report:fail_under"):
-                # Total needs to be rounded, but don't want to report 100
-                # unless it is really 100.
-                if 99 < total < 100:
-                    total = 99
-                else:
-                    total = round(total)
-
-                if total >= self.coverage.get_option("report:fail_under"):
-                    return OK
-                else:
-                    return FAIL_UNDER
+            fail_under = self.coverage.get_option("report:fail_under")
+            precision = self.coverage.get_option("report:precision")
+            if should_fail_under(total, fail_under, precision):
+                return FAIL_UNDER
 
         return OK
 
@@ -541,8 +541,8 @@ class CoverageScript(object):
         """Display an error message, or the named topic."""
         assert error or topic or parser
         if error:
-            print(error)
-            print("Use '%s help' for help." % (self.program_name,))
+            print(error, file=sys.stderr)
+            print("Use '%s help' for help." % (self.program_name,), file=sys.stderr)
         elif parser:
             print(parser.format_help().strip())
         else:
@@ -758,9 +758,9 @@ def main(argv=None):
         # An exception was caught while running the product code.  The
         # sys.exc_info() return tuple is packed into an ExceptionDuringRun
         # exception.
-        traceback.print_exception(*err.args)
+        traceback.print_exception(*err.args)    # pylint: disable=no-value-for-parameter
         status = ERR
-    except CoverageException as err:
+    except BaseCoverageException as err:
         # A controlled error inside coverage.py: print the message to the user.
         print(err)
         status = ERR

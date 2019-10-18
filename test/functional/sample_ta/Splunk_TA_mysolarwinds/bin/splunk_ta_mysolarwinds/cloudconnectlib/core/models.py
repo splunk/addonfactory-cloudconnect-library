@@ -1,5 +1,10 @@
+from builtins import str
+from builtins import object
 import base64
+import json
+import sys
 import traceback
+import six
 
 from .ext import lookup_method
 from .template import compile_template
@@ -17,7 +22,7 @@ class _Token(object):
         template must be a string."""
         self._source = source
         self._value_for = compile_template(source) \
-            if isinstance(source, basestring) else None
+            if isinstance(source, six.string_types) else None
 
     def render(self, variables):
         """Render value with variables if source is a string.
@@ -32,7 +37,7 @@ class _Token(object):
                 ' a valid Jinja2 template and token is exist in variables. '
                 'message=%s cause=%s',
                 self._source,
-                ex.message,
+                ex,
                 traceback.format_exc()
             )
         return self._source
@@ -43,10 +48,10 @@ class DictToken(object):
 
     def __init__(self, template_expr):
         self._tokens = {k: _Token(v)
-                        for k, v in (template_expr or {}).iteritems()}
+                        for k, v in (template_expr or {}).items()}
 
     def render(self, variables):
-        return {k: v.render(variables) for k, v in self._tokens.iteritems()}
+        return {k: v.render(variables) for k, v in self._tokens.items()}
 
 
 class BaseAuth(object):
@@ -73,15 +78,37 @@ class BasicAuthorization(BaseAuth):
         self._username = _Token(username)
         self._password = _Token(password)
 
+    def to_native_string(self, string, encoding='ascii'):
+        """
+        According to rfc7230:
+            Historically, HTTP has allowed field content with text in the
+            ISO-8859-1 charset [ISO-8859-1], supporting other charsets only
+            through use of [RFC2047] encoding.  In practice, most HTTP header
+            field values use only a subset of the US-ASCII charset [USASCII].
+            Newly defined header fields SHOULD limit their field values to
+            US-ASCII octets.  A recipient SHOULD treat other octets in field
+            content (obs-text) as opaque data.
+        """
+        is_py2 = (sys.version_info[0] == 2)
+        if isinstance(string, six.text_type):
+            out = string
+        else:
+            if is_py2:
+                out = string.encode(encoding)
+            else:
+                out = string.decode(encoding)
+
+        return out
+
     def __call__(self, headers, context):
         username = self._username.render(context)
         password = self._password.render(context)
-        headers['Authorization'] = 'Basic %s' % base64.encodestring(
-            username + ':' + password
+        headers['Authorization'] = 'Basic %s' % self.to_native_string(
+            base64.b64encode((username + ':' + password).encode('latin1'))
         ).strip()
 
 
-class Request(object):
+class RequestParams(object):
     def __init__(self, url, method, header=None, auth=None, body=None):
         self._header = DictToken(header)
         self._url = _Token(url)
@@ -109,19 +136,39 @@ class Request(object):
     def body(self):
         return self._body
 
+    def render(self, ctx):
+        return Request(
+            url=self._url.render(ctx),
+            method=self._method,
+            headers=self.normalize_headers(ctx),
+            body=self.body.render(ctx)
+        )
+
     def normalize_url(self, context):
         """Normalize url"""
         return self._url.render(context)
 
-    def normalize_header(self, context):
+    def normalize_headers(self, context):
         """Normalize headers which must be a dict which keys and values are
         string."""
         header = self.header.render(context)
-        return {k: str(v) for k, v in header.iteritems()}
+        return {k: str(v) for k, v in header.items()}
 
     def normalize_body(self, context):
         """Normalize body"""
         return self.body.render(context)
+
+
+class Request(object):
+    def __init__(self, method, url, headers, body):
+        self.method = method
+        self.url = url
+        self.headers = headers
+        if not body:
+            body = None
+        elif not isinstance(body, six.string_types):
+            body = json.dumps(body)
+        self.body = body
 
 
 class _Function(object):

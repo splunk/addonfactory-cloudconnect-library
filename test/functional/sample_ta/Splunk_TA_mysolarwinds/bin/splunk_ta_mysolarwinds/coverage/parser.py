@@ -16,7 +16,7 @@ from coverage.backward import bytes_to_ints, string_class
 from coverage.bytecode import CodeObjects
 from coverage.debug import short_stack
 from coverage.misc import contract, join_regex, new_contract, nice_pair, one_of
-from coverage.misc import NoSource, IncapablePython, NotPython
+from coverage.misc import NoSource, NotPython, StopEverything
 from coverage.phystokens import compile_unicode, generate_tokens, neuter_encoding_declaration
 
 
@@ -106,7 +106,6 @@ class PythonParser(object):
         """
         combined = join_regex(regexes)
         if env.PY2:
-            # pylint: disable=redefined-variable-type
             combined = combined.decode("utf8")
         regex_c = re.compile(combined)
         matches = set()
@@ -138,7 +137,7 @@ class PythonParser(object):
 
         tokgen = generate_tokens(self.text)
         for toktype, ttext, (slineno, _), (elineno, _), ltext in tokgen:
-            if self.show_tokens:                # pragma: not covered
+            if self.show_tokens:                # pragma: debugging
                 print("%10s %5s %-20r %r" % (
                     tokenize.tok_name.get(toktype, toktype),
                     nice_pair((slineno, elineno)), ttext, ltext
@@ -373,7 +372,7 @@ class ByteParser(object):
         # attributes on code objects that we need to do the analysis.
         for attr in ['co_lnotab', 'co_firstlineno']:
             if not hasattr(self.code, attr):
-                raise IncapablePython(                          # pragma: only jython
+                raise StopEverything(                   # pragma: only jython
                     "This implementation of Python doesn't support code analysis.\n"
                     "Run coverage.py under another Python for this command."
                 )
@@ -410,6 +409,8 @@ class ByteParser(object):
                     yield (byte_num, line_num)
                     last_line_num = line_num
                 byte_num += byte_incr
+            if env.PYVERSION >= (3, 6) and line_incr >= 0x80:
+                line_incr -= 0x100
             line_num += line_incr
         if line_num != last_line_num:
             yield (byte_num, line_num)
@@ -504,6 +505,10 @@ class NodeList(object):
         self.lineno = body[0].lineno
 
 
+# TODO: some add_arcs methods here don't add arcs, they return them. Rename them.
+# TODO: the cause messages have too many commas.
+# TODO: Shouldn't the cause messages join with "and" instead of "or"?
+
 class AstArcAnalyzer(object):
     """Analyze source text with an AST to find executable code paths."""
 
@@ -545,9 +550,10 @@ class AstArcAnalyzer(object):
             if code_object_handler is not None:
                 code_object_handler(node)
 
+    @contract(start=int, end=int)
     def add_arc(self, start, end, smsg=None, emsg=None):
         """Add an arc, including message fragments to use if it is missing."""
-        if self.debug:
+        if self.debug:                      # pragma: debugging
             print("\nAdding arc: ({}, {}): {!r}, {!r}".format(start, end, smsg, emsg))
             print(short_stack(limit=6))
         self.arcs.add((start, end))
@@ -573,8 +579,18 @@ class AstArcAnalyzer(object):
         else:
             return node.lineno
 
+    def _line_decorated(self, node):
+        """Compute first line number for things that can be decorated (classes and functions)."""
+        lineno = node.lineno
+        if env.PYBEHAVIOR.trace_decorated_def:
+            if node.decorator_list:
+                lineno = node.decorator_list[0].lineno
+        return lineno
+
     def _line__Assign(self, node):
         return self.line_for_node(node.value)
+
+    _line__ClassDef = _line_decorated
 
     def _line__Dict(self, node):
         # Python 3.5 changed how dict literals are made.
@@ -587,6 +603,8 @@ class AstArcAnalyzer(object):
                 return node.values[0].lineno
         else:
             return node.lineno
+
+    _line__FunctionDef = _line_decorated
 
     def _line__List(self, node):
         if node.elts:
@@ -691,6 +709,13 @@ class AstArcAnalyzer(object):
             node = None
         return node
 
+    # Missing nodes: _missing__*
+    #
+    # Entire statements can be optimized away by Python. They will appear in
+    # the AST, but not the bytecode.  These functions are called (by
+    # find_non_missing_node) to find a node to use instead of the missing
+    # node.  They can return None if the node should truly be gone.
+
     def _missing__If(self, node):
         # If the if-node is missing, then one of its children might still be
         # here, but not both. So return the first of the two that isn't missing.
@@ -718,10 +743,24 @@ class AstArcAnalyzer(object):
             return non_missing_children[0]
         return NodeList(non_missing_children)
 
+    def _missing__While(self, node):
+        body_nodes = self.find_non_missing_node(NodeList(node.body))
+        if not body_nodes:
+            return None
+        # Make a synthetic While-true node.
+        new_while = ast.While()
+        new_while.lineno = body_nodes.lineno
+        new_while.test = ast.Name()
+        new_while.test.lineno = body_nodes.lineno
+        new_while.test.id = "True"
+        new_while.body = body_nodes.body
+        new_while.orelse = None
+        return new_while
+
     def is_constant_expr(self, node):
         """Is this a compile-time constant?"""
         node_name = node.__class__.__name__
-        if node_name in ["NameConstant", "Num"]:
+        if node_name in ["Constant", "NameConstant", "Num"]:
             return "Num"
         elif node_name == "Name":
             if node.id in ["True", "False", "None", "__debug__"]:
@@ -806,10 +845,10 @@ class AstArcAnalyzer(object):
     # Handlers: _handle__*
     #
     # Each handler deals with a specific AST node type, dispatched from
-    # add_arcs.  Each deals with a particular kind of node type, and returns
-    # the set of exits from that node. These functions mirror the Python
-    # semantics of each syntactic construct.  See the docstring for add_arcs to
-    # understand the concept of exits from a node.
+    # add_arcs.  Handlers return the set of exits from that node, and can
+    # also call self.add_arc to record arcs they find.  These functions mirror
+    # the Python semantics of each syntactic construct.  See the docstring
+    # for add_arcs to understand the concept of exits from a node.
 
     @contract(returns='ArcStarts')
     def _handle__Break(self, node):
@@ -821,23 +860,29 @@ class AstArcAnalyzer(object):
     @contract(returns='ArcStarts')
     def _handle_decorated(self, node):
         """Add arcs for things that can be decorated (classes and functions)."""
-        last = self.line_for_node(node)
+        main_line = last = node.lineno
         if node.decorator_list:
+            if env.PYBEHAVIOR.trace_decorated_def:
+                last = None
             for dec_node in node.decorator_list:
                 dec_start = self.line_for_node(dec_node)
-                if dec_start != last:
+                if last is not None and dec_start != last:
                     self.add_arc(last, dec_start)
-                    last = dec_start
+                last = dec_start
+            if env.PYBEHAVIOR.trace_decorated_def:
+                self.add_arc(last, main_line)
+                last = main_line
             # The definition line may have been missed, but we should have it
             # in `self.statements`.  For some constructs, `line_for_node` is
             # not what we'd think of as the first line in the statement, so map
             # it to the first one.
-            body_start = self.line_for_node(node.body[0])
-            body_start = self.multiline.get(body_start, body_start)
-            for lineno in range(last+1, body_start):
-                if lineno in self.statements:
-                    self.add_arc(last, lineno)
-                    last = lineno
+            if node.body:
+                body_start = self.line_for_node(node.body[0])
+                body_start = self.multiline.get(body_start, body_start)
+                for lineno in range(last+1, body_start):
+                    if lineno in self.statements:
+                        self.add_arc(last, lineno)
+                        last = lineno
         # The body is handled in collect_arcs.
         return set([ArcStart(last)])
 
@@ -968,21 +1013,45 @@ class AstArcAnalyzer(object):
             final_exits = self.add_body_arcs(node.finalbody, prev_starts=final_from)
 
             if try_block.break_from:
-                self.process_break_exits(
-                    self._combine_finally_starts(try_block.break_from, final_exits)
-                )
+                if env.PYBEHAVIOR.finally_jumps_back:
+                    for break_line in try_block.break_from:
+                        lineno = break_line.lineno
+                        cause = break_line.cause.format(lineno=lineno)
+                        for final_exit in final_exits:
+                            self.add_arc(final_exit.lineno, lineno, cause)
+                    breaks = try_block.break_from
+                else:
+                    breaks = self._combine_finally_starts(try_block.break_from, final_exits)
+                self.process_break_exits(breaks)
+
             if try_block.continue_from:
-                self.process_continue_exits(
-                    self._combine_finally_starts(try_block.continue_from, final_exits)
-                )
+                if env.PYBEHAVIOR.finally_jumps_back:
+                    for continue_line in try_block.continue_from:
+                        lineno = continue_line.lineno
+                        cause = continue_line.cause.format(lineno=lineno)
+                        for final_exit in final_exits:
+                            self.add_arc(final_exit.lineno, lineno, cause)
+                    continues = try_block.continue_from
+                else:
+                    continues = self._combine_finally_starts(try_block.continue_from, final_exits)
+                self.process_continue_exits(continues)
+
             if try_block.raise_from:
                 self.process_raise_exits(
                     self._combine_finally_starts(try_block.raise_from, final_exits)
                 )
+
             if try_block.return_from:
-                self.process_return_exits(
-                    self._combine_finally_starts(try_block.return_from, final_exits)
-                )
+                if env.PYBEHAVIOR.finally_jumps_back:
+                    for return_line in try_block.return_from:
+                        lineno = return_line.lineno
+                        cause = return_line.cause.format(lineno=lineno)
+                        for final_exit in final_exits:
+                            self.add_arc(final_exit.lineno, lineno, cause)
+                    returns = try_block.return_from
+                else:
+                    returns = self._combine_finally_starts(try_block.return_from, final_exits)
+                self.process_return_exits(returns)
 
             if exits:
                 # The finally clause's exits are only exits for the try block

@@ -7,7 +7,8 @@ import os
 import sys
 
 from coverage import env
-from coverage.backward import iitems
+from coverage.backward import litems, range     # pylint: disable=redefined-builtin
+from coverage.debug import short_stack
 from coverage.files import abs_file
 from coverage.misc import CoverageException, isolate_module
 from coverage.pytracer import PyTracer
@@ -42,6 +43,7 @@ def should_start_context(frame):
     fn_name = frame.f_code.co_name
     if fn_name.startswith("test"):
         return fn_name
+    return None
 
 
 class Collector(object):
@@ -71,8 +73,8 @@ class Collector(object):
     def __init__(self, should_trace, check_include, timid, branch, warn, concurrency):
         """Create a collector.
 
-        `should_trace` is a function, taking a file name, and returning a
-        `coverage.FileDisposition object`.
+        `should_trace` is a function, taking a file name and a frame, and
+        returning a `coverage.FileDisposition object`.
 
         `check_include` is a function taking a file name and a frame. It returns
         a boolean: True if the file should be traced, False if not.
@@ -86,8 +88,9 @@ class Collector(object):
         collecting data on which statements followed each other (arcs).  Use
         `get_arc_data` to get the arc data.
 
-        `warn` is a warning function, taking a single string message argument,
-        to be used if a warning needs to be issued.
+        `warn` is a warning function, taking a single string message argument
+        and an optional slug argument which will be a string or None, to be
+        used if a warning needs to be issued.
 
         `concurrency` is a list of strings indicating the concurrency libraries
         in use.  Valid values are "greenlet", "eventlet", "gevent", or "thread"
@@ -100,6 +103,8 @@ class Collector(object):
         self.warn = warn
         self.branch = branch
         self.threading = None
+
+        self.origin = short_stack()
 
         self.concur_id_func = None
 
@@ -162,6 +167,13 @@ class Collector(object):
         """Return the class name of the tracer we're using."""
         return self._trace_class.__name__
 
+    def _clear_data(self):
+        """Clear out existing data, but stay ready for more collection."""
+        self.data.clear()
+
+        for tracer in self.tracers:
+            tracer.reset_activity()
+
     def reset(self):
         """Clear collected data, and prepare to collect more."""
         # A dictionary mapping file names to dicts with line number keys (if not
@@ -207,6 +219,8 @@ class Collector(object):
 
         # Our active Tracers.
         self.tracers = []
+
+        self._clear_data()
 
     def _start_tracer(self):
         """Start a new Tracer object, and store it in self.tracers."""
@@ -267,6 +281,8 @@ class Collector(object):
         if self._collectors:
             self._collectors[-1].pause()
 
+        self.tracers = []
+
         # Check to see whether we had a fullcoverage tracer installed. If so,
         # get the stack frames it stashed away for us.
         traces0 = []
@@ -296,7 +312,7 @@ class Collector(object):
             except TypeError:
                 raise Exception("fullcoverage must be run with the C trace function.")
 
-        # Install our installation tracer in threading, to jump start other
+        # Install our installation tracer in threading, to jump-start other
         # threads.
         if self.threading:
             self.threading.settrace(self._installation_trace)
@@ -304,12 +320,15 @@ class Collector(object):
     def stop(self):
         """Stop collecting trace information."""
         assert self._collectors
+        if self._collectors[-1] is not self:
+            print("self._collectors:")
+            for c in self._collectors:
+                print("  {!r}\n{}".format(c, c.origin))
         assert self._collectors[-1] is self, (
             "Expected current collector to be %r, but it's %r" % (self, self._collectors[-1])
         )
 
         self.pause()
-        self.tracers = []
 
         # Remove this Collector from the stack, and resume the one underneath
         # (if any).
@@ -338,6 +357,14 @@ class Collector(object):
         else:
             self._start_tracer()
 
+    def _activity(self):
+        """Has any activity been traced?
+
+        Returns a boolean, True if any trace function was invoked.
+
+        """
+        return any(tracer.activity() for tracer in self.tracers)
+
     def switch_context(self, new_context):
         """Who-Tests-What hack: switch to a new who-context."""
         # Make a new data dict, or find the existing one, and switch all the
@@ -349,12 +376,29 @@ class Collector(object):
     def save_data(self, covdata):
         """Save the collected data to a `CoverageData`.
 
-        Also resets the collector.
-
+        Returns True if there was data to save, False if not.
         """
+        if not self._activity():
+            return False
+
         def abs_file_dict(d):
             """Return a dict like d, but with keys modified by `abs_file`."""
-            return dict((abs_file(k), v) for k, v in iitems(d))
+            # The call to litems() ensures that the GIL protects the dictionary
+            # iterator against concurrent modifications by tracers running
+            # in other threads. We try three times in case of concurrent
+            # access, hoping to get a clean copy.
+            runtime_err = None
+            for _ in range(3):
+                try:
+                    items = litems(d)
+                except RuntimeError as ex:
+                    runtime_err = ex
+                else:
+                    break
+            else:
+                raise runtime_err       # pylint: disable=raising-bad-type
+
+            return dict((abs_file(k), v) for k, v in items)
 
         if self.branch:
             covdata.add_arcs(abs_file_dict(self.data))
@@ -369,4 +413,5 @@ class Collector(object):
             with open(out_file, "w") as wtw_out:
                 pprint.pprint(self.contexts, wtw_out)
 
-        self.reset()
+        self._clear_data()
+        return True

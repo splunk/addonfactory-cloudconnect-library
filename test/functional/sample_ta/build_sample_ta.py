@@ -20,14 +20,14 @@ def parse_arguments():
     python_support = "python2"
 
     if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print("error: Invalid command provided")
         print_help()
+        print("\nerror: Invalid command provided")
         sys.exit(2)
 
     sample_ta_name = sys.argv[1]
     if not os.path.isdir(sample_ta_name):
-        print("error: No such directory available: {}".format(sample_ta_name))
         print_help()
+        print("\nerror: No such directory available: {}".format(sample_ta_name))
         sys.exit(2)
 
     sample_ta_name = sample_ta_name.rstrip("/")
@@ -35,8 +35,8 @@ def parse_arguments():
     if len(sys.argv) == 3:
         python_support = str(sys.argv[2]).strip()
         if python_support not in ["python2", "dual_compatible"]:
-            print("error: Invalid value provided to mention the python version to be supported. Valid values are 'python2' and 'dual_compatible'")
             print_help()
+            print("\nerror: Invalid value provided to mention the python version to be supported. Valid values are 'python2' and 'dual_compatible'")
             sys.exit(2)
 
     return (sample_ta_name, python_support)

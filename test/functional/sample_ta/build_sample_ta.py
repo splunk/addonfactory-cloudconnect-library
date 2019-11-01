@@ -6,12 +6,16 @@ import getopt
 
 def print_help():
     print("""
-    This script will be helpful to build the sample TA with all the required 3rd party packages to test the functionality of cloudconnectlib. The add-on package will be provided as the output of this script which the user can install on the Splunk instance directly.
+    This script will be helpful to build the sample TA with all the required 3rd party packages to test the functionality of cloudconnectlib. The add-on package will be provided as the output of this script which the user can install on the Splunk instance directly.\n
     Usage:
         build_sample_ta.py <sample_ta_name> <python_version_support>
 
-        <sample_ta_name>              All the sample TAs are located in cloudconnectlib repo at location: test/functional/sample_ta. Provide name of the TA which needs to be built.
-        <python_version_support>      Python version to be supported in the add-on. Allowed values are "python2" and "dual_compatible". If "python2" is provided, then the add-on will support only Python2 version. If "dual_compatible" is provided, then all dual compatible 3rd party packages will be included in the add-on. Though the user will have to manually add "httplib2" package in the add-on since it is not dual compatible.
+        <sample_ta_name>              All the sample TAs are located in cloudconnectlib repo at location: test/functional/sample_ta.
+                                      Provide name of the TA which needs to be built.
+        <python_version_support>      Python version to be supported in the add-on. Allowed values are "python2" and "dual_compatible". 
+                                      If "python2" is provided, then the add-on will support only Python2 version.
+                                      If "dual_compatible" is provided, then all dual compatible 3rd party packages will be included in the add-on.
+                                      Though the user will have to manually add "httplib2" package in the add-on since it is not dual compatible.
     """)
     pass
 

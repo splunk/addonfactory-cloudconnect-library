@@ -6,6 +6,7 @@ import getopt
 
 def print_help():
     print("""
+    This script will be helpful to build the sample TA with all the required 3rd party packages to test the functionality of cloudconnectlib. The add-on package will be provided as the output of this script which the user can install on the Splunk instance directly.
     Usage:
         build_sample_ta.py <sample_ta_name> <python_version_support>
 

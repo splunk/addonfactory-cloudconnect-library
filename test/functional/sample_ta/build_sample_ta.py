@@ -15,7 +15,7 @@ def print_help():
         <python_version_support>      Python version to be supported in the add-on. Allowed values are "python2" and "dual_compatible". 
                                       If "python2" is provided, then the add-on will support only Python2 version.
                                       If "dual_compatible" is provided, then all dual compatible 3rd party packages will be included in the add-on.
-                                      Though the user will have to manually add "httplib2" package in the add-on since it is not dual compatible.
+                                      However, the user will have to manually add "httplib2" package in the add-on since it is not dual compatible.
     """)
     pass
 
@@ -131,12 +131,14 @@ if not archive_status:
 else:
     if support_python_version == "dual_compatible":
         print("""
-        NOTE: All the dual compatible (Python2 and Python3) packages are downloaded. Since httplib2 is not dual compatible, it has not been downloaded. Once the sample TA is extracted, follow below steps to include httplib2 in the TA code:
+        NOTE: All the dual compatible (Python2 and Python3) packages are downloaded. Since httplib2 is not dual compatible, it has not been
+        downloaded. Once the sample TA is extracted, follow below steps to include httplib2 in the TA code:
             1. To download httplib2, execute the below command:
-                -> If TA will be executed on Python2: `python -m pip install httplib2==0.14.0 --target <destination path to download the package>`
-                -> IF TA will be executed on Python3 (Eg: Python3.7): `python3.7 -m pip install httplib2==0.14.0 --target <destination path to download the package>`
+                -> If TA will be executed on Python2: `python -m pip install httplib2==0.14.0 --target <destination path>`
+                -> IF TA will be executed on Python3 (Eg: Python3.7): `python3.7 -m pip install httplib2==0.14.0 --target <destination path>`
             2. Copy the httplib2 package to the sample TA:
-                For instance: Once the sample TA 'Splunk_TA_mysnow' is installed on the Splunk instance, copy the httplib2 package in a sample TA at the path: `$SPLUNK_HOME/etc/apps/Splunk_TA_mysnow/bin/splunk_ta_mysnow/`
+                For instance: Once the sample TA 'Splunk_TA_mysnow' is installed on the Splunk instance, copy the httplib2 package in a sample TA
+                at the path: `$SPLUNK_HOME/etc/apps/Splunk_TA_mysnow/bin/splunk_ta_mysnow/`
             3. Restart the splunk instance
         """)
     print("\nStatus: Success")

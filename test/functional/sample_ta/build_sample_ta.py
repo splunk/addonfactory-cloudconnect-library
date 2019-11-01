@@ -123,10 +123,12 @@ if not archive_status:
 else:
     if support_python_version == "dual_compatible":
         print("""
-        NOTE: All the dual compatible (Python2 and Python3) packages are downloaded. Since httplib2 is not dual compatible, it has not been downloaded to support python3 version. Once the sample TA is extracted, follow below steps to include Python3 compatible httplib2 in the TA code:
-            1. Download httplib2, execute the command:  `python3.7 -m pip install httplib2==0.14.0 --target <destination path to download the package>`
-            2. Copy the httplib2 package to the sample TA.
-                For Eg: If 'Splunk_TA_mysnow' is installed on the Splunk instance, then copy the httplib2 package at the path: `$SPLUNK_HOME/etc/apps/Splunk_TA_mysnow/bin/splunk_ta_mysnow`
+        NOTE: All the dual compatible (Python2 and Python3) packages are downloaded. Since httplib2 is not dual compatible, it has not been downloaded. Once the sample TA is extracted, follow below steps to include httplib2 in the TA code:
+            1. To download httplib2, execute the below command:
+                -> If TA will be executed on Python2: `python -m pip install httplib2==0.14.0 --target <destination path to download the package>`
+                -> IF TA will be executed on Python3 (Eg: Python3.7): `python3.7 -m pip install httplib2==0.14.0 --target <destination path to download the package>`
+            2. Copy the httplib2 package to the sample TA:
+                For instance: Once the sample TA 'Splunk_TA_mysnow' is installed on the Splunk instance, copy the httplib2 package in a sample TA at the path: `$SPLUNK_HOME/etc/apps/Splunk_TA_mysnow/bin/splunk_ta_mysnow/`
             3. Restart the splunk instance
         """)
     print("\nStatus: Success")

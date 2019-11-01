@@ -12,10 +12,10 @@ def print_help():
 
         <sample_ta_name>              All the sample TAs are located in cloudconnectlib repo at location: test/functional/sample_ta.
                                       Provide name of the TA which needs to be built.
-        <python_version_support>      Python version to be supported in the add-on. Allowed values are "python2" and "dual_compatible". 
+        <python_version_support>      Python version to be supported in the add-on. Allowed values are "python2" and "python3". 
+                                      Default value is "python2"
                                       If "python2" is provided, then the add-on will support only Python2 version.
-                                      If "dual_compatible" is provided, then all dual compatible 3rd party packages will be included in the add-on.
-                                      However, the user will have to manually add "httplib2" package in the add-on since it is not dual compatible.
+                                      If "python3" is provided, then the add-on will support only Python3 version
     """)
     pass
 
@@ -38,9 +38,9 @@ def parse_arguments():
 
     if len(sys.argv) == 3:
         python_support = str(sys.argv[2]).strip()
-        if python_support not in ["python2", "dual_compatible"]:
+        if python_support not in ["python2", "python3"]:
             print_help()
-            print("\nerror: Invalid value provided to mention the python version to be supported. Valid values are 'python2' and 'dual_compatible'")
+            print("\nerror: Invalid value provided to mention the python version to be supported. Valid values are 'python2' and 'python3'")
             sys.exit(2)
 
     return (sample_ta_name, python_support)
@@ -71,7 +71,7 @@ def transfer_3rd_party_pkg(sample_ta_name, support_python_version):
     package_destination_path = os.path.join("test", "functional", "sample_ta", sample_ta_name, "bin", sample_ta_name.lower())
 
     for package_name in os.listdir("package"):
-        if support_python_version == "dual_compatible" and package_name in ["httplib2", "functools32"]:
+        if support_python_version == "python3" and package_name in ["httplib2", "functools32", "concurrent"]:
             continue
 
         transfer_package_cmd = ["cp", "-rf", os.path.join("package", package_name), package_destination_path]
@@ -129,17 +129,5 @@ print("==========================================================")
 if not archive_status:
     print("\nStatus: Failure")
 else:
-    if support_python_version == "dual_compatible":
-        print("""
-        NOTE: All the dual compatible (Python2 and Python3) packages are downloaded. Since httplib2 is not dual compatible, it has not been
-        downloaded. Once the sample TA is extracted, follow below steps to include httplib2 in the TA code:
-            1. To download httplib2, execute the below command:
-                -> If TA will be executed on Python2: `python -m pip install httplib2==0.14.0 --target <destination path>`
-                -> IF TA will be executed on Python3 (Eg: Python3.7): `python3.7 -m pip install httplib2==0.14.0 --target <destination path>`
-            2. Copy the httplib2 package to the sample TA:
-                For instance: Once the sample TA 'Splunk_TA_mysnow' is installed on the Splunk instance, copy the httplib2 package in a sample TA
-                at the path: `$SPLUNK_HOME/etc/apps/Splunk_TA_mysnow/bin/splunk_ta_mysnow/`
-            3. Restart the splunk instance
-        """)
     print("\nStatus: Success")
 print("\n=========================================================")

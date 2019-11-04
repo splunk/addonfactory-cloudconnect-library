@@ -6,6 +6,3 @@ The sample TAs present in this directory are meant to test the functionalities o
    - <sample_ta_name>: Provide name of one of the Sample TAs present in the directory
    - <python_version>: Provide a python version which will be supported by the Sample TA. Allowed values are "python2" and "python3". Default value is "python2"
 4. On successful execution of the script, an archived file of the Sample TA gets generated, which can be uploaded on the splunk instance and the user can utilize it to test the functionalities of the cloudconnectlib library.
-
-### Example of generator script execution
-![Execution of generator script](https://git.splunk.com/projects/SOLN/repos/cloud-connect-engine/browse/test/functional/sample_ta/generator_script_working.PNG?at=feature/ADDON-23978-cloudconnectlib-enhance-the-test-cases)

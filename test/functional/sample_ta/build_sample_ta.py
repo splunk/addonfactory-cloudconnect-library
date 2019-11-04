@@ -14,8 +14,10 @@ def print_help():
                                       Provide name of the TA which needs to be built.
         <python_version_support>      Python version to be supported in the add-on. Allowed values are "python2" and "python3". 
                                       Default value is "python2"
-                                      If "python2" is provided, then the add-on will support only Python2 version.
+                                      If "python2" is provided, then the add-on will support only Python2 version
                                       If "python3" is provided, then the add-on will support only Python3 version
+        
+        Eg: `python build_sample_ta.py Splunk_TA_mysnow/ python3`
     """)
     pass
 

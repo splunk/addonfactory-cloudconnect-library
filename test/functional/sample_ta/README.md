@@ -8,4 +8,4 @@ The sample TAs present in this directory are meant to test the functionalities o
 4. On successful execution of the script, an archived file of the Sample TA gets generated, which can be uploaded on the splunk instance and the user can utilize it to test the functionalities of the cloudconnectlib library.
 
 ### Example of generator script execution
-![Execution of generator script](generator_script_working.png)
+![Execution of generator script](https://git.splunk.com/projects/SOLN/repos/cloud-connect-engine/browse/test/functional/sample_ta/generator_script_working.PNG?at=feature/ADDON-23978-cloudconnectlib-enhance-the-test-cases)

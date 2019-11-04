@@ -1,4 +1,4 @@
-## Generator Script to build Sample TA
+## Generator script to build the sample TA
 The sample TAs present in this directory are meant to test the functionalities of cloudconnectlib library. In order to build the sample TAs to test the features of cloudconnectlib, execute the below steps:
 1. Make sure you are present in the current directory while building the sample TA.
 2. A generator script named "build_sample_ta.py" is present in this directory. In order to get familiar with this script, execute the command: `python build_sample_ta.py`

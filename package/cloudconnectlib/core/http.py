@@ -4,6 +4,7 @@ from builtins import object
 import time
 import traceback
 import six
+import munch
 
 from cloudconnectlib.common import util
 from cloudconnectlib.common.log import get_cc_logger
@@ -148,13 +149,42 @@ def get_proxy_info(proxy_config):
     )
     return proxy_info
 
+def standardize_proxy_config(proxy_config):
+    """
+        This function is used to standardize the proxy information structure to get it evaluated through `get_proxy_info` function
+    """
+
+    if not isinstance(proxy_config, dict):
+        raise ValueError("Received unexpected format of proxy configuration. Expected format: object, Actual format: {}".format(type(proxy_config)))
+
+    standard_proxy_config = {
+        "proxy_enabled": proxy_config.get("enabled", proxy_config.get("proxy_enabled")),
+        "proxy_username": proxy_config.get("username", proxy_config.get("proxy_username")),
+        "proxy_password": proxy_config.get("password", proxy_config.get("proxy_password")),
+        "proxy_url": proxy_config.get("host", proxy_config.get("proxy_url")),
+        "proxy_type": proxy_config.get("type", proxy_config.get("proxy_type")),
+        "proxy_port": proxy_config.get("port", proxy_config.get("proxy_port")),
+        "proxy_rdns": proxy_config.get("rdns", proxy_config.get("proxy_rdns"))
+    }
+
+    return standard_proxy_config
+
 
 class HttpClient(object):
     def __init__(self, proxy_info=None):
         """Constructs a `HTTPRequest` with a optional proxy setting.
         """
         self._connection = None
-        self._proxy_info = proxy_info
+    
+        if proxy_info:
+            if isinstance(proxy_info, munch.Munch):
+                proxy_info = dict(proxy_info)
+
+            # Updating the proxy_info object to make it compatible for getting evaluated through `get_proxy_info` function
+            proxy_info = standardize_proxy_config(proxy_info)
+            self._proxy_info = get_proxy_info(proxy_info)
+        else:
+            self._proxy_info = proxy_info
         self._url_preparer = PreparedRequest()
 
     def _send_internal(self, uri, method, headers=None, body=None, proxy_info=None):

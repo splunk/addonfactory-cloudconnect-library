@@ -118,7 +118,7 @@ setup(
     },
     install_requires=[
         "jsonschema==2.6.0",
-        "jinja2==2.10.1",
+        "jinja2==2.11.3",
         "jsonpath-rw==1.4.0",
         "httplib2==0.14.0",
         "splunk-sdk==1.6.6",

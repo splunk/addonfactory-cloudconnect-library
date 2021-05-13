@@ -1,5 +1,5 @@
 jsonschema==2.6.0
-jinja2==2.10.1
+jinja2==2.11.3
 jsonpath-rw==1.4.0
 httplib2==0.14.0
 sortedcontainers==2.1.0

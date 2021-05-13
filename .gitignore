@@ -27,7 +27,12 @@ package/test/
 node_modules/
 .coverage
 
-venv/
+.venv/
 examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/
 /htmlcov
 junit_report.xml
+cloudconnectlib.egg-info/dependency_links.txt
+cloudconnectlib.egg-info/PKG-INFO
+cloudconnectlib.egg-info/requires.txt
+cloudconnectlib.egg-info/SOURCES.txt
+cloudconnectlib.egg-info/top_level.txt

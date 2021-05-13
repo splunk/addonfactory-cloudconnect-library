@@ -120,7 +120,7 @@ setup(
         "jsonschema==2.6.0",
         "jinja2==2.10.1",
         "jsonpath-rw==1.4.0",
-        "httplib2==0.14.0",
+        "httplib2==0.19.0",
         "splunk-sdk==1.6.6",
         "sortedcontainers==2.1.0",
         "munch==2.3.2",

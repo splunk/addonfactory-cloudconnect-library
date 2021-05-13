@@ -27,7 +27,7 @@ package/test/
 node_modules/
 .coverage
 
-venv/
+.venv/
 examples/1.0/snow_helsinki/Splunk_TA_snow/bin/splunk_ta_snow/
 /htmlcov
 junit_report.xml

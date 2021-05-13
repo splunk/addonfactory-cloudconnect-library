@@ -17,6 +17,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: Gr1N/setup-poetry@v4
+      - name: Install
+        run: |
+          poetry install
       - uses: actions/cache@v2
         with:
           path: .venv

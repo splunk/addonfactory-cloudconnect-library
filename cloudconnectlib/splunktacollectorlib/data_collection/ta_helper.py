@@ -16,7 +16,7 @@ else:
 from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema
 from . import ta_consts as c
 from ...splunktacollectorlib import config as sc
-from ...splunktalib.common import util
+from splunktalib.common import util
 
 
 def utc2timestamp(human_time):

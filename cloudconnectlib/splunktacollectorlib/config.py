@@ -16,8 +16,8 @@ import traceback
 import time
 import six
 
-from ..splunktalib.rest import splunkd_request, code_to_msg
-from ..splunktalib.common import util as sc_util
+from splunktalib.rest import splunkd_request, code_to_msg
+from splunktalib.common import util as sc_util
 
 from .common import log as stulog
 from .common import UCCException

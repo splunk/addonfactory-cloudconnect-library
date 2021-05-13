@@ -6,9 +6,9 @@ import socket
 from . import ta_consts as c
 from . import ta_helper as th
 from ..common import log as stulog
-from ...splunktalib import modinput as modinput
-from ...splunktalib import splunk_cluster as sc
-from ...splunktalib.common import util
+from splunktalib import modinput as modinput
+from splunktalib import splunk_cluster as sc
+from splunktalib.common import util
 
 
 # methods can be overrided by subclass : process_task_configs

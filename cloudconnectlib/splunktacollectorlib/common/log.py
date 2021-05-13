@@ -1,5 +1,5 @@
 import logging
-from ...splunktalib.common import log as stclog
+from splunktalib.common import log as stclog
 import six
 
 

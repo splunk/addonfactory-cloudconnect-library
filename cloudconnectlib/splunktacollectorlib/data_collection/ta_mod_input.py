@@ -18,10 +18,10 @@ from . import ta_data_loader as dl
 from ..common import load_schema_file as ld
 from ..common import log as stulog
 from ...common.lib_util import get_app_root_dir, get_mod_input_script_name
-from ...splunktalib import file_monitor as fm
-from ...splunktalib import modinput
-from ...splunktalib import orphan_process_monitor as opm
-from ...splunktalib.common import util as utils
+from splunktalib import file_monitor as fm
+from splunktalib import modinput
+from splunktalib import orphan_process_monitor as opm
+from splunktalib.common import util as utils
 
 utils.remove_http_proxy_env_vars()
 

@@ -5,8 +5,8 @@ import re
 from . import ta_consts as c
 from . import ta_helper as th
 from ..common import log as stulog
-from ...splunktalib import state_store as ss
-from ...splunktalib.common.util import is_true
+from splunktalib import state_store as ss
+from splunktalib.common.util import is_true
 
 
 class TACheckPointMgr(object):

@@ -4,7 +4,7 @@ import sys
 import os
 from . import common
 import logging
-sys.path.append(os.path.join(common.PROJECT_ROOT, "package"))
+sys.path.append(os.path.join(common.PROJECT_ROOT))
 from cloudconnectlib.common import log as ccelog
 
 logger = logging.getLogger("testing")
@@ -89,7 +89,6 @@ def cce_unit_test_func_without_decorator(msg):
     return msg
 """
     plugin_dir = os.path.join(common.PROJECT_ROOT,
-                              "package",
                               "cloudconnectlib",
                               "plugin")
     test_plugin_file1 = "cce_plugin_test_plugin_file1.py"
@@ -160,7 +159,6 @@ def cce_unit_test_func_without_decorator(msg):
     return msg
 """
     plugin_dir = os.path.join(common.PROJECT_ROOT,
-                              "package",
                               "cloudconnectlib",
                               "plugin")
     test_plugin_file = "cce_plugin_test_plugin_file.py"
@@ -199,7 +197,6 @@ def test_plugin_in_engine_w_files(capsys):
     from cloudconnectlib.core.job import CCEJob
 
     plugin_dir = os.path.join(common.PROJECT_ROOT,
-                              "package",
                               "cloudconnectlib",
                               "plugin")
     test_functions = """

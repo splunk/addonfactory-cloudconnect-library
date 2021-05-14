@@ -51,8 +51,7 @@ class TACheckPointMgr(object):
         return ss.get_state_store(
             meta_config,
             app_name,
-            use_cache_file=use_cache_file,
-            max_cache_seconds=max_cache_seconds
+            use_cached_store=use_cache_file
         )
 
     def _get_collection_name(self):

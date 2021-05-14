@@ -11,6 +11,7 @@ def test_checkpoint_manager_adapter():
         'stanza_name': 'TEST_STANZA_NAME'
     }
     checkpoint_dir = op.join(op.dirname(op.abspath(__file__)), 'checkpoint_dir')
+    os.makedirs(checkpoint_dir, exist_ok=True)
 
     meta_conf = {
         'checkpoint_dir': checkpoint_dir

@@ -1,9 +1,19 @@
 [tool.poetry]
 name = "cloudconnectlib"
-version = "2.0.3"
+version = "0.0.0"
 description = "APP Cloud Connect"
 authors = ["Addon Factory template <addonfactory@splunk.com>"]
 license = "APACHE-2.0"
+classifiers = [
+        "Intended Audience :: Developers",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.7",
+        "Operating System :: OS Independent",
+        "License :: OSI Approved :: Apache Software License",
+]
+include = [
+    "cloudconnectlib/configuration/*.json",
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"

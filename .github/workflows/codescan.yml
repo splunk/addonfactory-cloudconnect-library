@@ -1,4 +1,4 @@
-name: Semgrep
+name: CodeScans
 on: [push, pull_request]
 jobs:
   semgrep:

@@ -4,7 +4,7 @@ import sys
 import os
 from . import common
 import logging
-sys.path.append(os.path.join(common.PROJECT_ROOT, "package"))
+sys.path.append(os.path.join(common.PROJECT_ROOT))
 from cloudconnectlib.common import log as ccelog
 
 logger = logging.getLogger("testing")

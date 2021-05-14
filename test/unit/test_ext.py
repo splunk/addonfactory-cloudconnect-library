@@ -72,7 +72,7 @@ def test_json_path():
             {'a': {'x': {'b': 1, 'c': 'number one'}, 'y': {'b': 2, 'c': 'number two'}}},
             'a.*.b.`parent`.c',
             2,
-            ['number two', 'number one']
+            ['number one', 'number two']
         ),
         (
             'abcedfghijkl$%^&#@$',

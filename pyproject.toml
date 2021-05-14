@@ -7,7 +7,7 @@ license = "APACHE-2.0"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-jsonschema = "2.6.0"
+jsonschema = "^3.2.0"
 jinja2 = "2.10.1"
 jsonpath-rw = "1.4.0"
 httplib2 = "0.19.1"
@@ -21,6 +21,7 @@ future = "*"
 configparser = "^5.0.2"
 requests = "^2.25.1"
 splunktalib = "^1.2.1"
+jsl = "^0.2.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

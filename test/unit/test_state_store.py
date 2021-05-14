@@ -22,11 +22,14 @@ def _clean_up(checkpoint_dir, filename):
 
 def test_update_file_state_store():
     checkpoint_dir = op.join(op.dirname(__file__), 'test_checkpoint_dir')
+    os.makedirs(checkpoint_dir, exist_ok=True)
     filename = 'checkpoint_file_for_update'
+    if not os.path.exists(op.join(checkpoint_dir, filename)):
+        open(op.join(checkpoint_dir, filename + ".new"), "w+")
 
     _clean_up(checkpoint_dir, filename)
 
-    fss = state_store.FileStateStore(app_name='TestApp', checkpoint_dir=checkpoint_dir)
+    fss = state_store.FileStateStore(appname='TestApp', meta_configs={"checkpoint_dir": checkpoint_dir})
 
     checkpoint = fss.get_state(filename)
     assert checkpoint is None
@@ -48,11 +51,14 @@ def test_update_file_state_store():
 
 def test_delete_file_state_store():
     checkpoint_dir = op.join(op.dirname(__file__), 'test_checkpoint_dir2')
+    os.makedirs(checkpoint_dir, exist_ok=True)
     filename = 'checkpoint_file_for_delete'
+    if not os.path.exists(op.join(checkpoint_dir, filename)):
+        open(op.join(checkpoint_dir, filename + ".new"), "w+")
 
     _clean_up(checkpoint_dir, filename)
 
-    fss = state_store.FileStateStore(app_name='TestApp', checkpoint_dir=checkpoint_dir)
+    fss = state_store.FileStateStore(appname='TestApp', meta_configs={"checkpoint_dir": checkpoint_dir})
     checkpoint = {
         'a1': 'str',
         'a2': 124,

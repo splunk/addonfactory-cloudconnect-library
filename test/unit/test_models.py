@@ -100,9 +100,9 @@ def test_basic_auth():
         auth = BasicAuthorization(c)
         headers = {}
         auth(headers, {})
-        assert headers['Authorization'] == 'Basic %s' % base64.encodestring(
-            c['username'] + ':' + c['password']
-        ).strip()
+        assert headers['Authorization'] == 'Basic %s' % base64.b64encode(
+            f"{c['username']}:{c['password']}".encode(),
+        ).decode("utf-8").strip()
 
 
 def test_calculate_conditions():

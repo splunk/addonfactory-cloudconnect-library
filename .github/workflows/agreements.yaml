@@ -1,7 +1,7 @@
 name: "CLA Assistant"
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited]
   pull_request_target:
     types: [opened, closed, synchronize]
 
@@ -56,3 +56,15 @@ jobs:
           signed-commit-message: "$contributorName has signed the COC in #$pullRequestNo"
           custom-notsigned-prcomment: "All contributors have NOT signed the COC Document"
           custom-allsigned-prcomment: "****CLA Assistant Lite bot**** All contributors have signed the COC  ✍️ ✅"
+  ReleaseNotesPreview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          git fetch --prune --unshallow --tags
+      - uses: snyk/release-notes-preview@v1.6.1
+        with:
+          releaseBranch: main
+        env:
+          GITHUB_PR_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

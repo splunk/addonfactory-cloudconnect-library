@@ -147,7 +147,7 @@ def build_schema(ordered=True):
 
 if __name__ == '__main__':
     schema_file = op.join(op.dirname(op.dirname(op.dirname(op.abspath(__file__)))),
-                          'package', 'cloudconnectlib', 'configuration', 'schema_1_0_0.json')
+                           'cloudconnectlib', 'configuration', 'schema_1_0_0.json')
     schema_as_json = build_schema(True)
-    with open(schema_file, 'w') as f:
+    with open(schema_file, 'w+') as f:
         f.write(json.dumps(schema_as_json, indent=4))

@@ -11,7 +11,7 @@ from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
 from cloudconnectlib.core.exceptions import HTTPError
 from httplib2 import Http, socks, ProxyInfo
-from solnlib.packages.requests import PreparedRequest, utils
+from requests import PreparedRequest, utils
 from solnlib.utils import is_true
 
 try: # Python2 environment support

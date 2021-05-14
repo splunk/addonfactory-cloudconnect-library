@@ -1,5 +1,5 @@
 import json
-from ..splunktalib.common import util
+from splunktalib.common import util
 from solnlib.modular_input.event import XMLEvent
 
 

@@ -7,7 +7,7 @@ from collections import namedtuple
 
 from . import ta_consts as c
 from ..common import log as stulog
-from ...splunktalib.common import util as scu
+from splunktalib.common import util as scu
 
 evt_fmt = ("<stream><event><host>{0}</host>"
            "<source><![CDATA[{1}]]></source>"

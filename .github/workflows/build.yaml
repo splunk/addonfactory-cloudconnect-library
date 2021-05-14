@@ -25,4 +25,5 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.python-version }}-poetry-${{ hashFiles('poetry.lock') }}
       - name: Test with pytest
         run: |
-          SPLUNK_HOME=/Applications/Splunk/ poetry run pytest test/unit
+          mkdir -p /opt/splunk/var/log/splunk/ || true
+          SPLUNK_HOME=/opt/splunk/ poetry run pytest test/unit

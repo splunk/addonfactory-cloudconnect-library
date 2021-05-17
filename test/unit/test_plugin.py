@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import pytest
+import importlib
 import sys
 import os
 from . import common
@@ -68,8 +68,7 @@ def remove_file(target_dir, target_file):
 
 
 def test_plugin_init_error_path(capsys):
-    import_part = """
-from cloudconnectlib.core.plugin import cce_pipeline_plugin
+    import_part = """from cloudconnectlib.core.plugin import cce_pipeline_plugin
 """
 
     test_functions = """
@@ -125,6 +124,7 @@ def cce_unit_test_func_without_decorator(msg):
         # The function name already exists
         json_path_value = _extension_functions["json_path"]
         write_py_file(plugin_dir, test_plugin_file5, import_part+test_functions)
+        importlib.invalidate_caches()
         init_pipeline_plugins(plugin_dir)
         assert "cce_unit_test_func_with_arg1" in list(_extension_functions.keys())
         assert "cce_unit_test_func_with_arg2" in list(_extension_functions.keys())

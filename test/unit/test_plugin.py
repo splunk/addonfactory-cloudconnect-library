@@ -52,7 +52,7 @@ def write_py_file(target_dir, target_file, content):
     if not os.path.isdir(target_dir):
         os.mkdir(target_dir)
 
-    with open(target_file_path, mode='w') as tf:
+    with open(target_file_path, mode='w+') as tf:
         tf.write(content)
 
 

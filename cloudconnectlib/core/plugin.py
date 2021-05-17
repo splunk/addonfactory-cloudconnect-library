@@ -87,7 +87,9 @@ def init_pipeline_plugins(plugin_dir):
                        plugin_dir)
         return
 
-    sys.path.append(plugin_dir)
+    if plugin_dir not in sys.path:
+        sys.path.append(plugin_dir)
+
     for file_name in next(walk(plugin_dir))[2]:
         if file_name == "__init__.py" or not file_name.startswith("cce_plugin_"):
             continue

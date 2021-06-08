@@ -40,9 +40,11 @@ munch = "^2.3.2"
 splunktaucclib = "^5"
 six = "*"
 future = "*"
-requests = "^2.24"
 jsonpath-ng = "^1.5.2"
 decorator = "^4"
+requests = "^2.25.1"
+splunktalib = "^1.2.1"
+jsl = "^0.2.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

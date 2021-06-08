@@ -139,14 +139,6 @@ MarkupSafe = ">=0.23"
 i18n = ["Babel (>=0.8)"]
 
 [[package]]
-name = "jsl"
-version = "0.2.4"
-description = "A Python DSL for defining JSON schemas"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "jsonpath-ng"
 version = "1.5.2"
 description = "A final implementation of JSONPath for Python that aims to be standard compliant, including arithmetic and binary comparison operators and providing clear AST for metaprogramming."
@@ -423,7 +415,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "002d8a0654ba3c756cae89c2a89d3addd44ec91d80c8243a3359902d8a97b42d"
+content-hash = "d05f2cbe8c4603f96357e6b3448bbcebfbf54fd13bc7e8dda87747a15b8e1158"
 
 [metadata.files]
 atomicwrites = [
@@ -528,9 +520,6 @@ iniconfig = [
 jinja2 = [
     {file = "Jinja2-2.11.3-py2.py3-none-any.whl", hash = "sha256:03e47ad063331dd6a3f04a43eddca8a966a26ba0c5b7207a9a9e4e08f1b29419"},
     {file = "Jinja2-2.11.3.tar.gz", hash = "sha256:a6d58433de0ae800347cab1fa3043cebbabe8baa9d29e668f1c768cb87a333c6"},
-]
-jsl = [
-    {file = "jsl-0.2.4.tar.gz", hash = "sha256:222621116b6ff508f12b2d9e17a576d08d618b06c0845b1867b000a90424c19d"},
 ]
 jsonpath-ng = [
     {file = "jsonpath-ng-1.5.2.tar.gz", hash = "sha256:144d91379be14d9019f51973bd647719c877bfc07dc6f3f5068895765950c69d"},

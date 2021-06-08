@@ -368,7 +368,7 @@ sortedcontainers = ">=2,<3"
 
 [[package]]
 name = "splunktaucclib"
-version = "5.0.0"
+version = "5.0.1"
 description = ""
 category = "main"
 optional = false
@@ -637,8 +637,8 @@ splunktalib = [
     {file = "splunktalib-2.0.0.tar.gz", hash = "sha256:b42c9e23fa92deb87f1a07fd1bd42479baba57bc240e5ed71cafda89b600eee0"},
 ]
 splunktaucclib = [
-    {file = "splunktaucclib-5.0.0-py3-none-any.whl", hash = "sha256:fc97c1ffc17d82e14a6eeda6b139db5ebf59728821a39d2f18ae0cfef994d718"},
-    {file = "splunktaucclib-5.0.0.tar.gz", hash = "sha256:11fa347b5895ed50977f2693fa48960f18096264c8b379f9db0238b397cc2490"},
+    {file = "splunktaucclib-5.0.1-py3-none-any.whl", hash = "sha256:5908191b39e3bc60f534ada81fa3899337882a9fbc2b3895d3066e70244faa8f"},
+    {file = "splunktaucclib-5.0.1.tar.gz", hash = "sha256:c821e0982f02dd1449891af00db4244c60bec8b839a77dc61f045b48266881fb"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},

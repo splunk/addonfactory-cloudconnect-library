@@ -47,6 +47,7 @@ splunktalib = "^2"
 jsl = "^0.2.4"
 jsonpath-ng = "^1.5.2"
 decorator = "^4"
+importlib-metadata = "<=2.1.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

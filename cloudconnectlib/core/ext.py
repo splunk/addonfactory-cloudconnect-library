@@ -23,7 +23,7 @@ from collections import Iterable
 from datetime import datetime
 import six
 
-from jsonpath_rw import parse
+from jsonpath_ng import parse
 from .exceptions import FuncException, StopCCEIteration, QuitJobError
 from .pipemgr import PipeManager
 from ..common import util, log

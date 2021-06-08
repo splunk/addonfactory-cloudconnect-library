@@ -34,7 +34,6 @@ include = [
 python = "^3.7"
 jsonschema = "^3.2.0"
 jinja2 = "^2.10.1"
-jsonpath-rw = "^1.4.0"
 httplib2 = "^0.19.1"
 splunk-sdk = "^1.6.15"
 sortedcontainers = "^2.3.0"
@@ -46,6 +45,7 @@ future = "*"
 requests = "^2.25.1"
 splunktalib = "^1.2.1"
 jsl = "^0.2.4"
+jsonpath-ng = "^1.5.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

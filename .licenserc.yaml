@@ -36,6 +36,6 @@ header:
     - "test/functional/sample_ta/**"
     - "test/functional/data/**"
     - "examples/**"
-    - "*.json"
+    - "**/*.json"
 
   comment: on-failure

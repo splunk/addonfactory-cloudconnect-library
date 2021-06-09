@@ -25,8 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: ort-action
-        uses: splunk/addonfactory-ort-action@main
+        uses: splunk/addonfactory-ort-action@v1.4
         id: ort-action
+        with:
+          UsePython3: "3.7"
       - name: ort-action-artifacts-reports
         uses: actions/upload-artifact@v2
         with:

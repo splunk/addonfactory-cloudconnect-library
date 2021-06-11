@@ -46,7 +46,7 @@ decorator = "^4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
-pytest-cov = "2.12.0"
+pytest-cov = "2.12.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

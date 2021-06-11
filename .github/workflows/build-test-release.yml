@@ -109,9 +109,68 @@ jobs:
       - uses: actions/upload-artifact@v2 # upload test results
         if: success() || failure() # run this step even if previous step failed
         with:
-          name: test-results-unit-python_${{ matrix.python-version }}
+          name: test-results-unit-splunk
           path: test-results/*
 
+  test-functional:
+    name: Test functional ${{ matrix.splunk-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        splunk-version:
+          - "8.2"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install Poetry
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+      - name: Install Splunk
+        run: |
+          pip install --user git+https://github.com/pixelb/crudini
+          export SPLUNK_PRODUCT=splunk
+          export SPLUNK_VERSION=$(crudini --get deps/build/addonfactory_test_matrix_splunk/splunk_matrix.conf "${{ matrix.splunk-version }}" VERSION)
+          export SPLUNK_BUILD=$(crudini --get deps/build/addonfactory_test_matrix_splunk/splunk_matrix.conf "${{ matrix.splunk-version }}" BUILD)
+          export SPLUNK_SLUG=$SPLUNK_VERSION-SPLUNK_BUILD
+          export SPLUNK_ARCH=x86_64
+          export SPLUNK_LINUX_FILENAME=splunk-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-${SPLUNK_ARCH}.tgz
+          export SPLUNK_BUILD_URL=https://download.splunk.com/products/${SPLUNK_PRODUCT}/releases/${SPLUNK_VERSION}/linux/${SPLUNK_LINUX_FILENAME}
+          echo $SPLUNK_BUILD_URL
+          export SPLUNK_HOME=/opt/splunk
+          sudo wget -qO /tmp/splunk.tgz ${SPLUNK_BUILD_URL}
+          sudo tar -C /opt -zxf /tmp/splunk.tgz
+          sudo chown -R $USER:$USER /opt/splunk
+          echo -e "[user_info]\nUSERNAME=Admin\nPASSWORD=Chang3d"'!' | sudo tee -a /opt/splunk/etc/system/local/user-seed.conf
+          echo 'OPTIMISTIC_ABOUT_FILE_LOCKING=1' | sudo tee -a /opt/splunk/etc/splunk-launch.conf
+          #
+          /opt/splunk/bin/splunk start --accept-license
+        env:
+          SPLUNK_VERSION: 8.2
+      - name: Install Code
+        run: source $HOME/.poetry/env; poetry install
+      - name: Run Pytest with coverage
+        run: source $HOME/.poetry/env; poetry run pytest --cov=./ --cov-report=xml --junitxml=test-results/junit.xml test/functional
+        env:
+          SPLUNK_HOME: "/opt/splunk"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          directory: ./coverage/reports/
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          path_to_write_report: ./coverage/codecov_report.txt
+          verbose: true
+      - uses: actions/upload-artifact@v2 # upload test results
+        if: success() || failure() # run this step even if previous step failed
+        with:
+          name: test-results-functional-splunk${{ matrix.splunk-version }}
+          path: test-results/*
   lint:
     runs-on: ubuntu-latest
     name: Lint Code Base

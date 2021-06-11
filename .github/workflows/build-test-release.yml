@@ -167,7 +167,7 @@ jobs:
     needs:
       #- lint
       #- test-unit
-      - review_secrets
+      #- review_secrets
       - compliance-copyrights
       - compliance-dependencies
     runs-on: ubuntu-latest

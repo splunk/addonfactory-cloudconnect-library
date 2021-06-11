@@ -2,3 +2,4 @@
 .*\.lock$
 ^test/
 ^examples/
+^contrib/common

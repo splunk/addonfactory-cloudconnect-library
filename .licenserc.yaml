@@ -13,13 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""
-APP Cloud Connect
-"""
-import os
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: Splunk Inc.
 
-from .common.lib_util import register_cacert_locater
+  paths-ignore:
+    - ".circleci/"
+    - ".github/"
+    - ".vscode/"
+    - "dist"
+    - "licenses"
+    - "**/*.md"
+    - "LICENSE"
+    - "NOTICE"
+    - "*.lock"
+    - "tests/data/**"
+    - "tests/unit/testdata/*"
+    - ".*"
+    - "*.pot"
+    - "*.po"
+    - "test/functional/sample_ta/**"
+    - "test/functional/data/**"
+    - "examples/**"
+    - "**/*.json"
 
-register_cacert_locater(os.path.join(os.path.dirname(__file__), 'core', 'cacerts'))
-
-__version__ = '2.0.2'
+  comment: on-failure

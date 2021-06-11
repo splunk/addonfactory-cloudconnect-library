@@ -84,9 +84,9 @@ jobs:
           sudo wget -qO /tmp/splunk.tgz ${SPLUNK_BUILD_URL}
           sudo tar -C /opt -zxf /tmp/splunk.tgz
           sudo chown -R $USER:$USER /opt/splunk
-          sudo ls $SPLUNK_HOME/etc/apps/solnlib_demo/bin/
           echo -e "[user_info]\nUSERNAME=Admin\nPASSWORD=Chang3d"'!' | sudo tee -a /opt/splunk/etc/system/local/user-seed.conf
           echo 'OPTIMISTIC_ABOUT_FILE_LOCKING=1' | sudo tee -a /opt/splunk/etc/splunk-launch.conf
+          #
           #/opt/splunk/bin/splunk start --accept-license
         env:
           SPLUNK_VERSION: 8.2

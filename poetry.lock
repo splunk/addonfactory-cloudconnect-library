@@ -137,9 +137,30 @@ MarkupSafe = ">=0.23"
 i18n = ["Babel (>=0.8)"]
 
 [[package]]
+name = "jsl"
+version = "0.2.4"
+description = "A Python DSL for defining JSON schemas"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "jsonpath-ng"
 version = "1.5.2"
 description = "A final implementation of JSONPath for Python that aims to be standard compliant, including arithmetic and binary comparison operators and providing clear AST for metaprogramming."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+decorator = "*"
+ply = "*"
+six = "*"
+
+[[package]]
+name = "jsonpath-rw"
+version = "1.4.0"
+description = "A robust and significantly extended implementation of JSONPath for Python, with a clear AST for metaprogramming."
 category = "main"
 optional = false
 python-versions = "*"
@@ -422,7 +443,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "fe6b9a019c9559701cbbe8d214496ba30deccc5b4f80d90f2dbbbc0190291d77"
+content-hash = "5d6e076a3adbd74d7c6ca0dc1fe7237b6a562bad089982c3f81390ce7a8e06e5"
 
 [metadata.files]
 atomicwrites = [
@@ -530,9 +551,15 @@ jinja2 = [
     {file = "Jinja2-2.11.3-py2.py3-none-any.whl", hash = "sha256:03e47ad063331dd6a3f04a43eddca8a966a26ba0c5b7207a9a9e4e08f1b29419"},
     {file = "Jinja2-2.11.3.tar.gz", hash = "sha256:a6d58433de0ae800347cab1fa3043cebbabe8baa9d29e668f1c768cb87a333c6"},
 ]
+jsl = [
+    {file = "jsl-0.2.4.tar.gz", hash = "sha256:222621116b6ff508f12b2d9e17a576d08d618b06c0845b1867b000a90424c19d"},
+]
 jsonpath-ng = [
     {file = "jsonpath-ng-1.5.2.tar.gz", hash = "sha256:144d91379be14d9019f51973bd647719c877bfc07dc6f3f5068895765950c69d"},
     {file = "jsonpath_ng-1.5.2-py3-none-any.whl", hash = "sha256:93d1f248be68e485eb6635c3a01b2d681f296dc349d71e37c8755837b8944d36"},
+]
+jsonpath-rw = [
+    {file = "jsonpath-rw-1.4.0.tar.gz", hash = "sha256:05c471281c45ae113f6103d1268ec7a4831a2e96aa80de45edc89b11fac4fbec"},
 ]
 jsonschema = [
     {file = "jsonschema-3.2.0-py2.py3-none-any.whl", hash = "sha256:4e5b3cf8216f577bee9ce139cbe72eca3ea4f292ec60928ff24758ce626cd163"},

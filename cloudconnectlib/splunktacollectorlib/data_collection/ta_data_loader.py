@@ -135,7 +135,7 @@ class TADataLoader(object):
     @staticmethod
     def _read_default_settings():
         cur_dir = op.dirname(op.abspath(__file__))
-        setting_file = op.join(cur_dir,"../../","splunktalib", "setting.conf")
+        setting_file = op.join(cur_dir,"../../../","splunktalib", "setting.conf")
         parser = configparser.ConfigParser()
         parser.read(setting_file)
         settings = {}

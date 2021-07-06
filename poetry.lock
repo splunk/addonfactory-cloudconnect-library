@@ -366,7 +366,7 @@ sortedcontainers = ">=2,<3"
 
 [[package]]
 name = "splunktaucclib"
-version = "5.0.1"
+version = "5.0.3"
 description = ""
 category = "main"
 optional = false
@@ -375,7 +375,7 @@ python-versions = ">=3.7,<4.0"
 [package.dependencies]
 future = ">=0,<1"
 solnlib = ">=4.0.0,<5.0.0"
-splunk-sdk = ">=1.6,<2.0"
+splunk-sdk = "1.6.16"
 splunktalib = ">=2.0.0,<3.0.0"
 
 [[package]]
@@ -637,8 +637,8 @@ splunktalib = [
     {file = "splunktalib-2.0.0.tar.gz", hash = "sha256:b42c9e23fa92deb87f1a07fd1bd42479baba57bc240e5ed71cafda89b600eee0"},
 ]
 splunktaucclib = [
-    {file = "splunktaucclib-5.0.1-py3-none-any.whl", hash = "sha256:5908191b39e3bc60f534ada81fa3899337882a9fbc2b3895d3066e70244faa8f"},
-    {file = "splunktaucclib-5.0.1.tar.gz", hash = "sha256:c821e0982f02dd1449891af00db4244c60bec8b839a77dc61f045b48266881fb"},
+    {file = "splunktaucclib-5.0.3-py3-none-any.whl", hash = "sha256:166ea8aeef511610c506868dab4ae54b590960b4ee87449f9357ff531d38fd3e"},
+    {file = "splunktaucclib-5.0.3.tar.gz", hash = "sha256:fc3bc0eb467c379da6b4268d56dd0265895f6dd0d6655fa14ba886486b687f5a"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},

@@ -33,7 +33,7 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.7"
 jsonschema = "^3.2.0"
-jinja2 = "^2.10.1"
+jinja2 = ">2 <4"
 httplib2 = "^0.19"
 splunk-sdk = "^1.6"
 munch = "^2.3.2"
@@ -42,7 +42,7 @@ six = "*"
 future = "*"
 requests = "^2.24"
 jsonpath-ng = "^1.5.2"
-decorator = "^4"
+decorator = ">4 <6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

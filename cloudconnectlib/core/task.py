@@ -233,6 +233,9 @@ class BaseTask(object):
             if data:
                 # FIXME
                 context.update(data)
+            if context.get('is_token_refreshed'):
+                logger.info("The access token is refreshed hence skipping the rest post process handler tasks. Retrying again.")
+                return
         logger.debug('Execute handlers finished successfully.')
 
     def _pre_process(self, context):
@@ -466,6 +469,33 @@ class CCEHTTPRequestTask(BaseTask):
                 return None, True
             return response, False
 
+        if status in (400,):
+            _ERROR_CODE_REGEX = '"errorCode":"(?P<errorcode>.*)"'
+            error = regex_search(_ERROR_CODE_REGEX,response.body) if response.body else {}
+            error_code = error.get("errorcode", "")
+            _ERROR_MESSAGE_REGEX = '"message":"(?P<message>.*)",'
+            message = regex_search(_ERROR_MESSAGE_REGEX, response.body) if response.body else {}
+            message = message.get("message")
+            if error_code == "BIG_OBJECT_UNSUPPORTED_OPERATION" and bool(re.search("^Unsupported order direction on filter column.*ASCENDING.*",message)):
+                logger.warning(
+                    'The salesforce object does not support operations performed by SOQL query, '
+                    'The response of the request url=%s is "%s", method=%s and status=%s.',
+                    request.url, message, request.method, status
+                )
+                return response, False
+        if status in (401,):
+            logger.info(
+                'The response of request which url=%s and'
+                ' method=%s is unauthorized, status=%s.',
+                request.url, request.method, status
+            )
+            return response, False
+        if status in (404,):
+            logger.warning(
+                'The requested event log file does not exist. The response status=%s for request to url=%s and '
+                'method=%s.', status, request.url, request.method
+            )
+            return response, False
         error_log = ('The response status=%s for request which url=%s and'
                      ' method=%s.') % (
                         status, request.url, request.method

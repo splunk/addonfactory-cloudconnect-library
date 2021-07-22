@@ -16,11 +16,6 @@
 """
 Data Loader main entry point
 """
-
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import object
 import queue
 import os.path as op
 import configparser

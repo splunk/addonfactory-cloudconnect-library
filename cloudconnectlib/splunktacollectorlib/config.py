@@ -17,14 +17,6 @@
 This is for load/save configuration in UCC server or TA.
 The load/save action is based on specified schema.
 """
-
-from __future__ import absolute_import
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
-from builtins import object
 import json
 import logging
 import traceback

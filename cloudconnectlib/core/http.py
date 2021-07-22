@@ -18,7 +18,6 @@ from builtins import range
 from builtins import object
 import time
 import traceback
-import six
 import munch
 
 from cloudconnectlib.common import util
@@ -271,7 +270,7 @@ class HttpClient(object):
     def send(self, request):
         if not request:
             raise ValueError('The request is none')
-        if request.body and not isinstance(request.body, six.string_types):
+        if request.body and not isinstance(request.body, str):
             raise TypeError('Invalid request body type: {}'.format(request.body))
 
         if self._connection is None:

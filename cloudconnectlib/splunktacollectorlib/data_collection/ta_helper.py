@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import six
-from builtins import object
 import hashlib
 import json
 import os.path as op
@@ -61,7 +59,7 @@ def get_md5(data):
     :return:
     """
     assert data is not None, "The input cannot be None"
-    if isinstance(data, six.string_types):
+    if isinstance(data, str):
         return hashlib.sha256(data.encode('utf-8')).hexdigest()
     elif isinstance(data, (list, tuple, dict)):
         return hashlib.sha256(json.dumps(data).encode('utf-8')).hexdigest()

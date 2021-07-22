@@ -21,7 +21,6 @@ import json
 import logging
 import traceback
 import time
-import six
 
 from splunktalib.rest import splunkd_request, code_to_msg
 from splunktalib.common import util as sc_util
@@ -282,7 +281,7 @@ class Config(object):
                                   if key not in ucc_config_schema})
         for field in Config.META_FIELDS:
             assert field in ucc_config_schema and \
-                isinstance(ucc_config_schema[field], six.string_types), \
+                isinstance(ucc_config_schema[field], str), \
                 'Missing or invalid field "%s" in given schema' % field
             setattr(self, field, ucc_config_schema[field])
 

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import six
 import os
 import sys
 
@@ -111,7 +110,7 @@ def test_nextpage_url(monkeypatch):
         pass
     assert isinstance(context.get("__stdout__"), list) and \
            len(context.get("__stdout__")) > 0
-    assert isinstance(context.get("__nextpage_url__"), six.string_types)
+    assert isinstance(context.get("__nextpage_url__"), str)
     assert context["__nextpage_url__"] == \
            "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=2"
     assert task._request.count == 1

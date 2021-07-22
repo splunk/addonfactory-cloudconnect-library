@@ -13,13 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import str
-from builtins import object
 import base64
 import json
 import sys
 import traceback
-import six
 
 from .ext import lookup_method
 from .template import compile_template
@@ -37,7 +34,7 @@ class _Token(object):
         template must be a string."""
         self._source = source
         self._value_for = compile_template(source) \
-            if isinstance(source, six.string_types) else None
+            if isinstance(source, str) else None
 
     def render(self, variables):
         """Render value with variables if source is a string.
@@ -105,7 +102,7 @@ class BasicAuthorization(BaseAuth):
             content (obs-text) as opaque data.
         """
         is_py2 = (sys.version_info[0] == 2)
-        if isinstance(string, six.text_type):
+        if isinstance(string, str):
             out = string
         else:
             if is_py2:
@@ -181,7 +178,7 @@ class Request(object):
         self.headers = headers
         if not body:
             body = None
-        elif not isinstance(body, six.string_types):
+        elif not isinstance(body, str):
             body = json.dumps(body)
         self.body = body
 

@@ -13,13 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import str
-from builtins import object
 import logging
 import re
 import traceback
 from abc import abstractmethod
-import six
 
 from jsonschema import validate, ValidationError
 from munch import munchify
@@ -81,7 +78,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     def _render_from_dict(source, ctx):
         rendered = DictToken(source).render(ctx)
 
-        return dict((k, v.strip() if isinstance(v, six.string_types) else v)
+        return dict((k, v.strip() if isinstance(v, str) else v)
                     for k, v in rendered.items())
 
     def _load_proxy(self, candidate, variables):

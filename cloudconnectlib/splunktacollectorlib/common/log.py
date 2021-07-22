@@ -15,7 +15,6 @@
 #
 import logging
 from splunktalib.common import log as stclog
-import six
 
 
 def set_log_level(log_level):
@@ -23,7 +22,7 @@ def set_log_level(log_level):
     Set log level.
     """
 
-    if isinstance(log_level, six.string_types):
+    if isinstance(log_level, str):
         if log_level.upper() == "DEBUG":
             stclog.Logs().set_level(logging.DEBUG)
         elif log_level.upper() == "INFO":

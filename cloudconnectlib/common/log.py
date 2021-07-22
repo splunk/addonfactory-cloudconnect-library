@@ -19,10 +19,9 @@ from solnlib.pattern import Singleton
 from ..splunktacollectorlib.common import log as stulog
 from ..splunktacollectorlib.data_collection import ta_helper as th
 from .lib_util import get_mod_input_script_name
-from future.utils import with_metaclass
 
 
-class CloudClientLogAdapter(with_metaclass(Singleton, logging.LoggerAdapter)):
+class CloudClientLogAdapter(logging.LoggerAdapter, metaclass=Singleton):
     def __init__(self, logger=None, extra=None, prefix=""):
         super(CloudClientLogAdapter, self).__init__(logger, extra)
         self.cc_prefix = prefix if prefix else ""

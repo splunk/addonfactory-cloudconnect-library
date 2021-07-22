@@ -43,6 +43,7 @@ future = "*"
 requests = "^2.24"
 jsonpath-ng = "^1.5.2"
 decorator = ">=4,<6"
+PySocks = "^1.7.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

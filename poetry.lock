@@ -316,14 +316,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
-name = "schematics"
-version = "2.1.0"
-description = "Python Data Structures for Humans"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -333,19 +325,16 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "solnlib"
-version = "4.1.0"
+version = "4.2.0"
 description = "The Splunk Software Development Kit for Splunk Solutions"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-future = ">=0,<1"
 requests = ">=2.24,<3.0"
-schematics = ">=2.1,<3.0"
-six = "*"
 sortedcontainers = ">=2.2,<3.0"
-splunk-sdk = ">=1.6,<2.0"
+splunk-sdk = "1.6.16"
 
 [[package]]
 name = "sortedcontainers"
@@ -365,7 +354,7 @@ python-versions = "*"
 
 [[package]]
 name = "splunktalib"
-version = "2.0.1"
+version = "2.1.0"
 description = "Supporting library for Splunk Add-ons"
 category = "main"
 optional = false
@@ -378,14 +367,13 @@ sortedcontainers = ">=2,<3"
 
 [[package]]
 name = "splunktaucclib"
-version = "5.0.3"
+version = "5.0.4"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-future = ">=0,<1"
 solnlib = ">=4.0.0,<5.0.0"
 splunk-sdk = "1.6.16"
 splunktalib = ">=2.0.0,<3.0.0"
@@ -651,17 +639,13 @@ requests = [
     {file = "requests-2.26.0-py2.py3-none-any.whl", hash = "sha256:6c1246513ecd5ecd4528a0906f910e8f0f9c6b8ec72030dc9fd154dc1a6efd24"},
     {file = "requests-2.26.0.tar.gz", hash = "sha256:b8aa58f8cf793ffd8782d3d8cb19e66ef36f7aba4353eec859e74678b01b07a7"},
 ]
-schematics = [
-    {file = "schematics-2.1.0-py2.py3-none-any.whl", hash = "sha256:8fcc6182606fd0b24410a1dbb066d9bbddbe8da9c9509f47b743495706239283"},
-    {file = "schematics-2.1.0.tar.gz", hash = "sha256:a40b20635c0e43d18d3aff76220f6cd95ea4decb3f37765e49529b17d81b0439"},
-]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 solnlib = [
-    {file = "solnlib-4.1.0-py3-none-any.whl", hash = "sha256:4e467e9135d59f15e6d546157e1978cf92931708e1e0844472b5a1c21cd8eb7a"},
-    {file = "solnlib-4.1.0.tar.gz", hash = "sha256:5876006bef6f6bf94c62e0af7d184ecbce6aa625115916811893d7e6fdc8b575"},
+    {file = "solnlib-4.2.0-py3-none-any.whl", hash = "sha256:11152d8aece1cc1830b311f024e7dede09e36ac56cb1e9c2cf897c788c461ded"},
+    {file = "solnlib-4.2.0.tar.gz", hash = "sha256:d31981768f280a49ed9997672b83231804254fb88a40af347b963c7a63ca0aa4"},
 ]
 sortedcontainers = [
     {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
@@ -671,12 +655,12 @@ splunk-sdk = [
     {file = "splunk-sdk-1.6.16.tar.gz", hash = "sha256:b4963a983f1538686cf3f83f9e5ee5e48419cc71744fc8bc0f60f8b8576efb98"},
 ]
 splunktalib = [
-    {file = "splunktalib-2.0.1-py3-none-any.whl", hash = "sha256:e0b07178fef785f99c4d928437d3f72605f55691850cd734122e87aadaf46e67"},
-    {file = "splunktalib-2.0.1.tar.gz", hash = "sha256:99b114293a12bfad9258138ad091a066cf1632c62d375e6fd9443c19b9ce2245"},
+    {file = "splunktalib-2.1.0-py3-none-any.whl", hash = "sha256:2345bc4f21df4a3c70077b3fb76b3959988700f12d2755951a42e81d2f487650"},
+    {file = "splunktalib-2.1.0.tar.gz", hash = "sha256:700585b36313065fa894f0960b347a3926ce17a4e8c8c0bc41e9b2a661153912"},
 ]
 splunktaucclib = [
-    {file = "splunktaucclib-5.0.3-py3-none-any.whl", hash = "sha256:166ea8aeef511610c506868dab4ae54b590960b4ee87449f9357ff531d38fd3e"},
-    {file = "splunktaucclib-5.0.3.tar.gz", hash = "sha256:fc3bc0eb467c379da6b4268d56dd0265895f6dd0d6655fa14ba886486b687f5a"},
+    {file = "splunktaucclib-5.0.4-py3-none-any.whl", hash = "sha256:b250a15696c40149e665383d44d058399c47f9da2052a6a4e6bc1a4e485915c6"},
+    {file = "splunktaucclib-5.0.4.tar.gz", hash = "sha256:8f47a0830e58893f20d24f839656e9594475896d334de55d5d9c31d9a52a70a0"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},

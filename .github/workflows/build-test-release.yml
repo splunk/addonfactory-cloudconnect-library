@@ -93,7 +93,7 @@ jobs:
       - name: Install Code
         run: source $HOME/.poetry/env; poetry install
       - name: Run Pytest with coverage
-        run: source $HOME/.poetry/env; poetry run pytest --cov=./ --cov-report=xml --junitxml=test-results/junit.xml test/unit
+        run: source $HOME/.poetry/env; poetry run pytest --cov=./cloudconnectlib --cov-report=xml --junitxml=test-results/junit.xml test/unit
         env:
           SPLUNK_HOME: "/opt/splunk"
       - name: Upload coverage to Codecov

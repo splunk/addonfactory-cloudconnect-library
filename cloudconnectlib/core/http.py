@@ -13,14 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import str
-from builtins import range
-from builtins import object
 import time
 import traceback
-import six
 import munch
-
 from cloudconnectlib.common import util
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
@@ -29,10 +24,7 @@ from httplib2 import Http, socks, ProxyInfo
 from requests import PreparedRequest, utils
 from solnlib.utils import is_true
 
-try: # Python2 environment support
-    from httplib2 import SSLHandshakeError
-except: # Python3 environment support
-    from ssl import SSLError as SSLHandshakeError
+from ssl import SSLError as SSLHandshakeError
 
 _logger = get_cc_logger()
 
@@ -43,7 +35,7 @@ _PROXY_TYPE_MAP = {
 }
 
 
-class HTTPResponse(object):
+class HTTPResponse:
     """
     HTTPResponse class wraps response of HTTP request for later use.
     """
@@ -184,13 +176,15 @@ def standardize_proxy_config(proxy_config):
     return standard_proxy_config
 
 
-class HttpClient(object):
+class HttpClient:
     def __init__(self, proxy_info=None):
         """Constructs a `HTTPRequest` with a optional proxy setting.
         """
         self._connection = None
     
-        if proxy_info:
+        if proxy_info and isinstance(proxy_info, ProxyInfo):
+            self._proxy_info = proxy_info
+        elif proxy_info:
             if isinstance(proxy_info, munch.Munch):
                 proxy_info = dict(proxy_info)
 
@@ -262,15 +256,15 @@ class HttpClient(object):
 
     def _initialize_connection(self):
         if self._proxy_info:
-            _logger.info('Proxy is enabled for http connection.')
+            _logger.info('Proxy is enabled.')
         else:
-            _logger.info('Proxy is not enabled for http connection.')
+            _logger.info('Proxy is not enabled.')
         self._connection = self._build_http_connection(self._proxy_info)
 
     def send(self, request):
         if not request:
             raise ValueError('The request is none')
-        if request.body and not isinstance(request.body, six.string_types):
+        if request.body and not isinstance(request.body, str):
             raise TypeError('Invalid request body type: {}'.format(request.body))
 
         if self._connection is None:

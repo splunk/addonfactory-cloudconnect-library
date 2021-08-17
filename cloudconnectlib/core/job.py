@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import threading
 
 from .exceptions import QuitJobError
@@ -24,7 +23,7 @@ from ..common import log
 logger = log.get_cc_logger()
 
 
-class CCEJob(object):
+class CCEJob:
     """
     One CCEJob is composed of a list of tasks. The task could be HTTP
      task or Split task(currently supported task types).
@@ -62,15 +61,6 @@ class CCEJob(object):
         :type proxy_setting: ``dict``
         """
         self._proxy_info = proxy_setting
-        logger.debug("CCEJob proxy info: proxy_enabled='%s', proxy_url='%s', "
-                     "proxy_port='%s', proxy_rdns='%s', proxy_type='%s', "
-                     "proxy_username='%s'",
-                     proxy_setting.get("proxy_enabled"),
-                     proxy_setting.get("proxy_url"), 
-                     proxy_setting.get("proxy_port"),
-                     proxy_setting.get("proxy_rdns"),
-                     proxy_setting.get("proxy_type"),
-                     proxy_setting.get("proxy_username"))
 
     def add_task(self, task):
         """
@@ -121,12 +111,16 @@ class CCEJob(object):
             logger.info('No more task need to perform, exiting job')
             return
 
-        jobs = [CCEJob(context=ctx, tasks=self._rest_tasks) for ctx in contexts]
+        count = 0
+        for ctx in contexts:
+            count += 1
+            yield CCEJob(context=ctx, tasks=self._rest_tasks) 
+            if self._check_if_stop_needed():
+                break
 
-        logger.debug('Generated %s job in total', len(jobs))
+        logger.debug('Generated %s job in total', count)
         logger.debug('Job execution finished successfully.')
         self._stopped.set()
-        return jobs
 
     def stop(self, block=False, timeout=30):
         """

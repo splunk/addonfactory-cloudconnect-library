@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import next
-from builtins import object
 from . import ta_checkpoint_manager as cp
 from . import ta_data_collector as tdc
 
@@ -34,7 +32,7 @@ def build_event(host=None,
                                   raw_data, is_unbroken, is_done])
 
 
-class TaDataClient(object):
+class TaDataClient:
     def __init__(self,
                  meta_config,
                  task_config,

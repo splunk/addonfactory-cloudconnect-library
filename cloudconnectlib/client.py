@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import copy
 import os.path
 import traceback
@@ -27,7 +26,7 @@ from .core.exceptions import ConfigException
 _logger = get_cc_logger()
 
 
-class CloudConnectClient(object):
+class CloudConnectClient:
     """The client of cloud connect used to start a cloud connect engine instance.
     """
 

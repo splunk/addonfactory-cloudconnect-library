@@ -13,13 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import str
-from builtins import object
 import base64
 import json
 import sys
 import traceback
-import six
 
 from .ext import lookup_method
 from .template import compile_template
@@ -28,7 +25,7 @@ from ..common.log import get_cc_logger
 _logger = get_cc_logger()
 
 
-class _Token(object):
+class _Token:
     """Token class wraps a template expression"""
 
     def __init__(self, source):
@@ -37,7 +34,7 @@ class _Token(object):
         template must be a string."""
         self._source = source
         self._value_for = compile_template(source) \
-            if isinstance(source, six.string_types) else None
+            if isinstance(source, str) else None
 
     def render(self, variables):
         """Render value with variables if source is a string.
@@ -58,7 +55,7 @@ class _Token(object):
         return self._source
 
 
-class DictToken(object):
+class DictToken:
     """DictToken wraps a dict which value is template expression"""
 
     def __init__(self, template_expr):
@@ -69,7 +66,7 @@ class DictToken(object):
         return {k: v.render(variables) for k, v in self._tokens.items()}
 
 
-class BaseAuth(object):
+class BaseAuth:
     """A base class for all authorization classes"""
 
     def __call__(self, headers, context):
@@ -104,14 +101,10 @@ class BasicAuthorization(BaseAuth):
             US-ASCII octets.  A recipient SHOULD treat other octets in field
             content (obs-text) as opaque data.
         """
-        is_py2 = (sys.version_info[0] == 2)
-        if isinstance(string, six.text_type):
+        if isinstance(string, str):
             out = string
         else:
-            if is_py2:
-                out = string.encode(encoding)
-            else:
-                out = string.decode(encoding)
+            out = string.decode(encoding)
 
         return out
 
@@ -123,7 +116,7 @@ class BasicAuthorization(BaseAuth):
         ).strip()
 
 
-class RequestParams(object):
+class RequestParams:
     def __init__(self, url, method, header=None, auth=None, body=None):
         self._header = DictToken(header)
         self._url = _Token(url)
@@ -174,19 +167,19 @@ class RequestParams(object):
         return self.body.render(context)
 
 
-class Request(object):
+class Request:
     def __init__(self, method, url, headers, body):
         self.method = method
         self.url = url
         self.headers = headers
         if not body:
             body = None
-        elif not isinstance(body, six.string_types):
+        elif not isinstance(body, str):
             body = json.dumps(body)
         self.body = body
 
 
-class _Function(object):
+class _Function:
     def __init__(self, inputs, function):
         self._inputs = tuple(_Token(expr) for expr in inputs or [])
         self._function = function
@@ -260,7 +253,7 @@ class Condition(_Function):
         return result
 
 
-class _Conditional(object):
+class _Conditional:
     """A base class for all conditional action"""
 
     def __init__(self, conditions):
@@ -310,7 +303,7 @@ class IterationMode(_Conditional):
         return self._conditions
 
 
-class Checkpoint(object):
+class Checkpoint:
     """A checkpoint includes a namespace to determine the checkpoint location
     and a content defined the format of content stored in checkpoint."""
 

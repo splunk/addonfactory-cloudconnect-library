@@ -13,23 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""UCC Config Module
+"""
+UCC Config Module
 This is for load/save configuration in UCC server or TA.
 The load/save action is based on specified schema.
 """
 
-from __future__ import absolute_import
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
-from builtins import object
 import json
 import logging
 import traceback
 import time
-import six
 
 from splunktalib.rest import splunkd_request, code_to_msg
 from splunktalib.common import util as sc_util
@@ -78,7 +71,7 @@ class ConfigException(UCCException):
     pass
 
 
-class Config(object):
+class Config:
     """UCC Config Module
     """
 
@@ -290,7 +283,7 @@ class Config(object):
                                   if key not in ucc_config_schema})
         for field in Config.META_FIELDS:
             assert field in ucc_config_schema and \
-                isinstance(ucc_config_schema[field], six.string_types), \
+                isinstance(ucc_config_schema[field], str), \
                 'Missing or invalid field "%s" in given schema' % field
             setattr(self, field, ucc_config_schema[field])
 

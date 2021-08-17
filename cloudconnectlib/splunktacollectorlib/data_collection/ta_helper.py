@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import six
-from builtins import object
 import hashlib
 import json
 import os.path as op
@@ -22,11 +20,7 @@ import re
 from calendar import timegm
 from datetime import datetime
 
-import sys
-if sys.version_info[0] >= 3:
-   from functools import lru_cache
-else:
-   from functools32 import lru_cache
+from functools import lru_cache
 
 from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema
 from . import ta_consts as c
@@ -61,7 +55,7 @@ def get_md5(data):
     :return:
     """
     assert data is not None, "The input cannot be None"
-    if isinstance(data, six.string_types):
+    if isinstance(data, str):
         return hashlib.sha256(data.encode('utf-8')).hexdigest()
     elif isinstance(data, (list, tuple, dict)):
         return hashlib.sha256(json.dumps(data).encode('utf-8')).hexdigest()
@@ -80,10 +74,10 @@ def get_all_conf_contents(server_uri, sessionkey, settings, input_type=None):
 
 @lru_cache(maxsize=64)
 def format_name_for_file(name):
-    return hashlib.sha256(name.encode('utf-8')).hexdigest()
+    return hashlib.sha256(name.encode("utf-8")).hexdigest()
 
 
-class ConfigSchemaHandler(object):
+class ConfigSchemaHandler:
     _app_name = util.get_appname_from_path(op.abspath(__file__))
     # Division schema keys.
     TYPE = "type"
@@ -152,7 +146,7 @@ class ConfigSchemaHandler(object):
         return division_metrics
 
 
-class DivisionRule(object):
+class DivisionRule:
     def __init__(self, endpoint, metric, type, separator, refer):
         self._endpoint = endpoint
         self._metric = metric

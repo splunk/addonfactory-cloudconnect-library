@@ -18,9 +18,6 @@ Data Loader main entry point
 """
 
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import object
 import queue
 import os.path as op
 import configparser
@@ -31,7 +28,7 @@ from splunktalib.schedule import job as sjob
 from splunktalib.common import log
 
 
-class TADataLoader(object):
+class TADataLoader:
     """
     Data Loader boots all underlying facilities to handle data collection
     """
@@ -135,7 +132,7 @@ class TADataLoader(object):
     @staticmethod
     def _read_default_settings():
         cur_dir = op.dirname(op.abspath(__file__))
-        setting_file = op.join(cur_dir,"../../../","splunktalib", "setting.conf")
+        setting_file = op.abspath(op.join(cur_dir,"../../../","splunktalib", "setting.conf"))
         parser = configparser.ConfigParser()
         parser.read(setting_file)
         settings = {}
@@ -155,7 +152,7 @@ class TADataLoader(object):
         return settings
 
 
-class GlobalDataLoader(object):
+class GlobalDataLoader:
     """ Singleton, inited when started"""
 
     __instance = None

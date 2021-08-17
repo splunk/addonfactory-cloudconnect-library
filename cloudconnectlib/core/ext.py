@@ -13,17 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import str
-from builtins import range
 import calendar
 import json
 import re
 import traceback
 from collections import Iterable
 from datetime import datetime
-import six
 
-from jsonpath_ng import parse
+from jsonpath_rw import parse
 from .exceptions import FuncException, StopCCEIteration, QuitJobError
 from .pipemgr import PipeManager
 from ..common import util, log
@@ -33,7 +30,7 @@ _logger = log.get_cc_logger()
 
 def regex_search(pattern, source, flags=0):
     """Search substring in source through regex"""
-    if not isinstance(source, six.string_types):
+    if not isinstance(source, str):
         _logger.warning('Cannot apply regex search on non-string: %s', type(source))
         return {}
     try:
@@ -88,7 +85,7 @@ def json_path(source, json_path_expr):
         _logger.debug('source to apply JSONPATH is empty, return empty.')
         return ''
 
-    if isinstance(source, six.string_types):
+    if isinstance(source, str):
         _logger.debug(
             'source expected is a JSON, not %s. Attempt to'
             ' convert it to JSON',
@@ -98,7 +95,7 @@ def json_path(source, json_path_expr):
             source = json.loads(source)
         except Exception as ex:
             _logger.warning(
-                'Unable to load JSON from source: %s. '
+                'Unable to load JSON from string: %s. '
                 'Attempt to apply JSONPATH "%s" on source directly.',
                 ex,
                 json_path_expr
@@ -175,17 +172,17 @@ def std_output(candidates):
     """ Output a string to stdout.
     :param candidates: List of string to output to stdout or a single string.
     """
-    if isinstance(candidates, six.string_types):
+    if isinstance(candidates, str):
         candidates = [candidates]
 
     all_str = True
     for candidate in candidates:
-        if all_str and not isinstance(candidate, six.string_types):
+        if all_str and not isinstance(candidate, str):
             all_str = False
             _logger.debug(
                 'The type of data needs to print is "%s" rather than %s',
                 type(candidate),
-                str(six.string_types)
+                str(str)
             )
             try:
                 candidate = json.dumps(candidate)
@@ -193,7 +190,7 @@ def std_output(candidates):
                 _logger.exception('The type of data needs to print is "%s"'
                                   ' rather than %s',
                                   type(candidate),
-                                  str(six.string_types))
+                                  str(str))
 
         if not PipeManager().write_events(candidate):
             raise FuncException('Fail to output data to stdout. The event'
@@ -215,7 +212,7 @@ def _parse_json(source, json_path_expr=None):
         )
         source = json_path(source, json_path_expr)
 
-    elif isinstance(source, six.string_types):
+    elif isinstance(source, str):
         source = json.loads(source)
 
     return source
@@ -307,7 +304,7 @@ def time_str2str(date_string, from_format, to_format):
     """Convert a date string with given format to another format. Return
     the original date string if it's type is not string or failed to parse or
     convert it with format."""
-    if not isinstance(date_string, six.string_types):
+    if not isinstance(date_string, str):
         _logger.warning(
             '"date_string" must be a string type, found %s,'
             ' return the original date_string directly.',
@@ -368,10 +365,10 @@ def split_by(source, target, separator=None):
     try:
         if not source:
             return []
-        elif isinstance(source, six.string_types) and separator:
+        elif isinstance(source, str) and separator:
             values = source.split(separator)
             return [{target: value.strip()} for value in values]
-        elif isinstance(source, six.string_types):
+        elif isinstance(source, str):
             return [{target: source}]
         elif isinstance(source, Iterable):
             return [{target: value} for value in source]

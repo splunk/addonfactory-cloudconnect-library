@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import concurrent.futures as cf
 import threading
 from collections import Iterable
@@ -23,17 +22,23 @@ from .plugin import init_pipeline_plugins
 logger = get_cc_logger()
 
 
-class CloudConnectEngine(object):
+class CloudConnectEngine:
 
-    def __init__(self, max_workers=4):
+    def __init__(self, max_workers=4, plugin_dir=""):
+        """
+        Initialize CloudConnectEngine object
+        :param max_workers: maximum number of Threads to execute the given calls
+        :param plugin_dir: Absolute path of directory containing cce_plugin_*.py
+        :return:
+        """
         self._executor = cf.ThreadPoolExecutor(max_workers)
         self._pending_job_results = set()
         self._shutdown = False
         self._pending_jobs = []
         self._counter = 0
         self._lock = threading.RLock()
-        init_pipeline_plugins(
-            op.join(op.dirname(op.dirname(__file__)), "plugin"))
+        plugin_dir = plugin_dir or op.join(op.dirname(op.dirname(__file__)), "plugin")
+        init_pipeline_plugins(plugin_dir)
 
     def start(self, jobs=None):
         """

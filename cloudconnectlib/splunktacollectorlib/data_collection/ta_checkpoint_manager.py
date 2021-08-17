@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import json
 import logging
 import re
@@ -25,7 +24,7 @@ from splunktalib import state_store as ss
 from splunktalib.common.util import is_true
 
 
-class TACheckPointMgr(object):
+class TACheckPointMgr:
     SEPARATOR = "_" * 3
 
     # FIXME We'd better move all default values together
@@ -67,7 +66,7 @@ class TACheckPointMgr(object):
         return ss.get_state_store(
             meta_config,
             app_name,
-            use_cached_store=use_cache_file,
+            use_cache_file=use_cache_file,
             max_cache_seconds=max_cache_seconds
         )
 
@@ -121,47 +120,52 @@ class TACheckPointMgr(object):
                 seconds = adjusted
         return seconds
 
-    def get_ckpt_key(self, namespaces=None):
-        return self._key_formatter(namespaces)
+    def _get_ckpt_key(self, namespaces=None):
+        if not namespaces:
+            stanza = self._task_config[c.stanza_name]
+            stulog.logger.info('Namespaces is empty, using stanza name [%s] instead.', stanza)
+            namespaces = [stanza]
+        key_str, hashed_file = self._hash_key(namespaces)
+        stulog.logger.debug("raw_file='%s' hashed_file='%s'", key_str, hashed_file)
+        return hashed_file, namespaces
 
     def get_ckpt(self, namespaces=None, show_namespaces=False):
-        key, namespaces = self.get_ckpt_key(namespaces)
+        key, _ = self._get_ckpt_key(namespaces)
         raw_checkpoint = self._store.get_state(key)
-        stulog.logger.info("Get checkpoint key='%s' value='%s'",
-                           key, json.dumps(raw_checkpoint))
+        if stulog.logger.isEnabledFor(logging.DEBUG):
+            stulog.logger.debug(
+                "Get checkpoint key='%s' value='%s'", key, json.dumps(raw_checkpoint))
         if not show_namespaces and raw_checkpoint:
             return raw_checkpoint.get("data")
         return raw_checkpoint
 
     def delete_if_exists(self, namespaces=None):
         """Return true if exist and deleted else False"""
-        key, namespaces = self._get_ckpt_key(namespaces)
+        key, _ = self._get_ckpt_key(namespaces)
         if self._store.exists(key):
             self._store.delete_state(key)
             return True
         return False
+
     def update_ckpt(self, ckpt, namespaces=None):
         if not ckpt:
             stulog.logger.warning("Checkpoint expect to be not empty.")
             return
-        key, namespaces = self.get_ckpt_key(namespaces)
+        key, namespaces = self._get_ckpt_key(namespaces)
         value = {"namespaces": namespaces, "data": ckpt}
-        stulog.logger.info("Update checkpoint key='%s' value='%s'",
-                           key, json.dumps(value))
+        stulog.logger.debug("Update checkpoint key='%s' value='%s'",
+                            key, json.dumps(value))
         self._store.update_state(key, value)
 
     def remove_ckpt(self, namespaces=None):
-        key, namespaces = self.get_ckpt_key(namespaces)
+        key, _ = self._get_ckpt_key(namespaces)
         self._store.delete_state(key)
 
-    def _key_formatter(self, namespaces=None):
-        if not namespaces:
-            stulog.logger.info('Namespaces is empty, using stanza name instead.')
-            namespaces = [self._task_config[c.stanza_name]]
+    @staticmethod
+    def _hash_key(namespaces=None):
         key_str = TACheckPointMgr.SEPARATOR.join(namespaces)
         hashed_file = th.format_name_for_file(key_str)
-        stulog.logger.info("raw_file='%s' hashed_file='%s'", key_str, hashed_file)
-        return hashed_file, namespaces
+        return key_str, hashed_file
 
     def close(self, key=None):
         try:

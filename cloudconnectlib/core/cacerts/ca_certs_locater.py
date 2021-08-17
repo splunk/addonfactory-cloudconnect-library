@@ -29,7 +29,7 @@ import sys
 TEMP_CERT_FILE_NAME = 'httplib2_merged_certificates_{}.crt'
 LINUX_CERT_PATH_1 = '/etc/pki/tls/certs/ca-bundle.crt'  # RedHat
 LINUX_CERT_PATH_2 = '/etc/ssl/certs/ca-certificates.crt'  # Debian
-DARWIN_CERT_PATH = '/usr/local/etc/openssl/cert.pem'
+DARWIN_CERT_PATH = ['/usr/local/etc/openssl/cert.pem', '/etc/ssl/cert.pem'] # Possible paths for macOS
 HTTPLIB2_CA_CERT_FILE_NAME = 'cacerts.txt'
 
 TEMP_CERT_FILE_PATH = None
@@ -79,7 +79,7 @@ def _read_platform_pem_cert_file():
         pem_files = [_read_pem_file(LINUX_CERT_PATH_1), _read_pem_file(LINUX_CERT_PATH_2)]
         return '\n'.join([_f for _f in pem_files if _f])
     elif sys.platform.startswith('darwin'):
-        return _read_pem_file(DARWIN_CERT_PATH)
+        return _check_pem_file(DARWIN_CERT_PATH)
     else:
         return ""
 
@@ -105,7 +105,12 @@ def _read_pem_file(path):
     else:
         return ""
 
-
+def _check_pem_file(path_list):
+    for path in path_list:
+        if os.path.exists(path):
+            return _read_pem_file(path)
+    return ""
+    
 def _update_temp_cert_file(temp_file, pem_texts):
     with open(temp_file, mode='w') as temp_cert_file:
         for pem_text in pem_texts:

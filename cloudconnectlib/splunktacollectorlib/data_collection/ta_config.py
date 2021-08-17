@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from __future__ import absolute_import
-from builtins import object
 import os.path as op
 import socket
 
@@ -27,7 +25,7 @@ from splunktalib.common import util
 
 
 # methods can be overrided by subclass : process_task_configs
-class TaConfig(object):
+class TaConfig:
     _current_hostname = socket.gethostname()
     _appname = util.get_appname_from_path(op.abspath(__file__))
 

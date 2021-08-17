@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from __future__ import absolute_import
-from builtins import object
 import threading
 import time
 from collections import namedtuple
@@ -48,7 +46,7 @@ event_tuple = namedtuple('Event',
                           'raw_data', 'is_unbroken', 'is_done'])
 
 
-class TADataCollector(object):
+class TADataCollector:
     def __init__(self, tconfig, meta_config, task_config,
                  checkpoint_manager_cls, data_client_cls, data_loader):
         self._lock = threading.Lock()

@@ -29,7 +29,7 @@ from splunktalib.common import util
 
 
 def utc2timestamp(human_time):
-    regex1 = "\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
+    regex1 = r"\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
     match = re.search(regex1, human_time)
     if match:
         formated = match.group()
@@ -39,7 +39,7 @@ def utc2timestamp(human_time):
     strped_time = datetime.strptime(formated, c.time_fmt)
     timestamp = timegm(strped_time.utctimetuple())
 
-    regex2 = "\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}(\.\d+)"
+    regex2 = r"\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}(\.\d+)"
     match = re.search(regex2, human_time)
     if match:
         timestamp += float(match.group(1))

@@ -62,7 +62,7 @@ class MockedHttpResponse(object):
         return 200
 
 
-def mock_send_request(self, client, request):
+def mock_send_request(self, request):
     return MockedHttpResponse(request.url), False
 
 

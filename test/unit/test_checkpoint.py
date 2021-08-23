@@ -38,7 +38,7 @@ def test_checkpoint_manager_adapter():
 
     cmgr.save({'name': 'TEST_NAME', 'checkpoint': 'CHECKPOINT'})
 
-    filename = op.join(checkpoint_dir, cmgr.get_ckpt_key(['TEST_NAME'])[0])
+    filename = op.join(checkpoint_dir, cmgr._get_ckpt_key(['TEST_NAME'])[0])
     with open(filename, 'r') as fp:
         assert json.load(fp)['data'] == {
             'checkpoint': 'CHECKPOINT'

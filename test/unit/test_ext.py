@@ -23,7 +23,6 @@ from cloudconnectlib.core.ext import (
     is_true,
     lookup_method,
     regex_match,
-    regex_not_match,
     regex_search,
     std_output,
     splunk_xml,
@@ -42,11 +41,6 @@ def test_regex_match():
     assert regex_match('^[A-Za-z0-9]+', '123456abcdefg')
     assert regex_match('^$', '')
     assert regex_match('', 'abcd')
-
-
-def test_regex_not_match():
-    assert regex_not_match('\bclass\b', 'no class at all')
-    assert regex_not_match('^[A-Z]+', '123456')
 
 
 def test_splunk_xml():

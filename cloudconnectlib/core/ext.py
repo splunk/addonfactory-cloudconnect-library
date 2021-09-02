@@ -65,18 +65,6 @@ def regex_match(pattern, source, flags=0):
     return False
 
 
-def regex_not_match(pattern, source, flags=0):
-    """
-    Determine whether a string is not match a regex pattern.
-
-    :param pattern: regex expression
-    :param source: candidate to match regex
-    :param flags: flags for regex match
-    :return: `True` if candidate not match pattern else `False`
-    """
-    return not regex_match(pattern, source, flags)
-
-
 def json_path(source, json_path_expr):
     """ Extract value from string with JSONPATH expression.
     :param json_path_expr: JSONPATH expression
@@ -387,7 +375,6 @@ _extension_functions = {
     'exit_job_if_true': exit_job_if_true,
     'is_true': is_true,
     'regex_match': regex_match,
-    'regex_not_match': regex_not_match,
     'regex_search': regex_search,
     'set_var': set_var,
     'splunk_xml': splunk_xml,

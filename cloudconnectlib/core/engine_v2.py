@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import concurrent.futures as cf
 import threading
 from collections import Iterable
@@ -23,7 +22,7 @@ from .plugin import init_pipeline_plugins
 logger = get_cc_logger()
 
 
-class CloudConnectEngine(object):
+class CloudConnectEngine:
 
     def __init__(self, max_workers=4):
         self._executor = cf.ThreadPoolExecutor(max_workers)

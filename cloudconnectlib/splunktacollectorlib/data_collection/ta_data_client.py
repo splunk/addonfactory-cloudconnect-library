@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import next
-from builtins import object
 from . import ta_checkpoint_manager as cp
 from . import ta_data_collector as tdc
 
@@ -34,7 +32,7 @@ def build_event(host=None,
                                   raw_data, is_unbroken, is_done])
 
 
-class TaDataClient(object):
+class TaDataClient:
     def __init__(self,
                  meta_config,
                  task_config,
@@ -72,7 +70,7 @@ def client_adatper(job_func):
     class TaDataClientAdapter(TaDataClient):
         def __init__(self, all_conf_contents, meta_config, task_config,
                      chp_mgr):
-            super(TaDataClientAdapter, self).__init__(meta_config, task_config,
+            super().__init__(meta_config, task_config,
                                                       chp_mgr)
             self._execute_times = 0
             self._gen = job_func(self._task_config, chp_mgr)
@@ -83,7 +81,7 @@ def client_adatper(job_func):
             """
 
             # normaly base class just set self._stop as True
-            super(TaDataClientAdapter, self).stop()
+            super().stop()
 
         def get(self):
             """

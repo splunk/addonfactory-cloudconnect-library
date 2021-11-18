@@ -46,7 +46,7 @@ event_tuple = namedtuple('Event',
                           'raw_data', 'is_unbroken', 'is_done'])
 
 
-class TADataCollector(object):
+class TADataCollector:
     def __init__(self, tconfig, meta_config, task_config,
                  checkpoint_manager_cls, data_client_cls, data_loader):
         self._lock = threading.Lock()
@@ -124,7 +124,7 @@ class TADataCollector(object):
             except Exception:
                 stulog.logger.exception("{} Failed to index data"
                                         .format(self._p))
-            stulog.logger.info("{} End of indexing data".format(self._p))
+            stulog.logger.info(f"{self._p} End of indexing data")
             if not self._ta_config.is_single_instance():
                 self._data_loader.tear_down()
 
@@ -149,10 +149,10 @@ class TADataCollector(object):
                     if not self._write_events(events):
                         break
             except StopIteration:
-                stulog.logger.info("{} Finished this round".format(self._p))
+                stulog.logger.info(f"{self._p} Finished this round")
                 return
             except Exception:
-                stulog.logger.exception("{} Failed to get msg".format(self._p))
+                stulog.logger.exception(f"{self._p} Failed to get msg")
                 break
         # in case encounter exception or fail to write events
         if not self._stopped:

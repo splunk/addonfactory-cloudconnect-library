@@ -106,7 +106,7 @@ def _setup_signal_handler(data_loader, ta_short_name):
     """
 
     def _handle_exit(signum, frame):
-        stulog.logger.info("{} receives exit signal".format(ta_short_name))
+        stulog.logger.info(f"{ta_short_name} receives exit signal")
         if data_loader is not None:
             data_loader.tear_down()
 
@@ -281,6 +281,6 @@ def main(
             )
         except Exception:
             stulog.logger.exception(
-                "{} task encounter exception".format(mod_input_name))
-        stulog.logger.info("End {} task".format(mod_input_name))
+                f"{mod_input_name} task encounter exception")
+        stulog.logger.info(f"End {mod_input_name} task")
     sys.exit(0)

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import json
 import re
 
@@ -24,7 +23,7 @@ from splunktalib import state_store as ss
 from splunktalib.common.util import is_true
 
 
-class TACheckPointMgr(object):
+class TACheckPointMgr:
     SEPARATOR = "_" * 3
 
     # FIXME We'd better move all default values together

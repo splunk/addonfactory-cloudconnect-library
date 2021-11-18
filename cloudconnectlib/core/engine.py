@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import threading
 
 from . import defaults
@@ -24,7 +23,7 @@ from ..common.log import get_cc_logger
 _logger = get_cc_logger()
 
 
-class CloudConnectEngine(object):
+class CloudConnectEngine:
     """The cloud connect engine to process request instantiated
      from user options."""
 
@@ -89,7 +88,7 @@ class CloudConnectEngine(object):
         self._stopped = True
 
 
-class Job(object):
+class Job:
     """Job class represents a single request to send HTTP request until
     reached it's stop condition.
     """

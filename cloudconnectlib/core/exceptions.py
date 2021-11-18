@@ -38,7 +38,7 @@ class HTTPError(CCEError):
         Initialize HTTPError with `response` object and `status`.
         """
         self.reason = reason
-        super(HTTPError, self).__init__(reason)
+        super().__init__(reason)
 
 
 class StopCCEIteration(CCEError):

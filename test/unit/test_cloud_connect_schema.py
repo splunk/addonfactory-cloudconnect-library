@@ -24,7 +24,7 @@ from jsonschema import validate
 
 
 def _json_file(json_file):
-    with open(json_file, 'r') as f:
+    with open(json_file) as f:
         return json.load(f)
 
 
@@ -33,7 +33,7 @@ def _load_json_under_data(json_file):
 
 
 def _load_schema_from_file():
-    with open(common.SCHEMA_FILE, 'r') as f:
+    with open(common.SCHEMA_FILE) as f:
         return json.loads(f.read())
 
 

@@ -25,7 +25,7 @@ from splunktalib.common import util
 
 
 # methods can be overrided by subclass : process_task_configs
-class TaConfig(object):
+class TaConfig:
     _current_hostname = socket.gethostname()
     _appname = util.get_appname_from_path(op.abspath(__file__))
 
@@ -89,8 +89,8 @@ class TaConfig(object):
                 log_level = item["loglevel"]
                 break
         stulog.set_log_level(log_level)
-        stulog.logger.info("Set log_level={}".format(log_level))
-        stulog.logger.info("Start {} task".format(self._stanza_name))
+        stulog.logger.info(f"Set log_level={log_level}")
+        stulog.logger.info(f"Start {self._stanza_name} task")
 
     def get_input_type(self):
         return self._input_type

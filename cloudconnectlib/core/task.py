@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import copy
 import threading
 from abc import abstractmethod
@@ -35,7 +34,7 @@ _AUTH_TYPES = {
 }
 
 
-class ProcessHandler(object):
+class ProcessHandler:
     def __init__(self, method, arguments, output):
         self.method = method
         self.arguments = [_Token(arg) for arg in arguments or ()]
@@ -54,7 +53,7 @@ class ProcessHandler(object):
         return data
 
 
-class Condition(object):
+class Condition:
     def __init__(self, method, arguments):
         self.method = method
         self.arguments = [_Token(arg) for arg in arguments or ()]
@@ -66,7 +65,7 @@ class Condition(object):
         return callable_method(*args)
 
 
-class ConditionGroup(object):
+class ConditionGroup:
     def __init__(self):
         self._conditions = []
 
@@ -79,7 +78,7 @@ class ConditionGroup(object):
         )
 
 
-class ProxyTemplate(object):
+class ProxyTemplate:
     def __init__(self, proxy_setting):
         self._proxy = DictToken(proxy_setting or {})
 
@@ -88,7 +87,7 @@ class ProxyTemplate(object):
         return get_proxy_info(rendered)
 
 
-class RequestTemplate(object):
+class RequestTemplate:
     def __init__(self, request):
         if not request:
             raise ValueError('The request is none')
@@ -112,7 +111,7 @@ class RequestTemplate(object):
 
         method = request.get('method', 'GET')
         if not method or method.upper() not in ('GET', 'POST'):
-            raise ValueError('Unsupported value for request method: {}'.format(method))
+            raise ValueError(f'Unsupported value for request method: {method}')
         self.method = _Token(method)
 
         self.count = 0
@@ -135,7 +134,7 @@ class RequestTemplate(object):
         )
 
 
-class BaseTask(object):
+class BaseTask:
     def __init__(self, name):
         self._name = name
         self._pre_process_handler = []
@@ -245,7 +244,7 @@ class CCESplitTask(BaseTask):
     OUTPUT_KEY = "__cce_split_result__"
 
     def __init__(self, name):
-        super(CCESplitTask, self).__init__(name)
+        super().__init__(name)
         self._process_handler = None
         self._source = None
 
@@ -294,7 +293,7 @@ class CCEHTTPRequestTask(BaseTask):
     """
 
     def __init__(self, request, name, meta_config=None, task_config=None):
-        super(CCEHTTPRequestTask, self).__init__(name)
+        super().__init__(name)
         self._request = RequestTemplate(request)
         self._stop_conditions = ConditionGroup()
         self._proxy_info = None
@@ -358,10 +357,10 @@ class CCEHTTPRequestTask(BaseTask):
         :type settings: ``dict``
         """
         if not auth_type:
-            raise ValueError('Invalid auth type={}'.format(auth_type))
+            raise ValueError(f'Invalid auth type={auth_type}')
         authorizer_cls = _AUTH_TYPES.get(auth_type.lower())
         if not authorizer_cls:
-            raise ValueError('Unsupported auth type={}'.format(auth_type))
+            raise ValueError(f'Unsupported auth type={auth_type}')
         self._authorizer = authorizer_cls(settings)
 
     def set_iteration_count(self, count):
@@ -403,9 +402,9 @@ class CCEHTTPRequestTask(BaseTask):
         :type content: ``dict``
         """
         if not name or not name.strip():
-            raise ValueError('Invalid checkpoint name: "{}"'.format(name))
+            raise ValueError(f'Invalid checkpoint name: "{name}"')
         if not content:
-            raise ValueError('Invalid checkpoint content: {}'.format(content))
+            raise ValueError(f'Invalid checkpoint content: {content}')
         self._checkpointer = CheckpointManagerAdapter(
             namespaces=name,
             content=content,

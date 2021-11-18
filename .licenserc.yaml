@@ -33,8 +33,6 @@ header:
     - ".*"
     - "*.pot"
     - "*.po"
-    - "test/functional/sample_ta/**"
-    - "test/functional/data/**"
     - "examples/**"
     - "**/*.json"
 

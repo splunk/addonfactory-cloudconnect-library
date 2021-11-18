@@ -29,15 +29,13 @@ class MockedHttpResponse:
 
     @property
     def header(self):
-        args = self.url.split('&')
+        args = self.url.split("&")
         if args and args[-1].startswith("page="):
-            n = args[-1].split('=')[1]
-            url = self.url[0:-1] + '%s' % (int(n) + 1)
+            n = args[-1].split("=")[1]
+            url = self.url[0:-1] + "%s" % (int(n) + 1)
         else:
             url = self.url + "&page=2"
-        return {
-            'link': url
-        }
+        return {"link": url}
 
     @property
     def body(self):
@@ -69,27 +67,30 @@ def generate_task(monkeypatch, pagination=True):
             request={
                 "url": "https://api.github.com/search/code?q=addClass+user%3Amozilla",
                 "method": "GET",
-                "nextpage_url": "{{__nextpage_url__}}"
+                "nextpage_url": "{{__nextpage_url__}}",
             },
-            name='test_github'
+            name="test_github",
         )
     else:
         task = CCEHTTPRequestTask(
             request={
                 "url": "https://api.github.com/search/code?q=addClass+user:mozilla",
-                "method": "GET"
+                "method": "GET",
             },
-            name='test_github'
+            name="test_github",
         )
-    monkeypatch.setattr(CCEHTTPRequestTask, '_send_request', mock_send_request)
+    monkeypatch.setattr(CCEHTTPRequestTask, "_send_request", mock_send_request)
 
-    task.add_postprocess_handler(method='set_var',
-                                 input=["{{__response__.header.link}}"],
-                                 output='__nextpage_url__')
-    task.add_postprocess_handler(method='json_path',
-                                 input=["{{__response__.body}}",
-                                        "$.items[*]"],
-                                 output="__stdout__")
+    task.add_postprocess_handler(
+        method="set_var",
+        input=["{{__response__.header.link}}"],
+        output="__nextpage_url__",
+    )
+    task.add_postprocess_handler(
+        method="json_path",
+        input=["{{__response__.body}}", "$.items[*]"],
+        output="__stdout__",
+    )
     return task
 
 
@@ -108,11 +109,15 @@ def test_nextpage_url(monkeypatch):
 
     for x in task.perform(context):
         pass
-    assert isinstance(context.get("__stdout__"), list) and \
-           len(context.get("__stdout__")) > 0
+    assert (
+        isinstance(context.get("__stdout__"), list)
+        and len(context.get("__stdout__")) > 0
+    )
     assert isinstance(context.get("__nextpage_url__"), str)
-    assert context["__nextpage_url__"] == \
-           "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=2"
+    assert (
+        context["__nextpage_url__"]
+        == "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=2"
+    )
     assert task._request.count == 1
 
     task = generate_task(monkeypatch)
@@ -121,23 +126,35 @@ def test_nextpage_url(monkeypatch):
     for x in task.perform(context):
         pass
     assert task._request.count == 2
-    assert context["__nextpage_url__"] == \
-           "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=3"
+    assert (
+        context["__nextpage_url__"]
+        == "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=3"
+    )
 
     task = generate_task(monkeypatch)
     context = {}
     task.set_iteration_count(3)
     for x in task.perform(context):
         pass
-    assert isinstance(context.get("__stdout__"), list) and len(context.get("__stdout__")) > 0
-    assert context["__nextpage_url__"] == \
-           "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=4"
+    assert (
+        isinstance(context.get("__stdout__"), list)
+        and len(context.get("__stdout__")) > 0
+    )
+    assert (
+        context["__nextpage_url__"]
+        == "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=4"
+    )
 
     context = {}
     task.set_iteration_count(3)
     task._finished_iter_count = 0
     for x in task.perform(context):
         pass
-    assert isinstance(context.get("__stdout__"), list) and len(context.get("__stdout__")) > 0
-    assert context["__nextpage_url__"] == \
-           "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=4"
+    assert (
+        isinstance(context.get("__stdout__"), list)
+        and len(context.get("__stdout__")) > 0
+    )
+    assert (
+        context["__nextpage_url__"]
+        == "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=4"
+    )

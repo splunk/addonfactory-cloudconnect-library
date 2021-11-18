@@ -16,11 +16,12 @@
 import json
 import re
 
-from . import ta_consts as c
-from . import ta_helper as th
-from ..common import log as stulog
 from splunktalib import state_store as ss
 from splunktalib.common.util import is_true
+
+from ..common import log as stulog
+from . import ta_consts as c
+from . import ta_helper as th
 
 
 class TACheckPointMgr:
@@ -35,51 +36,48 @@ class TACheckPointMgr:
         self._store = self._create_state_store(
             meta_config,
             task_config.get(c.checkpoint_storage_type),
-            task_config[c.appname]
+            task_config[c.appname],
         )
 
     def _create_state_store(self, meta_config, storage_type, app_name):
-        stulog.logger.debug('Got checkpoint storage type=%s', storage_type)
+        stulog.logger.debug("Got checkpoint storage type=%s", storage_type)
 
         if storage_type == c.checkpoint_kv_storage:
             collection_name = self._get_collection_name()
             stulog.logger.debug(
-                'Creating KV state store, collection name=%s', collection_name
+                "Creating KV state store, collection name=%s", collection_name
             )
             return ss.get_state_store(
                 meta_config,
                 appname=app_name,
                 collection_name=collection_name,
-                use_kv_store=True
+                use_kv_store=True,
             )
 
         use_cache_file = self._use_cache_file()
-        max_cache_seconds = \
-            self._get_max_cache_seconds() if use_cache_file else None
+        max_cache_seconds = self._get_max_cache_seconds() if use_cache_file else None
 
         stulog.logger.debug(
-            'Creating file state store, use_cache_file=%s, max_cache_seconds=%s',
-            use_cache_file, max_cache_seconds
+            "Creating file state store, use_cache_file=%s, max_cache_seconds=%s",
+            use_cache_file,
+            max_cache_seconds,
         )
 
         return ss.get_state_store(
-            meta_config,
-            app_name,
-            use_cached_store=use_cache_file
+            meta_config, app_name, use_cached_store=use_cache_file
         )
 
     def _get_collection_name(self):
         collection = self._task_config.get(c.collection_name)
-        collection = collection.strip() if collection else ''
+        collection = collection.strip() if collection else ""
 
         if not collection:
             input_name = self._task_config[c.mod_input_name]
             stulog.logger.info(
-                'Collection name="%s" is empty, set it to "%s"',
-                collection, input_name
+                'Collection name="%s" is empty, set it to "%s"', collection, input_name
             )
             collection = input_name
-        return re.sub(r'[^\w]+', '_', collection)
+        return re.sub(r"[^\w]+", "_", collection)
 
     def _use_cache_file(self):
         # TODO Move the default value outside code
@@ -87,22 +85,21 @@ class TACheckPointMgr:
         if use_cache_file:
             stulog.logger.info(
                 "Stanza=%s using cached file store to create checkpoint",
-                self._task_config[c.stanza_name]
+                self._task_config[c.stanza_name],
             )
         return use_cache_file
 
     def _get_max_cache_seconds(self):
         default = self._DEFAULT_MAX_CACHE_SECONDS
-        seconds = self._task_config.get(
-            c.max_cache_seconds, default
-        )
+        seconds = self._task_config.get(c.max_cache_seconds, default)
         try:
             seconds = int(seconds)
         except ValueError:
             stulog.logger.warning(
                 "The max_cache_seconds '%s' is not a valid integer,"
                 " so set this variable to default value %s",
-                seconds, default
+                seconds,
+                default,
             )
             seconds = default
         else:
@@ -113,7 +110,9 @@ class TACheckPointMgr:
                 stulog.logger.warning(
                     "The max_cache_seconds (%s) is expected in range[1,%s],"
                     " set it to %s",
-                    seconds, maximum, adjusted
+                    seconds,
+                    maximum,
+                    adjusted,
                 )
                 seconds = adjusted
         return seconds
@@ -124,8 +123,9 @@ class TACheckPointMgr:
     def get_ckpt(self, namespaces=None, show_namespaces=False):
         key, namespaces = self.get_ckpt_key(namespaces)
         raw_checkpoint = self._store.get_state(key)
-        stulog.logger.info("Get checkpoint key='%s' value='%s'",
-                           key, json.dumps(raw_checkpoint))
+        stulog.logger.info(
+            "Get checkpoint key='%s' value='%s'", key, json.dumps(raw_checkpoint)
+        )
         if not show_namespaces and raw_checkpoint:
             return raw_checkpoint.get("data")
         return raw_checkpoint
@@ -136,8 +136,9 @@ class TACheckPointMgr:
             return
         key, namespaces = self.get_ckpt_key(namespaces)
         value = {"namespaces": namespaces, "data": ckpt}
-        stulog.logger.info("Update checkpoint key='%s' value='%s'",
-                           key, json.dumps(value))
+        stulog.logger.info(
+            "Update checkpoint key='%s' value='%s'", key, json.dumps(value)
+        )
         self._store.update_state(key, value)
 
     def remove_ckpt(self, namespaces=None):
@@ -146,7 +147,7 @@ class TACheckPointMgr:
 
     def _key_formatter(self, namespaces=None):
         if not namespaces:
-            stulog.logger.info('Namespaces is empty, using stanza name instead.')
+            stulog.logger.info("Namespaces is empty, using stanza name instead.")
             namespaces = [self._task_config[c.stanza_name]]
         key_str = TACheckPointMgr.SEPARATOR.join(namespaces)
         hashed_file = th.format_name_for_file(key_str)
@@ -156,6 +157,6 @@ class TACheckPointMgr:
     def close(self, key=None):
         try:
             self._store.close(key)
-            stulog.logger.info('Closed state store successfully. key=%s', key)
+            stulog.logger.info("Closed state store successfully. key=%s", key)
         except Exception:
-            stulog.logger.exception('Error closing state store. key=%s', key)
+            stulog.logger.exception("Error closing state store. key=%s", key)

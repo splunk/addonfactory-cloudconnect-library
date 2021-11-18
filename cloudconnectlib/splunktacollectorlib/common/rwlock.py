@@ -45,7 +45,7 @@ class _WriteLocker:
 
 
 class RWLock:
-    """ Simple Read-Write lock.
+    """Simple Read-Write lock.
 
     Allow multiple read but only one writing concurrently.
     """
@@ -83,4 +83,3 @@ class RWLock:
     @property
     def writer_lock(self):
         return _WriteLocker(self)
-

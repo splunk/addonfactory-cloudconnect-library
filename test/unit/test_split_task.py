@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 import pytest
-from cloudconnectlib.core.task import CCESplitTask
+
 from cloudconnectlib.core.exceptions import CCESplitError
+from cloudconnectlib.core.task import CCESplitTask
 
 context = {"apps": ["app1", "app2", "app3"]}
 

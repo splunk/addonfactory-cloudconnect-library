@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import logging
+
 from splunktalib.common import log as stclog
 
 
@@ -38,8 +39,14 @@ def set_log_level(log_level):
         else:
             stclog.Logs().set_level(logging.INFO)
     elif isinstance(log_level, int):
-        if log_level in [logging.DEBUG, logging.INFO, logging.ERROR,
-                         logging.WARN, logging.WARNING, logging.CRITICAL]:
+        if log_level in [
+            logging.DEBUG,
+            logging.INFO,
+            logging.ERROR,
+            logging.WARN,
+            logging.WARNING,
+            logging.CRITICAL,
+        ]:
             stclog.Logs().set_level(log_level)
         else:
             stclog.Logs().set_level(logging.INFO)
@@ -60,5 +67,3 @@ def reset_logger(name):
 
     global logger
     logger = stclog.Logs().get_logger(name)
-
-

@@ -17,10 +17,10 @@ import json
 import os.path as op
 from os import listdir
 
-from . import common
 import pytest
-from jsonschema import ValidationError
-from jsonschema import validate
+from jsonschema import ValidationError, validate
+
+from . import common
 
 
 def _json_file(json_file):
@@ -38,8 +38,8 @@ def _load_schema_from_file():
 
 
 def test_validate_generated_schema():
-    conf = _load_json_under_data('test_1.json')
-    assert conf['meta']['apiVersion'] == '1.0.0'
+    conf = _load_json_under_data("test_1.json")
+    assert conf["meta"]["apiVersion"] == "1.0.0"
     validate(conf, _load_schema_from_file())
 
 
@@ -51,8 +51,8 @@ def test_validate_schema_expect_raise():
         validate(conf, schema)
 
     # validate all required elements in top level
-    required = ['meta', 'tokens', 'requests']
-    validated = _load_json_under_data('test_1.json')
+    required = ["meta", "tokens", "requests"]
+    validated = _load_json_under_data("test_1.json")
 
     for r in required:
         backup = validated[r]
@@ -63,8 +63,11 @@ def test_validate_schema_expect_raise():
 
 
 def test_validate_examples():
-    files = [f for f in listdir(common.EXAMPLE_DIR) if
-             op.isfile(op.join(common.EXAMPLE_DIR, f)) and f.endswith('.json')]
+    files = [
+        f
+        for f in listdir(common.EXAMPLE_DIR)
+        if op.isfile(op.join(common.EXAMPLE_DIR, f)) and f.endswith(".json")
+    ]
     schema = _load_schema_from_file()
 
     for f in files:

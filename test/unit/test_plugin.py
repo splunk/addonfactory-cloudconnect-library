@@ -14,10 +14,12 @@
 # limitations under the License.
 #
 import importlib
-import sys
-import os
-from . import common
 import logging
+import os
+import sys
+
+from . import common
+
 sys.path.append(os.path.join(common.PROJECT_ROOT))
 from cloudconnectlib.common import log as ccelog
 
@@ -26,13 +28,14 @@ ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     "%(asctime)s %(levelname)s pid=%(process)d tid=%(threadName)s "
-    "file=%(filename)s:%(funcName)s:%(lineno)d | %(message)s")
+    "file=%(filename)s:%(funcName)s:%(lineno)d | %(message)s"
+)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 ccelog.set_cc_logger(logger)
 
-from cloudconnectlib.core.plugin import init_pipeline_plugins
 from cloudconnectlib.core.ext import _extension_functions, lookup_method
+from cloudconnectlib.core.plugin import init_pipeline_plugins
 
 
 def test_decorator():
@@ -44,7 +47,7 @@ def test_decorator():
 
     @cce_pipeline_plugin
     def func_with_arg2(msg, post=""):
-        return msg+post
+        return msg + post
 
     assert "func_with_arg1" in list(_extension_functions.keys())
     ret = lookup_method("func_with_arg1")("hello")
@@ -55,7 +58,7 @@ def test_decorator():
     assert ret == "hello"
 
     ret = lookup_method("func_with_arg2")("hello", post="world")
-    assert ret == "hello"+"world"
+    assert ret == "hello" + "world"
 
     _extension_functions.pop("func_with_arg1", None)
     _extension_functions.pop("func_with_arg2", None)
@@ -66,7 +69,7 @@ def write_py_file(target_dir, target_file, content):
     if not os.path.isdir(target_dir):
         os.mkdir(target_dir)
 
-    with open(target_file_path, mode='w') as tf:
+    with open(target_file_path, mode="w") as tf:
         tf.write(content)
 
 
@@ -101,9 +104,7 @@ def json_path(msg):
 def cce_unit_test_func_without_decorator(msg):
     return msg
 """
-    plugin_dir = os.path.join(common.PROJECT_ROOT,
-                              "cloudconnectlib",
-                              "plugin")
+    plugin_dir = os.path.join(common.PROJECT_ROOT, "cloudconnectlib", "plugin")
     test_plugin_file1 = "cce_plugin_test_plugin_file1.py"
     test_plugin_file2 = "test_plugin_file2.py"
     test_plugin_file3 = "test_plugin_file3.p"
@@ -119,25 +120,25 @@ def cce_unit_test_func_without_decorator(msg):
         assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
         # Don't have the right prefix
-        write_py_file(plugin_dir, test_plugin_file2, import_part+test_functions)
+        write_py_file(plugin_dir, test_plugin_file2, import_part + test_functions)
         init_pipeline_plugins(plugin_dir)
         assert "cce_unit_test_func_with_arg1" not in list(_extension_functions.keys())
         assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
-        write_py_file(plugin_dir, test_plugin_file3, import_part+test_functions)
+        write_py_file(plugin_dir, test_plugin_file3, import_part + test_functions)
         init_pipeline_plugins(plugin_dir)
         assert "cce_unit_test_func_with_arg1" not in list(_extension_functions.keys())
         assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
         # The file name already exists
-        write_py_file(plugin_dir, test_plugin_file4, import_part+test_functions)
+        write_py_file(plugin_dir, test_plugin_file4, import_part + test_functions)
         init_pipeline_plugins(plugin_dir)
         assert "cce_unit_test_func_with_arg1" not in list(_extension_functions.keys())
         assert "cce_unit_test_func_with_arg2" not in list(_extension_functions.keys())
 
         # The function name already exists
         json_path_value = _extension_functions["json_path"]
-        write_py_file(plugin_dir, test_plugin_file5, import_part+test_functions)
+        write_py_file(plugin_dir, test_plugin_file5, import_part + test_functions)
         importlib.invalidate_caches()
         init_pipeline_plugins(plugin_dir)
         assert "cce_unit_test_func_with_arg1" in list(_extension_functions.keys())
@@ -146,14 +147,14 @@ def cce_unit_test_func_without_decorator(msg):
 
     finally:
         remove_file(plugin_dir, test_plugin_file1)
-        remove_file(plugin_dir, test_plugin_file1+"c")
+        remove_file(plugin_dir, test_plugin_file1 + "c")
         remove_file(plugin_dir, test_plugin_file2)
-        remove_file(plugin_dir, test_plugin_file2+"c")
+        remove_file(plugin_dir, test_plugin_file2 + "c")
         remove_file(plugin_dir, test_plugin_file3)
         remove_file(plugin_dir, test_plugin_file4)
-        remove_file(plugin_dir, test_plugin_file4+"c")
+        remove_file(plugin_dir, test_plugin_file4 + "c")
         remove_file(plugin_dir, test_plugin_file5)
-        remove_file(plugin_dir, test_plugin_file5+"c")
+        remove_file(plugin_dir, test_plugin_file5 + "c")
 
 
 def test_plugin_init(capsys):
@@ -172,9 +173,7 @@ def cce_unit_test_func_with_arg2(msg, post=""):
 def cce_unit_test_func_without_decorator(msg):
     return msg
 """
-    plugin_dir = os.path.join(common.PROJECT_ROOT,
-                              "cloudconnectlib",
-                              "plugin")
+    plugin_dir = os.path.join(common.PROJECT_ROOT, "cloudconnectlib", "plugin")
     test_plugin_file = "cce_plugin_test_plugin_file.py"
     try:
         _extension_functions.pop("cce_unit_test_func_with_arg1", None)
@@ -188,17 +187,21 @@ def cce_unit_test_func_without_decorator(msg):
 
         assert "cce_unit_test_func_with_arg2" in list(_extension_functions.keys())
         ret = lookup_method("cce_unit_test_func_with_arg2")("hello", "you")
-        assert ret == "hello"+"you"
+        assert ret == "hello" + "you"
 
-        assert "cce_unit_test_func_without_decorator" not in list(_extension_functions.keys())
+        assert "cce_unit_test_func_without_decorator" not in list(
+            _extension_functions.keys()
+        )
     finally:
         remove_file(plugin_dir, test_plugin_file)
-        remove_file(plugin_dir, test_plugin_file+"c")
+        remove_file(plugin_dir, test_plugin_file + "c")
 
 
 def test_plugin_in_engine_no_files(capsys):
-    from .test_engine_v2 import HTTPJob, Counter
     from cloudconnectlib.core.engine_v2 import CloudConnectEngine
+
+    from .test_engine_v2 import Counter, HTTPJob
+
     counter = Counter()
     cc_engine = CloudConnectEngine()
     cc_engine.start([HTTPJob(counter)])
@@ -207,12 +210,10 @@ def test_plugin_in_engine_no_files(capsys):
 
 def test_plugin_in_engine_w_files(capsys):
     from cloudconnectlib.core.engine_v2 import CloudConnectEngine
-    from cloudconnectlib.core.task import CCEHTTPRequestTask
     from cloudconnectlib.core.job import CCEJob
+    from cloudconnectlib.core.task import CCEHTTPRequestTask
 
-    plugin_dir = os.path.join(common.PROJECT_ROOT,
-                              "cloudconnectlib",
-                              "plugin")
+    plugin_dir = os.path.join(common.PROJECT_ROOT, "cloudconnectlib", "plugin")
     test_functions = """
 from cloudconnectlib.core.plugin import cce_pipeline_plugin
 
@@ -234,29 +235,29 @@ def cce_unit_test_func_in_engine_arg2(msg):
                 "url": "https://www.baidu.com/",
                 "method": "GET",
             },
-            name='test_baidu'
+            name="test_baidu",
         )
 
         context = {}
-        task.add_postprocess_handler('cce_unit_test_func_in_engine_arg1',
-                                     ['hello'],
-                                     '__hello__')
+        task.add_postprocess_handler(
+            "cce_unit_test_func_in_engine_arg1", ["hello"], "__hello__"
+        )
         task.set_iteration_count(1)
         job = CCEJob(context=context)
         job.add_task(task)
         cc_engine = CloudConnectEngine()
         cc_engine.start([job])
-        assert context.get('__hello__') == 'hello'
+        assert context.get("__hello__") == "hello"
 
         test_plugin_file2 = "cce_plugin_test_plugin_file2.py"
         write_py_file(plugin_dir, test_plugin_file2, error_test_functions)
-        task.add_postprocess_handler('cce_unit_test_func_in_engine_arg2',
-                                     ['world'],
-                                     '__world__')
+        task.add_postprocess_handler(
+            "cce_unit_test_func_in_engine_arg2", ["world"], "__world__"
+        )
         cc_engine.start([job])
-        assert context.get('__world__') is None
+        assert context.get("__world__") is None
     finally:
         remove_file(plugin_dir, test_plugin_file1)
-        remove_file(plugin_dir, test_plugin_file1+"c")
+        remove_file(plugin_dir, test_plugin_file1 + "c")
         remove_file(plugin_dir, test_plugin_file2)
-        remove_file(plugin_dir, test_plugin_file2+"c")
+        remove_file(plugin_dir, test_plugin_file2 + "c")

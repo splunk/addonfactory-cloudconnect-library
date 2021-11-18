@@ -19,7 +19,7 @@ from cloudconnectlib.common.lib_util import register_module
 
 
 def test_register_module():
-    module_not_exist = 'cloudconnect_test'
+    module_not_exist = "cloudconnect_test"
 
     system_path = sys.path
     assert module_not_exist not in system_path
@@ -28,6 +28,7 @@ def test_register_module():
     assert module_not_exist not in system_path
 
     import os.path as op
+
     module_exist = op.abspath(__file__)
     register_module(module_exist)
 

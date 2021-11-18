@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .ext import _extension_functions
+import importlib
+import sys
+import traceback
 from os import path as op
 from os import walk
-import sys
+
 from ..common import log
-import traceback
-import importlib
+from .ext import _extension_functions
 
 logger = log.get_cc_logger()
 
@@ -40,19 +41,23 @@ def cce_pipeline_plugin(func):
         >>>     do_work()
     """
     if not callable(func):
-        logger.debug("Function %s is not callable, don't add it as a pipeline"
-                     " function", func.__name__)
+        logger.debug(
+            "Function %s is not callable, don't add it as a pipeline" " function",
+            func.__name__,
+        )
     else:
         if func.__name__ in list(_extension_functions.keys()):
-            logger.warning("Pipeline function %s already exists, please rename"
-                           "it!", func.__name__)
+            logger.warning(
+                "Pipeline function %s already exists, please rename" "it!",
+                func.__name__,
+            )
         else:
             _extension_functions[func.__name__] = func
-            logger.debug("Added function %s to pipeline plugin system",
-                        func.__name__)
+            logger.debug("Added function %s to pipeline plugin system", func.__name__)
 
     def pipeline_func(*args, **kwargs):
         return func(*args, **kwargs)
+
     return pipeline_func
 
 
@@ -66,21 +71,24 @@ def import_plugin_file(file_name):
     if file_name.endswith(".py"):
         module_name = file_name[:-3]
     else:
-        logger.warning("Plugin file %s is with unsupported extenstion, the "
-                       "supported are py", file_name)
+        logger.warning(
+            "Plugin file %s is with unsupported extenstion, the " "supported are py",
+            file_name,
+        )
         return
 
     if module_name in list(sys.modules.keys()):
-        logger.warning("Module %s aleady exists and it won't be reload, "
-                       "please rename your plugin module if it is required.",
-                       module_name)
+        logger.warning(
+            "Module %s aleady exists and it won't be reload, "
+            "please rename your plugin module if it is required.",
+            module_name,
+        )
         return
 
     try:
         importlib.import_module(module_name)
     except Exception:
-        logger.warning("Failed to load module {}, {}".format(
-            module_name, traceback.format_exc()))
+        logger.warning(f"Failed to load module {module_name}, {traceback.format_exc()}")
         return
 
     logger.info("Module %s is imported", module_name)
@@ -96,8 +104,9 @@ def init_pipeline_plugins(plugin_dir):
     with ".py"
     """
     if not op.isdir(plugin_dir):
-        logger.warning("%s is not a directory! Pipeline plugin files won't be loaded.",
-                       plugin_dir)
+        logger.warning(
+            "%s is not a directory! Pipeline plugin files won't be loaded.", plugin_dir
+        )
         return
 
     if plugin_dir not in sys.path:

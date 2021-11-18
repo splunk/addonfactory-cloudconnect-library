@@ -27,8 +27,7 @@ _logger = get_cc_logger()
 
 
 class CloudConnectClient:
-    """The client of cloud connect used to start a cloud connect engine instance.
-    """
+    """The client of cloud connect used to start a cloud connect engine instance."""
 
     def __init__(self, context, config_file, checkpoint_mgr):
         """
@@ -51,19 +50,20 @@ class CloudConnectClient:
             conf = load_json_file(self._config_file)
         except:
             raise ConfigException(
-                'Unable to load configuration file %s: %s'
+                "Unable to load configuration file %s: %s"
                 % (self._config_file, traceback.format_exc())
             )
 
-        version = conf.get('meta', {'apiVersion', None}).get('apiVersion', None)
+        version = conf.get("meta", {"apiVersion", None}).get("apiVersion", None)
         if not version:
             raise ConfigException(
-                'Config meta or api version not present in {}'.format(
-                    self._config_file))
+                f"Config meta or api version not present in {self._config_file}"
+            )
 
         config_loader, schema_file = get_loader_by_version(version)
         schema_path = os.path.join(
-            os.path.dirname(__file__), 'configuration', schema_file)
+            os.path.dirname(__file__), "configuration", schema_file
+        )
 
         return config_loader.load(conf, schema_path, self._context)
 
@@ -79,14 +79,13 @@ class CloudConnectClient:
             self._engine.start(
                 context=copy.deepcopy(self._context),
                 config=self._config,
-                checkpoint_mgr=self._checkpoint_mgr
+                checkpoint_mgr=self._checkpoint_mgr,
             )
         except Exception as ex:
-            _logger.exception('Error while starting client')
+            _logger.exception("Error while starting client")
             raise ex
 
     def stop(self):
-        """Stop the current cloud connect engine.
-        """
+        """Stop the current cloud connect engine."""
         if self._engine:
             self._engine.stop()

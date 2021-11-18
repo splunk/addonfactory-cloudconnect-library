@@ -15,28 +15,29 @@
 #
 import time
 import traceback
+
 import munch
+from httplib2 import Http, ProxyInfo, socks
+from requests import PreparedRequest, utils
+from solnlib.utils import is_true
 
 from cloudconnectlib.common import util
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
 from cloudconnectlib.core.exceptions import HTTPError
-from httplib2 import Http, socks, ProxyInfo
-from requests import PreparedRequest, utils
-from solnlib.utils import is_true
 
-try: # Python2 environment support
+try:  # Python2 environment support
     from httplib2 import SSLHandshakeError
-except: # Python3 environment support
+except:  # Python3 environment support
     from ssl import SSLError as SSLHandshakeError
 
 _logger = get_cc_logger()
 
 _PROXY_TYPE_MAP = {
-    'http': socks.PROXY_TYPE_HTTP,
-    'http_no_tunnel': socks.PROXY_TYPE_HTTP_NO_TUNNEL,
-    'socks4': socks.PROXY_TYPE_SOCKS4,
-    'socks5': socks.PROXY_TYPE_SOCKS5,
+    "http": socks.PROXY_TYPE_HTTP,
+    "http_no_tunnel": socks.PROXY_TYPE_HTTP_NO_TUNNEL,
+    "socks4": socks.PROXY_TYPE_SOCKS4,
+    "socks5": socks.PROXY_TYPE_SOCKS5,
 }
 
 
@@ -55,29 +56,30 @@ class HTTPResponse:
     @staticmethod
     def _decode_content(response, content):
         if not content:
-            return ''
+            return ""
 
         charset = utils.get_encoding_from_headers(response)
 
         if charset is None:
             charset = defaults.charset
             _logger.info(
-                'Unable to find charset in response headers,'
-                ' set it to default "%s"', charset
+                "Unable to find charset in response headers," ' set it to default "%s"',
+                charset,
             )
 
-        _logger.info('Decoding response content with charset=%s', charset)
+        _logger.info("Decoding response content with charset=%s", charset)
 
         try:
-            return content.decode(charset, errors='replace')
+            return content.decode(charset, errors="replace")
         except Exception as ex:
             _logger.warning(
-                'Failure decoding response content with charset=%s,'
-                ' decode it with utf-8: %s',
-                charset, ex
+                "Failure decoding response content with charset=%s,"
+                " decode it with utf-8: %s",
+                charset,
+                ex,
             )
 
-        return content.decode('utf-8', errors='replace')
+        return content.decode("utf-8", errors="replace")
 
     @property
     def header(self):
@@ -115,30 +117,28 @@ def _make_prepare_url_func():
 
 
 def get_proxy_info(proxy_config):
-    if not proxy_config or not is_true(proxy_config.get('proxy_enabled')):
-        _logger.info('Proxy is not enabled')
+    if not proxy_config or not is_true(proxy_config.get("proxy_enabled")):
+        _logger.info("Proxy is not enabled")
         return None
 
-    url = proxy_config.get('proxy_url')
-    port = proxy_config.get('proxy_port')
+    url = proxy_config.get("proxy_url")
+    port = proxy_config.get("proxy_port")
 
     if url or port:
         if not url:
             raise ValueError('Proxy "url" must not be empty')
         if not util.is_valid_port(port):
-            raise ValueError(
-                'Proxy "port" must be in range [1,65535]: %s' % port
-            )
+            raise ValueError('Proxy "port" must be in range [1,65535]: %s' % port)
 
-    user = proxy_config.get('proxy_username')
-    password = proxy_config.get('proxy_password')
+    user = proxy_config.get("proxy_username")
+    password = proxy_config.get("proxy_password")
 
     if not all((user, password)):
-        _logger.info('Proxy has no credentials found')
+        _logger.info("Proxy has no credentials found")
         user, password = None, None
 
-    proxy_type = proxy_config.get('proxy_type')
-    proxy_type = proxy_type.lower() if proxy_type else 'http'
+    proxy_type = proxy_config.get("proxy_type")
+    proxy_type = proxy_type.lower() if proxy_type else "http"
 
     if proxy_type in _PROXY_TYPE_MAP:
         ptv = _PROXY_TYPE_MAP[proxy_type]
@@ -148,7 +148,7 @@ def get_proxy_info(proxy_config):
         ptv = socks.PROXY_TYPE_HTTP
         _logger.info('Proxy type not found, set to "HTTP"')
 
-    rdns = is_true(proxy_config.get('proxy_rdns'))
+    rdns = is_true(proxy_config.get("proxy_rdns"))
 
     proxy_info = ProxyInfo(
         proxy_host=url,
@@ -156,26 +156,33 @@ def get_proxy_info(proxy_config):
         proxy_type=ptv,
         proxy_user=user,
         proxy_pass=password,
-        proxy_rdns=rdns
+        proxy_rdns=rdns,
     )
     return proxy_info
 
+
 def standardize_proxy_config(proxy_config):
     """
-        This function is used to standardize the proxy information structure to get it evaluated through `get_proxy_info` function
+    This function is used to standardize the proxy information structure to get it evaluated through `get_proxy_info` function
     """
 
     if not isinstance(proxy_config, dict):
-        raise ValueError(f"Received unexpected format of proxy configuration. Expected format: object, Actual format: {type(proxy_config)}")
+        raise ValueError(
+            f"Received unexpected format of proxy configuration. Expected format: object, Actual format: {type(proxy_config)}"
+        )
 
     standard_proxy_config = {
         "proxy_enabled": proxy_config.get("enabled", proxy_config.get("proxy_enabled")),
-        "proxy_username": proxy_config.get("username", proxy_config.get("proxy_username")),
-        "proxy_password": proxy_config.get("password", proxy_config.get("proxy_password")),
+        "proxy_username": proxy_config.get(
+            "username", proxy_config.get("proxy_username")
+        ),
+        "proxy_password": proxy_config.get(
+            "password", proxy_config.get("proxy_password")
+        ),
         "proxy_url": proxy_config.get("host", proxy_config.get("proxy_url")),
         "proxy_type": proxy_config.get("type", proxy_config.get("proxy_type")),
         "proxy_port": proxy_config.get("port", proxy_config.get("proxy_port")),
-        "proxy_rdns": proxy_config.get("rdns", proxy_config.get("proxy_rdns"))
+        "proxy_rdns": proxy_config.get("rdns", proxy_config.get("proxy_rdns")),
     }
 
     return standard_proxy_config
@@ -183,10 +190,9 @@ def standardize_proxy_config(proxy_config):
 
 class HttpClient:
     def __init__(self, proxy_info=None):
-        """Constructs a `HTTPRequest` with a optional proxy setting.
-        """
+        """Constructs a `HTTPRequest` with a optional proxy setting."""
         self._connection = None
-    
+
         if proxy_info:
             if isinstance(proxy_info, munch.Munch):
                 proxy_info = dict(proxy_info)
@@ -213,22 +219,21 @@ class HttpClient:
                 "You may need to check the certificate and "
                 "refer to the documentation and add it to the trust list. %s",
                 uri,
-                traceback.format_exc()
+                traceback.format_exc(),
             )
 
             self._connection = self._build_http_connection(
-                proxy_info=proxy_info,
-                disable_ssl_cert_validation=True
+                proxy_info=proxy_info, disable_ssl_cert_validation=True
             )
             return self._connection.request(
                 uri, body=body, method=method, headers=headers
             )
 
-    def _retry_send_request_if_needed(self, uri, method='GET', headers=None, body=None):
+    def _retry_send_request_if_needed(self, uri, method="GET", headers=None, body=None):
         """Invokes request and auto retry with an exponential backoff
         if the response status is configured in defaults.retry_statuses."""
         retries = max(defaults.retries, 0)
-        _logger.info('Invoking request to [%s] using [%s] method', uri, method)
+        _logger.info("Invoking request to [%s] using [%s] method", uri, method)
         for i in range(retries + 1):
             try:
                 response, content = self._send_internal(
@@ -236,17 +241,21 @@ class HttpClient:
                 )
             except Exception as err:
                 _logger.exception(
-                    'Could not send request url=%s method=%s', uri, method)
-                raise HTTPError('HTTP Error %s' % str(err))
+                    "Could not send request url=%s method=%s", uri, method
+                )
+                raise HTTPError("HTTP Error %s" % str(err))
 
             status = response.status
 
             if self._is_need_retry(status, i, retries):
                 delay = 2 ** i
                 _logger.warning(
-                    'The response status=%s of request which url=%s and'
-                    ' method=%s. Retry after %s seconds.',
-                    status, uri, method, delay,
+                    "The response status=%s of request which url=%s and"
+                    " method=%s. Retry after %s seconds.",
+                    status,
+                    uri,
+                    method,
+                    delay,
                 )
                 time.sleep(delay)
                 continue
@@ -259,16 +268,16 @@ class HttpClient:
 
     def _initialize_connection(self):
         if self._proxy_info:
-            _logger.info('Proxy is enabled for http connection.')
+            _logger.info("Proxy is enabled for http connection.")
         else:
-            _logger.info('Proxy is not enabled for http connection.')
+            _logger.info("Proxy is not enabled for http connection.")
         self._connection = self._build_http_connection(self._proxy_info)
 
     def send(self, request):
         if not request:
-            raise ValueError('The request is none')
+            raise ValueError("The request is none")
         if request.body and not isinstance(request.body, str):
-            raise TypeError(f'Invalid request body type: {request.body}')
+            raise TypeError(f"Invalid request body type: {request.body}")
 
         if self._connection is None:
             self._initialize_connection()
@@ -277,8 +286,7 @@ class HttpClient:
             url = self._prepare_url(request.url)
         except Exception:
             _logger.warning(
-                'Failed to encode url=%s: %s',
-                request.url, traceback.format_exc()
+                "Failed to encode url=%s: %s", request.url, traceback.format_exc()
             )
             url = request.url
 
@@ -288,15 +296,16 @@ class HttpClient:
 
     @staticmethod
     def _build_http_connection(
-            proxy_info=None,
-            timeout=defaults.timeout,
-            disable_ssl_cert_validation=defaults.disable_ssl_cert_validation):
+        proxy_info=None,
+        timeout=defaults.timeout,
+        disable_ssl_cert_validation=defaults.disable_ssl_cert_validation,
+    ):
         return Http(
             proxy_info=proxy_info,
             timeout=timeout,
-            disable_ssl_certificate_validation=disable_ssl_cert_validation)
+            disable_ssl_certificate_validation=disable_ssl_cert_validation,
+        )
 
     @staticmethod
     def _is_need_retry(status, retried, maximum_retries):
-        return retried < maximum_retries \
-               and status in defaults.retry_statuses
+        return retried < maximum_retries and status in defaults.retry_statuses

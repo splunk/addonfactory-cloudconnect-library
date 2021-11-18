@@ -71,7 +71,7 @@ class Condition(Function):
 
 class IterationMode(Document):
     iteration_count = OneOfField(
-        fields=[StringField(pattern='^[+-]?[1-9]\d*|0$'), IntField()])
+        fields=[StringField(pattern=r'^[+-]?[1-9]\d*|0$'), IntField()])
     stop_conditions = ArrayField(DocumentField(Condition))
 
 
@@ -116,7 +116,7 @@ class Meta(Document):
     """
     Represents scheme of metadata which contains version, etc.
     """
-    apiVersion = StringField(required=True, pattern='(?:\d{1,3}\.){2}[\w\-]{1,15}')
+    apiVersion = StringField(required=True, pattern=r'(?:\d{1,3}\.){2}[\w\-]{1,15}')
 
 
 class GlobalSettings(Document):

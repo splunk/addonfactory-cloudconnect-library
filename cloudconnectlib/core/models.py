@@ -25,7 +25,7 @@ from ..common.log import get_cc_logger
 _logger = get_cc_logger()
 
 
-class _Token(object):
+class _Token:
     """Token class wraps a template expression"""
 
     def __init__(self, source):
@@ -55,7 +55,7 @@ class _Token(object):
         return self._source
 
 
-class DictToken(object):
+class DictToken:
     """DictToken wraps a dict which value is template expression"""
 
     def __init__(self, template_expr):
@@ -66,7 +66,7 @@ class DictToken(object):
         return {k: v.render(variables) for k, v in self._tokens.items()}
 
 
-class BaseAuth(object):
+class BaseAuth:
     """A base class for all authorization classes"""
 
     def __call__(self, headers, context):
@@ -120,7 +120,7 @@ class BasicAuthorization(BaseAuth):
         ).strip()
 
 
-class RequestParams(object):
+class RequestParams:
     def __init__(self, url, method, header=None, auth=None, body=None):
         self._header = DictToken(header)
         self._url = _Token(url)
@@ -171,7 +171,7 @@ class RequestParams(object):
         return self.body.render(context)
 
 
-class Request(object):
+class Request:
     def __init__(self, method, url, headers, body):
         self.method = method
         self.url = url
@@ -183,7 +183,7 @@ class Request(object):
         self.body = body
 
 
-class _Function(object):
+class _Function:
     def __init__(self, inputs, function):
         self._inputs = tuple(_Token(expr) for expr in inputs or [])
         self._function = function
@@ -208,7 +208,7 @@ class Task(_Function):
     """Task class wraps a task in processor pipeline"""
 
     def __init__(self, inputs, function, output=None):
-        super(Task, self).__init__(inputs, function)
+        super().__init__(inputs, function)
         self._output = output
 
     @property
@@ -257,7 +257,7 @@ class Condition(_Function):
         return result
 
 
-class _Conditional(object):
+class _Conditional:
     """A base class for all conditional action"""
 
     def __init__(self, conditions):
@@ -281,7 +281,7 @@ class Processor(_Conditional):
     """Processor class contains a conditional data process pipeline"""
 
     def __init__(self, skip_conditions, pipeline):
-        super(Processor, self).__init__(skip_conditions)
+        super().__init__(skip_conditions)
         self._pipeline = pipeline or []
 
     @property
@@ -295,7 +295,7 @@ class Processor(_Conditional):
 
 class IterationMode(_Conditional):
     def __init__(self, iteration_count, conditions):
-        super(IterationMode, self).__init__(conditions)
+        super().__init__(conditions)
         self._iteration_count = iteration_count
 
     @property
@@ -307,7 +307,7 @@ class IterationMode(_Conditional):
         return self._conditions
 
 
-class Checkpoint(object):
+class Checkpoint:
     """A checkpoint includes a namespace to determine the checkpoint location
     and a content defined the format of content stored in checkpoint."""
 

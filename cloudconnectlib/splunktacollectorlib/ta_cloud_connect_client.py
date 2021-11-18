@@ -26,7 +26,7 @@ class TACloudConnectClient(TaDataClient):
                  checkpoint_mgr=None,
                  event_writer=None
                  ):
-        super(TACloudConnectClient, self).__init__(meta_config,
+        super().__init__(meta_config,
                                                    task_config,
                                                    checkpoint_mgr,
                                                    event_writer)

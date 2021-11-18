@@ -52,7 +52,7 @@ _LOGGING_LEVELS = {
 _DEFAULT_LOG_LEVEL = 'INFO'
 
 
-class CloudConnectConfigLoader(object):
+class CloudConnectConfigLoader:
     """The Base cloud connect configuration loader"""
 
     @staticmethod
@@ -78,8 +78,8 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     def _render_from_dict(source, ctx):
         rendered = DictToken(source).render(ctx)
 
-        return dict((k, v.strip() if isinstance(v, str) else v)
-                    for k, v in rendered.items())
+        return {k: v.strip() if isinstance(v, str) else v
+                    for k, v in rendered.items()}
 
     def _load_proxy(self, candidate, variables):
         """
@@ -96,7 +96,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         enabled = proxy.get('enabled', '0')
         if not is_valid_bool(enabled):
             raise ValueError(
-                'Proxy "enabled" expect to be bool type: {}'.format(enabled)
+                f'Proxy "enabled" expect to be bool type: {enabled}'
             )
 
         proxy['enabled'] = is_true(enabled)
@@ -127,7 +127,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         proxy_rdns = proxy.get('rdns', '0')
         if not is_valid_bool(proxy_rdns):
             raise ValueError(
-                'Proxy "rdns" expect to be bool type: {}'.format(proxy_rdns)
+                f'Proxy "rdns" expect to be bool type: {proxy_rdns}'
             )
         else:
             proxy['rdns'] = is_true(proxy_rdns)
@@ -195,7 +195,7 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
     @staticmethod
     def _validate_method(method):
         if lookup_method(method) is None:
-            raise ValueError('Unimplemented method: {}'.format(method))
+            raise ValueError(f'Unimplemented method: {method}')
 
     def _parse_tasks(self, raw_tasks):
         tasks = []

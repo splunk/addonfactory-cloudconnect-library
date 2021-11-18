@@ -56,10 +56,10 @@ def log(msg, msgx='', level=logging.INFO, need_tb=False):
         return
 
     msgx = ' - ' + msgx if msgx else ''
-    content = 'UCC Config Module: %s%s' % (msg, msgx)
+    content = f'UCC Config Module: {msg}{msgx}'
     if need_tb:
         stack = ''.join(traceback.format_stack())
-        content = '%s\r\n%s' % (content, stack)
+        content = f'{content}\r\n{stack}'
     stulog.logger.log(level, content, exc_info=1)
 
 
@@ -69,7 +69,7 @@ class ConfigException(UCCException):
     pass
 
 
-class Config(object):
+class Config:
     """UCC Config Module
     """
 

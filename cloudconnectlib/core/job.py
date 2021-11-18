@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import object
 import threading
 
 from .exceptions import QuitJobError
@@ -24,7 +23,7 @@ from ..common import log
 logger = log.get_cc_logger()
 
 
-class CCEJob(object):
+class CCEJob:
     """
     One CCEJob is composed of a list of tasks. The task could be HTTP
      task or Split task(currently supported task types).
@@ -80,7 +79,7 @@ class CCEJob(object):
         :type task: TBD
         """
         if not isinstance(task, BaseTask):
-            raise ValueError('Unsupported task type: {}'.format(type(task)))
+            raise ValueError(f'Unsupported task type: {type(task)}')
         if callable(getattr(task, "set_proxy", None)) and self._proxy_info:
             task.set_proxy(self._proxy_info)
         self._rest_tasks.append(task)
@@ -147,7 +146,7 @@ class CCEJob(object):
 
     def __str__(self):
         if self._running_task:
-            return 'Job(running task={})'.format(self._running_task)
+            return f'Job(running task={self._running_task})'
         return 'Job(no running task)'
 
     def __repr__(self):

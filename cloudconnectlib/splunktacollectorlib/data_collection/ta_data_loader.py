@@ -26,7 +26,7 @@ from splunktalib.schedule import job as sjob
 from splunktalib.common import log
 
 
-class TADataLoader(object):
+class TADataLoader:
     """
     Data Loader boots all underlying facilities to handle data collection
     """
@@ -150,7 +150,7 @@ class TADataLoader(object):
         return settings
 
 
-class GlobalDataLoader(object):
+class GlobalDataLoader:
     """ Singleton, inited when started"""
 
     __instance = None

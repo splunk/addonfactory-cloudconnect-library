@@ -23,7 +23,7 @@ sys.path.append(os.path.join(common.PROJECT_ROOT, "package"))
 from cloudconnectlib.core.task import CCEHTTPRequestTask
 
 
-class MockedHttpResponse(object):
+class MockedHttpResponse:
     def __init__(self, url):
         self.url = url
 

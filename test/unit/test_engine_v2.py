@@ -19,7 +19,7 @@ import time
 import cloudconnectlib.core.engine_v2 as engine
 
 
-class Counter(object):
+class Counter:
     def __init__(self, default=0):
         self._count = default
         self._lock = threading.Lock()
@@ -32,7 +32,7 @@ class Counter(object):
         return self._count
 
 
-class HTTPJob(object):
+class HTTPJob:
     def __init__(self, counter, stop_counter=None):
         self._counter = counter
         self._stop_counter = stop_counter
@@ -55,7 +55,7 @@ class HTTPJob(object):
                 self._stop_counter.increment()
 
 
-class SplitJob(object):
+class SplitJob:
     def __init__(self, counter, stop_counter=None):
         self._counter = counter
         self._stop_counter = stop_counter

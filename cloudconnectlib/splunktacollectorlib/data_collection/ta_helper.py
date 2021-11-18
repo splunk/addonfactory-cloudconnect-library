@@ -33,7 +33,7 @@ from splunktalib.common import util
 
 
 def utc2timestamp(human_time):
-    regex1 = "\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
+    regex1 = r"\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}"
     match = re.search(regex1, human_time)
     if match:
         formated = match.group()
@@ -43,7 +43,7 @@ def utc2timestamp(human_time):
     strped_time = datetime.strptime(formated, c.time_fmt)
     timestamp = timegm(strped_time.utctimetuple())
 
-    regex2 = "\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}(\.\d+)"
+    regex2 = r"\d{4}-\d{2}-\d{2}.\d{2}:\d{2}:\d{2}(\.\d+)"
     match = re.search(regex2, human_time)
     if match:
         timestamp += float(match.group(1))
@@ -81,7 +81,7 @@ def format_name_for_file(name):
     return hashlib.sha256(name.encode('utf-8')).hexdigest()
 
 
-class ConfigSchemaHandler(object):
+class ConfigSchemaHandler:
     _app_name = util.get_appname_from_path(op.abspath(__file__))
     # Division schema keys.
     TYPE = "type"
@@ -150,7 +150,7 @@ class ConfigSchemaHandler(object):
         return division_metrics
 
 
-class DivisionRule(object):
+class DivisionRule:
     def __init__(self, endpoint, metric, type, separator, refer):
         self._endpoint = endpoint
         self._metric = metric

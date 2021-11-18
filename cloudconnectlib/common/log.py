@@ -23,12 +23,12 @@ from .lib_util import get_mod_input_script_name
 
 class CloudClientLogAdapter(logging.LoggerAdapter, metaclass=Singleton):
     def __init__(self, logger=None, extra=None, prefix=""):
-        super(CloudClientLogAdapter, self).__init__(logger, extra)
+        super().__init__(logger, extra)
         self.cc_prefix = prefix if prefix else ""
 
     def process(self, msg, kwargs):
-        msg = "{} {}".format(self.cc_prefix, msg)
-        return super(CloudClientLogAdapter, self).process(msg, kwargs)
+        msg = f"{self.cc_prefix} {msg}"
+        return super().process(msg, kwargs)
 
     def set_level(self, val):
         self.logger.setLevel(val)

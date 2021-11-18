@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import str
-from builtins import range
-from builtins import object
 import time
 import traceback
 import munch
@@ -43,7 +40,7 @@ _PROXY_TYPE_MAP = {
 }
 
 
-class HTTPResponse(object):
+class HTTPResponse:
     """
     HTTPResponse class wraps response of HTTP request for later use.
     """
@@ -169,7 +166,7 @@ def standardize_proxy_config(proxy_config):
     """
 
     if not isinstance(proxy_config, dict):
-        raise ValueError("Received unexpected format of proxy configuration. Expected format: object, Actual format: {}".format(type(proxy_config)))
+        raise ValueError(f"Received unexpected format of proxy configuration. Expected format: object, Actual format: {type(proxy_config)}")
 
     standard_proxy_config = {
         "proxy_enabled": proxy_config.get("enabled", proxy_config.get("proxy_enabled")),
@@ -184,7 +181,7 @@ def standardize_proxy_config(proxy_config):
     return standard_proxy_config
 
 
-class HttpClient(object):
+class HttpClient:
     def __init__(self, proxy_info=None):
         """Constructs a `HTTPRequest` with a optional proxy setting.
         """
@@ -271,7 +268,7 @@ class HttpClient(object):
         if not request:
             raise ValueError('The request is none')
         if request.body and not isinstance(request.body, str):
-            raise TypeError('Invalid request body type: {}'.format(request.body))
+            raise TypeError(f'Invalid request body type: {request.body}')
 
         if self._connection is None:
             self._initialize_connection()

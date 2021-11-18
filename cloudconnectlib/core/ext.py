@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import str
-from builtins import range
 import calendar
 import json
 import re
@@ -344,7 +342,7 @@ def assert_true(value, message=None):
     """Assert value is True"""
     if not is_true(value):
         raise AssertionError(
-            message or '"{value}" is not true'.format(value=value)
+            message or f'"{value}" is not true'
         )
 
 

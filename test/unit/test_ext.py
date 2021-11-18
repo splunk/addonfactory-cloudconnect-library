@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from builtins import range
-from builtins import object
 import pytest
 from cloudconnectlib.core.exceptions import StopCCEIteration
 from cloudconnectlib.core.ext import (
@@ -112,7 +110,7 @@ def test_json_path():
 def test_std_output():
     import sys
 
-    class MockStdout(object):
+    class MockStdout:
         def __init__(self):
             self._buf = ''
             self._size = 0
@@ -325,7 +323,7 @@ def test_is_true():
 
 def test_regex_search():
     source = 'absbssd234455 222'
-    regex = 'ssd(?P<title>\d+)\s(?P<title2>\d+)'
+    regex = r'ssd(?P<title>\d+)\s(?P<title2>\d+)'
     s = regex_search(regex, source)
     assert len(s) == 2
     assert s['title'] == '234455'

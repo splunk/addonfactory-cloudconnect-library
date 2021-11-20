@@ -16,8 +16,8 @@
 import os.path as op
 import socket
 
+from solnlib import server_info
 from splunktalib import modinput as modinput
-from splunktalib import splunk_cluster as sc
 from splunktalib.common import util
 
 from ..common import log as stulog
@@ -46,7 +46,7 @@ class TaConfig:
         self._single_instance = single_instance
         self._task_configs = []
         self._client_schema = client_schema
-        self._server_info = sc.ServerInfo(
+        self._server_info = server_info.ServerInfo.from_server_uri(
             meta_config[c.server_uri], meta_config[c.session_key]
         )
         self._all_conf_contents = {}

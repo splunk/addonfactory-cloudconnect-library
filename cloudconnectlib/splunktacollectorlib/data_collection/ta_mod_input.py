@@ -23,9 +23,9 @@ import platform
 import sys
 import time
 
-from splunktalib import file_monitor as fm
+from solnlib import file_monitor as fm
+from solnlib import orphan_process_monitor as opm
 from splunktalib import modinput
-from splunktalib import orphan_process_monitor as opm
 from splunktalib.common import util as utils
 
 from ...common.lib_util import get_app_root_dir, get_mod_input_script_name

@@ -15,43 +15,14 @@ on:
     branches: [main, develop]
 
 jobs:
-  compliance-dependencies:
-    name: Compliance Dependencies
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+  compliance:
+    uses: splunk/addonfactory-github-workflows/.github/workflows/reusable-components-compliance.yaml@feature/open-source
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: ort-action
-        uses: splunk/addonfactory-ort-action@v1.5
-        id: ort-action
-        with:
-          UsePython3: "3.7"
-      - name: ort-action-artifacts-reports
-        uses: actions/upload-artifact@v2
-        with:
-          name: analysis-reports
-          path: |
-            .ort/reports/*
-        if: always()
-      - name: ort-action-artifacts-analyzer
-        uses: actions/upload-artifact@v2
-        with:
-          name: analysis-analyzer
-          path: |
-            .ort/analyzer/*
-        if: always()
-  compliance-copyrights:
-    name: Compliance Copyright Headers
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Check License Header
-        uses: apache/skywalking-eyes@main # always prefer to use a revision instead of `main`.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed only when you want License-Eye to comment on the pull request.
+  code-checks:
+    uses: splunk/addonfactory-github-workflows/.github/workflows/reusable-components-code-checks.yaml@feature/open-source
+    secrets:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   test-unit:
     name: Test Unit ${{ matrix.splunk-version }}
     runs-on: ubuntu-latest
@@ -112,101 +83,13 @@ jobs:
           name: test-results-unit-python_${{ matrix.python-version }}
           path: test-results/*
 
-  pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.7"
-      - uses: pre-commit/action@v2.0.3
-
-  review_secrets:
-    name: security-detect-secrets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          submodules: false
-      - name: Trufflehog Actions Scan
-        uses: edplato/trufflehog-actions-scan@v0.9f-beta
-        with:
-          scanArguments: "--max_dept 50 -x .github/workflows/exclude-patterns.txt --since_commit 2dc9e48a5861a9da45599e6d775c8450639c197d"
-
-  semgrep:
-    runs-on: ubuntu-latest
-    name: security-sast-semgrep
-    steps:
-      - uses: actions/checkout@v2
-      - name: Semgrep
-        id: semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/r2c
-  snyk:
-    name: security-vuln-snyk
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/python-3.8@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --sarif-file-output=snyk.sarif
-      - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v1
-        with:
-          sarif_file: snyk.sarif
-  build:
-    name: Build Release
+  publish:
+    uses: splunk/addonfactory-github-workflows/.github/workflows/reusable-components-publish.yaml@feature/open-source
     needs:
-      #- lint
-      #- test-unit
-      - review_secrets
-      - compliance-copyrights
-      - compliance-dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          #Very Important semantic-release won't trigger a tagged
-          #build if this is not set false
-          persist-credentials: false
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.7"
-      - name: Install Poetry
-        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-      - name: Install Code
-        run: source $HOME/.poetry/env; poetry build
-      - uses: actions/download-artifact@v2
-        with:
-          name: analysis-reports
-          path: /tmp/analysis-reports
-      - name: Update Notices
-        run: cp -f /tmp/analysis-reports/NOTICE_summary NOTICE
-      - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v2.6.0
-        with:
-          semantic_version: 17
-          extra_plugins: |
-            @semantic-release/exec
-            @semantic-release/git
-        env:
-          GITHUB_TOKEN: ${{ secrets.SEMREL_TOKEN }}
-          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-  update-semver:
-    name: Move Respository semver tags
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: haya14busa/action-update-semver@v1
+      - compliance
+      - code-checks
+      - test-unit
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN_ADMIN }}
+      PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}

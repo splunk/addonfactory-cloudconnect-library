@@ -15,8 +15,8 @@
 #
 import json
 
+from solnlib import utils
 from solnlib.modular_input.event import XMLEvent
-from splunktalib.common import util
 
 
 def is_valid_bool(val):
@@ -24,11 +24,11 @@ def is_valid_bool(val):
     :param val: value as string.
     :return: `True` if value can be convert to bool else `False`.
     """
-    return util.is_true(val) or util.is_false(val)
+    return utils.is_true(val) or utils.is_false(val)
 
 
 def is_true(val):
-    return util.is_true(val)
+    return utils.is_true(val)
 
 
 def is_valid_port(port):

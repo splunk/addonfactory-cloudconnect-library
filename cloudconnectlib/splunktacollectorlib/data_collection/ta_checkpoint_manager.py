@@ -16,8 +16,8 @@
 import json
 import re
 
+from solnlib.utils import is_true
 from splunktalib import state_store as ss
-from splunktalib.common.util import is_true
 
 from ..common import log as stulog
 from . import ta_consts as c

@@ -42,7 +42,7 @@ def get():
     """
     try:
         return _get()
-    except (IOError, OSError, ssl.SSLError):
+    except (OSError, ssl.SSLError):
         _fallback()  # IO and SSL relative errors should be swallowed to protect the HTTP request
 
 
@@ -108,7 +108,7 @@ def _read_httplib2_default_certs():
 
 def _read_pem_file(path):
     if os.path.exists(path):
-        with open(path, mode="r") as pem_file:
+        with open(path) as pem_file:
             return pem_file.read()
     else:
         return ""

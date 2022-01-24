@@ -17,14 +17,9 @@ import hashlib
 import json
 import os.path as op
 import re
-import sys
 from calendar import timegm
 from datetime import datetime
-
-if sys.version_info[0] >= 3:
-    from functools import lru_cache
-else:
-    from functools32 import lru_cache
+from functools import lru_cache
 
 from splunktalib.common import util
 from splunktaucclib.global_config import GlobalConfig, GlobalConfigSchema

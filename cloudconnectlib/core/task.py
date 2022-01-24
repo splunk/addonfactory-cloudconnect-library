@@ -20,7 +20,12 @@ from abc import abstractmethod
 from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
 from cloudconnectlib.core.checkpoint import CheckpointManagerAdapter
-from cloudconnectlib.core.exceptions import CCESplitError, HTTPError, StopCCEIteration
+from cloudconnectlib.core.exceptions import (
+    CCESplitError,
+    HTTPError,
+    QuitJobError,
+    StopCCEIteration,
+)
 from cloudconnectlib.core.ext import lookup_method
 from cloudconnectlib.core.http import HttpClient, get_proxy_info
 from cloudconnectlib.core.models import BasicAuthorization, DictToken, Request, _Token
@@ -151,6 +156,16 @@ class BaseTask:
         handler = ProcessHandler(method, input, output)
         self._pre_process_handler.append(handler)
 
+    def add_preprocess_handler_batch(self, handlers):
+        """
+        Add multiple preprocess handlers. All handlers will be maintained and
+        executed sequentially.
+        :param handlers: preprocess handler list
+        :type handlers: tuple
+        """
+        for method, args, output in handlers:
+            self.add_preprocess_handler(method, args, output)
+
     def add_preprocess_skip_condition(self, method, input):
         """
         Add a preprocess skip condition. The skip_conditions for preprocess
@@ -178,6 +193,16 @@ class BaseTask:
         """
         handler = ProcessHandler(method, input, output)
         self._post_process_handler.append(handler)
+
+    def add_postprocess_handler_batch(self, handlers):
+        """
+        Add multiple postprocess handlers. All handlers will be maintained and
+        executed sequentially.
+        :param handlers: postprocess handler list
+        :type handlers: tuple
+        """
+        for method, args, output in handlers:
+            self.add_postprocess_handler(method, args, output)
 
     def add_postprocess_skip_condition(self, method, input):
         """
@@ -207,6 +232,12 @@ class BaseTask:
             if data:
                 # FIXME
                 context.update(data)
+            if context.get("is_token_refreshed"):
+                # In case of OAuth flow after refreshing access token retrying again with the query to collect records
+                logger.info(
+                    "The access token is refreshed hence skipping the rest post process handler tasks. Retrying again."
+                )
+                return
         logger.debug("Execute handlers finished successfully.")
 
     def _pre_process(self, context):
@@ -263,7 +294,7 @@ class CCESplitTask(BaseTask):
 
         try:
             invoke_results = self._process_handler.execute(context)
-        except:
+        except Exception:
             logger.exception("Task=%s encountered exception", self)
             raise CCESplitError
         if not invoke_results or not invoke_results.get(CCESplitTask.OUTPUT_KEY):
@@ -285,7 +316,7 @@ class CCEHTTPRequestTask(BaseTask):
      from context when executing.
     """
 
-    def __init__(self, request, name, meta_config=None, task_config=None):
+    def __init__(self, request, name, meta_config=None, task_config=None, **kwargs):
         super().__init__(name)
         self._request = RequestTemplate(request)
         self._stop_conditions = ConditionGroup()
@@ -296,9 +327,12 @@ class CCEHTTPRequestTask(BaseTask):
         self._task_config = task_config
         self._meta_config = meta_config
 
+        self._http_client = None
         self._authorizer = None
         self._stopped = threading.Event()
         self._stop_signal_received = False
+        if kwargs.get("custom_func"):
+            self.custom_handle_status_code = kwargs["custom_func"]
 
     def stop(self, block=False, timeout=30):
         """
@@ -417,10 +451,9 @@ class CCEHTTPRequestTask(BaseTask):
             return True
         return False
 
-    @staticmethod
-    def _send_request(client, request):
+    def _send_request(self, request):
         try:
-            response = client.send(request)
+            response = self._http_client.send(request)
         except HTTPError as error:
             logger.exception(
                 "Error occurred in request url=%s method=%s reason=%s",
@@ -444,9 +477,15 @@ class CCEHTTPRequestTask(BaseTask):
                 return None, True
             return response, False
 
+        if "custom_handle_status_code" in dir(self):
+            returned_items = self.custom_handle_status_code(request, response, logger)
+            if isinstance(returned_items, list):
+                return returned_items[0], returned_items[1]
+
         error_log = (
-            "The response status=%s for request which url=%s and" " method=%s."
-        ) % (status, request.url, request.method)
+            "The response status=%s for request which url=%s and"
+            " method=%s and message=%s "
+        ) % (status, request.url, request.method, response.body)
 
         if status in defaults.warning_statuses:
             logger.warning(error_log)
@@ -474,12 +513,17 @@ class CCEHTTPRequestTask(BaseTask):
 
     def _prepare_http_client(self, ctx):
         proxy = self._proxy_info.render(ctx) if self._proxy_info else None
-        return HttpClient(proxy)
+        self._http_client = HttpClient(proxy)
+
+    def _flush_checkpoint(self):
+        if self._checkpointer:
+            # Flush checkpoint cache to disk
+            self._checkpointer.close()
 
     def perform(self, context):
         logger.info("Starting to perform task=%s", self)
 
-        client = self._prepare_http_client(context)
+        self._prepare_http_client(context)
         done_count = 0
 
         context.update(self._load_checkpoint(context))
@@ -492,6 +536,9 @@ class CCEHTTPRequestTask(BaseTask):
             except StopCCEIteration:
                 logger.info("Task=%s exits in pre_process stage", self)
                 break
+            except QuitJobError:
+                self._flush_checkpoint()
+                raise
 
             if self._check_if_stop_needed():
                 break
@@ -500,7 +547,7 @@ class CCEHTTPRequestTask(BaseTask):
             if self._authorizer:
                 self._authorizer(r.headers, context)
 
-            response, need_exit = self._send_request(client, r)
+            response, need_exit = self._send_request(r)
             context[_RESPONSE_KEY] = response
 
             if need_exit:
@@ -519,6 +566,9 @@ class CCEHTTPRequestTask(BaseTask):
             except StopCCEIteration:
                 logger.info("Task=%s exits in post_process stage", self)
                 break
+            except QuitJobError:
+                self._flush_checkpoint()
+                raise
 
             self._persist_checkpoint(context)
 
@@ -533,7 +583,5 @@ class CCEHTTPRequestTask(BaseTask):
         yield context
 
         self._stopped.set()
-        if self._checkpointer:
-            # Flush checkpoint cache to disk
-            self._checkpointer.close()
+        self._flush_checkpoint()
         logger.info("Perform task=%s finished", self)

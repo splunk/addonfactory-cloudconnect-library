@@ -42,7 +42,7 @@ def get():
     """
     try:
         return _get()
-    except (OSError, ssl.SSLError):
+    except (IOError, OSError, ssl.SSLError):
         _fallback()  # IO and SSL relative errors should be swallowed to protect the HTTP request
 
 
@@ -84,7 +84,7 @@ def _read_platform_pem_cert_file():
         ]
         return "\n".join([_f for _f in pem_files if _f])
     elif sys.platform.startswith("darwin"):
-        return _read_pem_file(DARWIN_CERT_PATH)
+        return _check_pem_file(DARWIN_CERT_PATH)
     else:
         return ""
 
@@ -108,10 +108,17 @@ def _read_httplib2_default_certs():
 
 def _read_pem_file(path):
     if os.path.exists(path):
-        with open(path) as pem_file:
+        with open(path, mode="r") as pem_file:
             return pem_file.read()
     else:
         return ""
+
+
+def _check_pem_file(path_list):
+    for path in path_list:
+        if os.path.exists(path):
+            return _read_pem_file(path)
+    return ""
 
 
 def _update_temp_cert_file(temp_file, pem_texts):
@@ -127,7 +134,7 @@ def _do_safe_remove(file_path):
     if os.path.exists(file_path):
         try:
             os.remove(file_path)
-        except:
+        except Exception:
             pass
 
 
@@ -140,7 +147,7 @@ def _get_temp_cert_file_dir():
     if not op.isdir(temp_dir):
         try:
             os.mkdir(temp_dir)
-        except:
+        except Exception:
             pass
     for candidate in ["temp_certs", "local", "default"]:
         dir_path = op.join(app_root, candidate)

@@ -123,12 +123,20 @@ class TACheckPointMgr:
     def get_ckpt(self, namespaces=None, show_namespaces=False):
         key, namespaces = self.get_ckpt_key(namespaces)
         raw_checkpoint = self._store.get_state(key)
-        stulog.logger.info(
+        stulog.logger.debug(
             "Get checkpoint key='%s' value='%s'", key, json.dumps(raw_checkpoint)
         )
         if not show_namespaces and raw_checkpoint:
             return raw_checkpoint.get("data")
         return raw_checkpoint
+
+    def delete_if_exists(self, namespaces=None):
+        """Return true if exist and deleted else False"""
+        key, _ = self._key_formatter(namespaces)
+        if self._store.exists(key):
+            self._store.delete_state(key)
+            return True
+        return False
 
     def update_ckpt(self, ckpt, namespaces=None):
         if not ckpt:
@@ -147,8 +155,11 @@ class TACheckPointMgr:
 
     def _key_formatter(self, namespaces=None):
         if not namespaces:
-            stulog.logger.info("Namespaces is empty, using stanza name instead.")
-            namespaces = [self._task_config[c.stanza_name]]
+            stanza = self._task_config[c.stanza_name]
+            stulog.logger.info(
+                f"Namespaces is empty, using stanza name {stanza} instead."
+            )
+            namespaces = [stanza]
         key_str = TACheckPointMgr.SEPARATOR.join(namespaces)
         hashed_file = th.format_name_for_file(key_str)
         stulog.logger.info("raw_file='%s' hashed_file='%s'", key_str, hashed_file)

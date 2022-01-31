@@ -317,6 +317,18 @@ class CCEHTTPRequestTask(BaseTask):
     """
 
     def __init__(self, request, name, meta_config=None, task_config=None, **kwargs):
+        """
+        :param verify: Absolute path to server certificate, otherwise uses
+            requests' default certificate to verify server's TLS certificate.
+            Explicitly set it to False to not verify TLS certificate.
+        :type verify: ``string or bool``
+        :param custom_func: Custom error code handling for HTTP codes:
+            the function should accept `request`, `response` and `logger` parameters
+            To let the library handle the status code, return a non-list object
+            To handle status code using custom logic, return (response, bool).
+                Bool decides whether to break or continue the code flow
+        :type custom_func: ``function``
+        """
         super().__init__(name)
         self._request = RequestTemplate(request)
         self._stop_conditions = ConditionGroup()
@@ -333,6 +345,7 @@ class CCEHTTPRequestTask(BaseTask):
         self._stop_signal_received = False
         if kwargs.get("custom_func"):
             self.custom_handle_status_code = kwargs["custom_func"]
+        self.requests_verify = kwargs.get("verify", True)
 
     def stop(self, block=False, timeout=30):
         """
@@ -479,7 +492,7 @@ class CCEHTTPRequestTask(BaseTask):
 
         if "custom_handle_status_code" in dir(self):
             returned_items = self.custom_handle_status_code(request, response, logger)
-            if isinstance(returned_items, list):
+            if isinstance(returned_items, (list, tuple)):
                 return returned_items[0], returned_items[1]
 
         error_log = (

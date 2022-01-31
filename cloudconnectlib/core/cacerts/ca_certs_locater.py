@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 """
+DEPRECATED FILE. IT IS NO LONGER USED IN THE LIBRARY.
+It is present only as a reference.
+
 `ca_certs_locater` is a lib for extending httplib2 to allow system certificate store to be used when
 verifying SSL certificates, to enable this lib, you should add it to your python import path before
 initializing httplib2. As we're not trying to implement SSL certificate RFCs, parsing and validating

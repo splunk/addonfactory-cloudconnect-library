@@ -526,7 +526,7 @@ class CCEHTTPRequestTask(BaseTask):
 
     def _prepare_http_client(self, ctx):
         proxy = self._proxy_info.render(ctx) if self._proxy_info else None
-        self._http_client = HttpClient(proxy)
+        self._http_client = HttpClient(proxy, self.requests_verify)
 
     def _flush_checkpoint(self):
         if self._checkpointer:

@@ -182,9 +182,13 @@ def standardize_proxy_config(proxy_config):
 
 
 class HttpClient:
-    def __init__(self, proxy_info=None):
-        """Constructs a `HTTPRequest` with a optional proxy setting."""
+    def __init__(self, proxy_info=None, verify=True):
+        """
+        Constructs a `HTTPRequest` with a optional proxy setting.
+        :param verify: same as the `verify` parameter of requests.request() method
+        """
         self._connection = None
+        self.requests_verify = verify
 
         if proxy_info:
             if isinstance(proxy_info, munch.Munch):

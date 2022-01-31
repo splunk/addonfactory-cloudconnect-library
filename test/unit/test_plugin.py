@@ -232,7 +232,7 @@ def cce_unit_test_func_in_engine_arg2(msg):
         write_py_file(plugin_dir, test_plugin_file1, test_functions)
         task = CCEHTTPRequestTask(
             request={
-                "url": "https://www.baidu.com/",
+                "url": "https://www.splunk.com/",
                 "method": "GET",
             },
             name="test_baidu",

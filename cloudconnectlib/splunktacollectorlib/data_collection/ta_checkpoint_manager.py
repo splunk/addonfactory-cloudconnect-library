@@ -133,10 +133,11 @@ class TACheckPointMgr:
     def delete_if_exists(self, namespaces=None):
         """Return true if exist and deleted else False"""
         key, _ = self._key_formatter(namespaces)
-        if self._store.exists(key):
+        try:
             self._store.delete_state(key)
             return True
-        return False
+        except Exception:
+            return False
 
     def update_ckpt(self, ckpt, namespaces=None):
         if not ckpt:

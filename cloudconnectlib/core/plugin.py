@@ -78,7 +78,7 @@ def import_plugin_file(file_name):
         return
 
     if module_name in list(sys.modules.keys()):
-        logger.warning(
+        logger.debug(
             "Module %s already exists and it won't be reload, "
             "please rename your plugin module if it is required.",
             module_name,

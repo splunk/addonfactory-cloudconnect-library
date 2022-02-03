@@ -32,7 +32,7 @@ import sys
 TEMP_CERT_FILE_NAME = "httplib2_merged_certificates_{}.crt"
 LINUX_CERT_PATH_1 = "/etc/pki/tls/certs/ca-bundle.crt"  # RedHat
 LINUX_CERT_PATH_2 = "/etc/ssl/certs/ca-certificates.crt"  # Debian
-DARWIN_CERT_PATH = "/usr/local/etc/openssl/cert.pem"
+DARWIN_CERT_PATH = ["/usr/local/etc/openssl/cert.pem"]
 HTTPLIB2_CA_CERT_FILE_NAME = "cacerts.txt"
 
 TEMP_CERT_FILE_PATH = None

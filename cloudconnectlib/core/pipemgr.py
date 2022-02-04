@@ -22,6 +22,6 @@ class PipeManager(metaclass=Singleton):
 
     def write_events(self, events):
         if not self._event_writer:
-            print(events)
+            print(events, flush=True)
             return True
         return self._event_writer.write_events(events)

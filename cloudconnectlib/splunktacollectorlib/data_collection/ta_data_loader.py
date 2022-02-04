@@ -20,10 +20,13 @@ import configparser
 import os.path as op
 import queue
 
-from splunktalib import timer_queue as tq
-from splunktalib.common import log
+from solnlib import log
+from solnlib import timer_queue as tq
 from splunktalib.concurrent import concurrent_executor as ce
 from splunktalib.schedule import job as sjob
+
+# Global logger
+logger = log.Logs().get_logger("util")
 
 
 class TADataLoader:
@@ -58,7 +61,7 @@ class TADataLoader:
         self._executor.start()
         self._timer_queue.start()
         self._scheduler.start()
-        log.logger.info("TADataLoader started.")
+        logger.info("TADataLoader started.")
 
         def _enqueue_io_job(job):
             job_props = job.get_props()
@@ -75,10 +78,10 @@ class TADataLoader:
             job.stop()
 
         self._scheduler.tear_down()
-        self._timer_queue.tear_down()
+        self._timer_queue.stop()
         self._executor.tear_down()
         self._event_writer.tear_down()
-        log.logger.info("DataLoader stopped.")
+        logger.info("DataLoader stopped.")
 
     def _wait_for_tear_down(self):
         wakeup_q = self._wakeup_queue
@@ -89,13 +92,13 @@ class TADataLoader:
                 pass
             else:
                 if go_exit:
-                    log.logger.info("DataLoader got stop signal")
+                    logger.info("DataLoader got stop signal")
                     self._stopped = True
                     break
 
     def tear_down(self):
         self._wakeup_queue.put(True)
-        log.logger.info("DataLoader is going to stop.")
+        logger.info("DataLoader is going to stop.")
 
     def stopped(self):
         return self._stopped
@@ -143,7 +146,7 @@ class TADataLoader:
                 settings[option] = int(settings[option])
             except ValueError:
                 settings[option] = -1
-        log.logger.debug("settings: %s", settings)
+        logger.debug("settings: %s", settings)
         return settings
 
 

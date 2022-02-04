@@ -25,8 +25,9 @@ import time
 
 from solnlib import file_monitor as fm
 from solnlib import orphan_process_monitor as opm
+from solnlib import utils
 from splunktalib import modinput
-from splunktalib.common import util as utils
+from splunktalib.common import util as sc_util
 
 from ...common.lib_util import get_app_root_dir, get_mod_input_script_name
 from ..common import load_schema_file as ld
@@ -122,7 +123,7 @@ def _setup_signal_handler(data_loader, ta_short_name):
         if data_loader is not None:
             data_loader.tear_down()
 
-    utils.handle_tear_down_signals(_handle_exit)
+    utils.handle_teardown_signals(_handle_exit)
 
 
 def _handle_file_changes(data_loader):
@@ -165,7 +166,7 @@ def run(
     ta_short_name = settings["meta"]["name"].lower()
 
     # This is for stdout flush
-    utils.disable_stdout_buffer()
+    sc_util.disable_stdout_buffer()
 
     # http://bugs.python.org/issue7980
     time.strptime("2016-01-01", "%Y-%m-%d")

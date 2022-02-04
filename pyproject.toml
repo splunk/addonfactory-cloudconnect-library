@@ -41,6 +41,7 @@ splunktaucclib = "^5"
 requests = "^2.24"
 jsonpath-ng = "^1.5.2"
 decorator = ">=4,<6"
+solnlib = "^4.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

@@ -32,7 +32,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-jsonschema = "^3.2.0"
+jsonschema = ">=3.2,<5.0"
 jinja2 = ">=2.10.1,<4.0.0"
 httplib2 = "^0.19"
 splunk-sdk = "^1.6"

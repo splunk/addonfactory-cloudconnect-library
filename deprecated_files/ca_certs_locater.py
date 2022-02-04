@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 """
+DEPRECATED FILE. IT IS NO LONGER USED IN THE LIBRARY.
+It is present only as a reference.
+
 `ca_certs_locater` is a lib for extending httplib2 to allow system certificate store to be used when
 verifying SSL certificates, to enable this lib, you should add it to your python import path before
 initializing httplib2. As we're not trying to implement SSL certificate RFCs, parsing and validating
@@ -29,7 +32,7 @@ import sys
 TEMP_CERT_FILE_NAME = "httplib2_merged_certificates_{}.crt"
 LINUX_CERT_PATH_1 = "/etc/pki/tls/certs/ca-bundle.crt"  # RedHat
 LINUX_CERT_PATH_2 = "/etc/ssl/certs/ca-certificates.crt"  # Debian
-DARWIN_CERT_PATH = "/usr/local/etc/openssl/cert.pem"
+DARWIN_CERT_PATH = ["/usr/local/etc/openssl/cert.pem"]
 HTTPLIB2_CA_CERT_FILE_NAME = "cacerts.txt"
 
 TEMP_CERT_FILE_PATH = None
@@ -84,7 +87,7 @@ def _read_platform_pem_cert_file():
         ]
         return "\n".join([_f for _f in pem_files if _f])
     elif sys.platform.startswith("darwin"):
-        return _read_pem_file(DARWIN_CERT_PATH)
+        return _check_pem_file(DARWIN_CERT_PATH)
     else:
         return ""
 
@@ -114,6 +117,13 @@ def _read_pem_file(path):
         return ""
 
 
+def _check_pem_file(path_list):
+    for path in path_list:
+        if os.path.exists(path):
+            return _read_pem_file(path)
+    return ""
+
+
 def _update_temp_cert_file(temp_file, pem_texts):
     with open(temp_file, mode="w") as temp_cert_file:
         for pem_text in pem_texts:
@@ -127,7 +137,7 @@ def _do_safe_remove(file_path):
     if os.path.exists(file_path):
         try:
             os.remove(file_path)
-        except:
+        except Exception:
             pass
 
 
@@ -140,7 +150,7 @@ def _get_temp_cert_file_dir():
     if not op.isdir(temp_dir):
         try:
             os.mkdir(temp_dir)
-        except:
+        except Exception:
             pass
     for candidate in ["temp_certs", "local", "default"]:
         dir_path = op.join(app_root, candidate)

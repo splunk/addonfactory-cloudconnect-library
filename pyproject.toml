@@ -32,15 +32,16 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-jsonschema = "^3.2.0"
+jsonschema = "^4.4.0"
 jinja2 = ">=2.10.1,<4.0.0"
 httplib2 = "^0.19"
 splunk-sdk = "^1.6"
 munch = "^2.3.2"
 splunktaucclib = "^5"
-requests = "^2.24"
+requests = "^2.27.1"
 jsonpath-ng = "^1.5.2"
 decorator = ">=4,<6"
+PySocks = "^1.7.1"
 solnlib = "^4.6.0"
 
 [tool.poetry.dev-dependencies]

@@ -121,12 +121,18 @@ class CCEJob:
             logger.info("No more task need to perform, exiting job")
             return
 
-        jobs = [CCEJob(context=ctx, tasks=self._rest_tasks) for ctx in contexts]
+        count = 0
 
-        logger.debug("Generated %s job in total", len(jobs))
+        for ctx in contexts:
+            count += 1
+            yield CCEJob(context=ctx, tasks=self._rest_tasks)
+
+            if self._check_if_stop_needed():
+                break
+
+        logger.debug("Generated %s job in total", count)
         logger.debug("Job execution finished successfully.")
         self._stopped.set()
-        return jobs
 
     def stop(self, block=False, timeout=30):
         """

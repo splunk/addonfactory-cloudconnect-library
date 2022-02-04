@@ -27,7 +27,7 @@ logger = log.get_cc_logger()
 
 def cce_pipeline_plugin(func):
     """
-    Decorator for pipepline plugin functions.
+    Decorator for pipeline plugin functions.
 
     This docorator helps to register user defined pipeline function into CCE
     engine so that it could be looked up when executing jobs.
@@ -42,13 +42,13 @@ def cce_pipeline_plugin(func):
     """
     if not callable(func):
         logger.debug(
-            "Function %s is not callable, don't add it as a pipeline" " function",
+            "Function %s is not callable, don't add it as a pipeline function",
             func.__name__,
         )
     else:
         if func.__name__ in list(_extension_functions.keys()):
             logger.warning(
-                "Pipeline function %s already exists, please rename" "it!",
+                "Pipeline function %s already exists, please rename it!",
                 func.__name__,
             )
         else:
@@ -72,14 +72,14 @@ def import_plugin_file(file_name):
         module_name = file_name[:-3]
     else:
         logger.warning(
-            "Plugin file %s is with unsupported extenstion, the " "supported are py",
+            "Plugin file %s is with unsupported extension, the supported are py",
             file_name,
         )
         return
 
     if module_name in list(sys.modules.keys()):
-        logger.warning(
-            "Module %s aleady exists and it won't be reload, "
+        logger.debug(
+            "Module %s already exists and it won't be reload, "
             "please rename your plugin module if it is required.",
             module_name,
         )

@@ -126,16 +126,16 @@ class Config:
             retries = 4
             waiting_time = [1, 2, 2]
             for retry in range(retries):
-                resp, cont = splunkd_request(
+                response = splunkd_request(
                     splunkd_uri=self.make_uri(ep_id),
                     session_key=self.session_key,
                     data=data,
                     retry=3,
                 )
-
-                if resp is None or resp.status != 200:
+                cont = response.text
+                if response is None or response.status_code != 200:
                     msg = 'Fail to load endpoint "{ep_id}" - {err}' "".format(
-                        ep_id=ep_id, err=code_to_msg(resp, cont) if resp else cont
+                        ep_id=ep_id, err=code_to_msg(response)
                     )
                     log(msg, level=logging.ERROR, need_tb=True)
                     raise ConfigException(msg)
@@ -205,20 +205,20 @@ class Config:
                 continue
             item_uri = self.make_uri(endpoint_id, item_name=item_name)
 
-            resp, cont = splunkd_request(
+            response = splunkd_request(
                 splunkd_uri=item_uri,
                 session_key=self.session_key,
                 data=item_data,
                 method="POST",
                 retry=3,
             )
-            if resp is None or resp.status not in (200, 201):
+            if response is None or response.status_code not in (200, 201):
                 msg = (
                     'Fail to update item "{item}" in endpoint "{ep_id}"'
                     " - {err}".format(
                         ep_id=endpoint_id,
                         item=item_name,
-                        err=code_to_msg(resp, cont) if resp else cont,
+                        err=code_to_msg(response),
                     )
                 )
                 log(msg, level=logging.ERROR)

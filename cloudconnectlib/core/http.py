@@ -185,6 +185,8 @@ class HttpClient:
     def __init__(self, proxy_info=None, verify=True):
         """
         Constructs a `HTTPRequest` with a optional proxy setting.
+        :param proxy_info: a dictionary of proxy details. It could directly match the input signature
+            of `requests` library, otherwise will be standardized and converted to match the input signature.
         :param verify: same as the `verify` parameter of requests.request() method
         """
         self._connection = None
@@ -194,10 +196,14 @@ class HttpClient:
             if isinstance(proxy_info, munch.Munch):
                 proxy_info = dict(proxy_info)
 
-            # Updating the proxy_info object to make it compatible for getting evaluated
-            # through `get_proxy_info` function
-            proxy_info = standardize_proxy_config(proxy_info)
-            self._proxy_info = get_proxy_info(proxy_info)
+            if all((len(proxy_info) == 2, "http" in proxy_info, "https" in proxy_info)):
+                # when `proxy_info` already matches the input signature of `requests` library's proxy dict
+                self._proxy_info = proxy_info
+            else:
+                # Updating the proxy_info object to make it compatible for getting evaluated
+                # through `get_proxy_info` function
+                proxy_info = standardize_proxy_config(proxy_info)
+                self._proxy_info = get_proxy_info(proxy_info)
         else:
             self._proxy_info = proxy_info
         self._url_preparer = PreparedRequest()

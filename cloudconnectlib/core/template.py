@@ -31,6 +31,9 @@ def compile_template(template):
         if match:
             context_var = context.get(match.groups()[0])
             return context_var if context_var else ""
-        return _template.render(context)
+        # nosemgrep reason - the `context` passed is provided by addon, and it should sanitized by the addon.
+        return _template.render(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2  # noqa: E501 - semgrep name is too long
+            context
+        )
 
     return translate_internal

@@ -1,0 +1,13 @@
+# Ignore git items
+.gitignore
+.git/
+:include .gitignore
+
+# Test cases, examples and workflows
+tests/
+.github/
+examples/
+tool/
+
+# For removed files
+deprecated_files/

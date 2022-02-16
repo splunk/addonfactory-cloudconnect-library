@@ -149,8 +149,10 @@ class Config:
                 else:
                     break
             else:
-                log(exc, level=logging.ERROR, need_tb=True)
-                raise exc
+                # F821 reason - when `ConfigException` would be caught, `exc` would be defined.
+                # The uncaught exceptions would break the code flow.
+                log(exc, level=logging.ERROR, need_tb=True)  # noqa: F821
+                raise exc  # noqa: F821
 
         log('"load" method out', level=logging.DEBUG)
         return ret
@@ -185,7 +187,7 @@ class Config:
             level=logging.DEBUG,
         )
 
-        assert (
+        assert (  # nosemgrep: gitlab.bandit.B101 - additional check for endpoint_id. Raises AssertionError otherwise
             endpoint_id in self._endpoints
         ), "Unexpected endpoint id in given schema - {ep_id}" "".format(
             ep_id=endpoint_id
@@ -314,8 +316,11 @@ class Config:
             }
         )
         for field in Config.META_FIELDS:
-            assert field in ucc_config_schema and isinstance(
-                ucc_config_schema[field], str
+            assert (  # nosemgrep: gitlab.bandit.B101 - additional check for ucc_config_schema.
+                field in ucc_config_schema
+                and isinstance(
+                    ucc_config_schema[field], str
+                )
             ), ('Missing or invalid field "%s" in given schema' % field)
             setattr(self, field, ucc_config_schema[field])
 
@@ -324,10 +329,14 @@ class Config:
             if key.startswith("_"):
                 continue
 
-            assert isinstance(val, dict), (
+            assert isinstance(  # nosemgrep: gitlab.bandit.B101 - additional check `val` type.
+                val, dict
+            ), (
                 'The schema of endpoint "%s" should be dict' % key
             )
-            assert "endpoint" in val, 'The endpoint "%s" has no endpoint entry' % key
+            assert "endpoint" in val, (  # nosemgrep: gitlab.bandit.B101 - additional check for endpoint in `val`.
+                'The endpoint "%s" has no endpoint entry' % key
+            )
 
             self._endpoints[key] = val
 

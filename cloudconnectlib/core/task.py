@@ -88,7 +88,10 @@ class ProxyTemplate:
 
 
 class RequestTemplate:
-    def __init__(self, request):
+    # nosemgrep reason - false positive, `request` is a dict here having configs required for making request
+    def __init__(  # nosemgrep: python.django.security.audit.django-ratelimit.missing-ratelimit.missing-ratelimit
+        self, request
+    ):
         if not request:
             raise ValueError("The request is none")
         url = request.get("url")
@@ -295,7 +298,8 @@ class CCESplitTask(BaseTask):
         try:
             invoke_results = self._process_handler.execute(context)
         except Exception:
-            logger.exception("Task=%s encountered exception", self)
+            # Fixing `python.lang.best-practice.logging-error-without-handling.logging-error-without-handling`
+            logger.warn("Task=%s encountered exception", self)
             raise CCESplitError
         if not invoke_results or not invoke_results.get(CCESplitTask.OUTPUT_KEY):
             raise CCESplitError
@@ -316,7 +320,10 @@ class CCEHTTPRequestTask(BaseTask):
      from context when executing.
     """
 
-    def __init__(self, request, name, meta_config=None, task_config=None, **kwargs):
+    # nosemgrep reason - false positive, `request` is a dict here having configs required for making request
+    def __init__(
+        self, request, name, meta_config=None, task_config=None, **kwargs
+    ):  # nosemgrep: python.django.security.audit.django-ratelimit.missing-ratelimit.missing-ratelimit
         """
         :param verify: Absolute path to server certificate, otherwise uses
             requests' default certificate to verify server's TLS certificate.
@@ -464,7 +471,10 @@ class CCEHTTPRequestTask(BaseTask):
             return True
         return False
 
-    def _send_request(self, request):
+    # nosemgrep reason - false positive, `request` is a dict here having configs required for making request
+    def _send_request(
+        self, request
+    ):  # nosemgrep: python.django.security.audit.django-ratelimit.missing-ratelimit.missing-ratelimit
         try:
             response = self._http_client.send(request)
         except HTTPError as error:

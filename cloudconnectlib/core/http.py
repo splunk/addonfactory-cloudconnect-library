@@ -288,7 +288,10 @@ class HttpClient:
             _logger.info("Proxy is not enabled for http connection.")
         self._connection = self._build_http_connection(self._proxy_info)
 
-    def send(self, request):
+    # nosemgrep reason - false positive, `request` is a dict here having configs required for making request
+    def send(  # nosemgrep: python.django.security.audit.django-ratelimit.missing-ratelimit.missing-ratelimit
+        self, request
+    ):
         if not request:
             raise ValueError("The request is none")
         if request.body and not isinstance(request.body, str):

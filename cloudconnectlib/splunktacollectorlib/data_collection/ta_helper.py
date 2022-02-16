@@ -54,7 +54,9 @@ def get_md5(data):
     :param data:
     :return:
     """
-    assert data is not None, "The input cannot be None"
+    assert (  # nosemgrep: gitlab.bandit.B101 - checking for data to not be None
+        data is not None
+    ), "The input cannot be None"
     if isinstance(data, str):
         return hashlib.sha256(data.encode("utf-8")).hexdigest()
     elif isinstance(data, (list, tuple, dict)):
@@ -124,10 +126,12 @@ class ConfigSchemaHandler:
 
     def _process_division(self, division_endpoint, division_contents):
         division_metrics = []
-        assert isinstance(division_contents, dict)
+        assert isinstance(  # nosemgrep: gitlab.bandit.B101 - checking for type of `division_contents`
+            division_contents, dict
+        )
         for division_key, division_value in division_contents.items():
             try:
-                assert (
+                assert (  # nosemgrep: gitlab.bandit.B101
                     self.TYPE in division_value
                     and division_value[self.TYPE] in [self.TYPE_SINGLE, self.TYPE_MULTI]
                     and self.SEPARATOR in division_value

@@ -86,7 +86,11 @@ def import_plugin_file(file_name):
         return
 
     try:
-        importlib.import_module(module_name)
+        # nosemgrep reason - this function only imports a custom cce_plugin_<addon's plugin>.py,
+        # which is provided by an addon and programmatically provided.
+        importlib.import_module(  # nosemgrep: python.lang.security.audit.non-literal-import.non-literal-import
+            module_name
+        )
     except Exception:
         logger.warning(f"Failed to load module {module_name}, {traceback.format_exc()}")
         return

@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 import threading
-import time
 from collections import namedtuple
 
 from splunktalib.common import util as scu
@@ -110,8 +109,12 @@ class TADataCollector:
             events = [events]
         evts = []
         for event in events:
-            assert event.raw_data, "the raw data of events is empty"
-            if event.is_unbroken:
+            assert (  # nosemgrep: gitlab.bandit.B101 - additional check for raw data in a single event.
+                event.raw_data
+            ), "the raw data of events is empty"
+            if (
+                event.is_unbroken  # nosemgrep: python.lang.maintainability.is-function-without-parentheses.is-function-without-parentheses - false positive, it is a property and not a function.  # noqa: E501 - semgrep name is too long
+            ):
                 evt = unbroken_evt_fmt.format(
                     event.host or "",
                     event.source or "",
@@ -119,7 +122,9 @@ class TADataCollector:
                     event.time or "",
                     event.index or "",
                     scu.escape_cdata(event.raw_data),
-                    "<done/>" if event.is_done else "",
+                    "<done/>"
+                    if event.is_done  # nosemgrep: python.lang.maintainability.is-function-without-parentheses.is-function-without-parentheses - false positive, it is a property and not a function.  # noqa: E501 - semgrep name is too long
+                    else "",
                 )
             else:
                 evt = evt_fmt.format(

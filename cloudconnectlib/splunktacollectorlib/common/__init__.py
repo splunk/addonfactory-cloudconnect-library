@@ -22,7 +22,7 @@ def load_schema_file(schema_file):
     Load schema file.
     """
 
-    with open(schema_file) as f:
+    with open(schema_file, encoding="UTF-8") as f:
         ret = json.load(f)
 
     common = ret.get("_common_", dict())

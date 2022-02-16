@@ -35,7 +35,7 @@ from ..common import log as stulog
 from . import ta_checkpoint_manager as cpmgr
 from . import ta_config as tc
 from . import ta_data_client as tdc
-from . import ta_data_loader as dl
+from . import ta_data_loader as tdl
 
 utils.remove_http_proxy_env_vars()
 
@@ -171,7 +171,7 @@ def run(
     # http://bugs.python.org/issue7980
     time.strptime("2016-01-01", "%Y-%m-%d")
 
-    loader = dl.create_data_loader()
+    loader = tdl.create_data_loader()
 
     # handle signal
     _setup_signal_handler(loader, ta_short_name)
@@ -272,8 +272,12 @@ def main(
     """
     Main entry point
     """
-    assert collector_cls, "ucc modinput collector is None."
-    assert schema_file_path, "ucc modinput schema file is None"
+    assert (  # nosemgrep: gitlab.bandit.B101 - check for required params to be passed
+        collector_cls
+    ), "ucc modinput collector is None."
+    assert (  # nosemgrep: gitlab.bandit.B101 - check for required params to be passed
+        schema_file_path
+    ), "ucc modinput schema file is None"
 
     settings = ld(schema_file_path)
 
@@ -289,8 +293,6 @@ def main(
             )
         elif args[1] == "--validate-arguments":
             sys.exit(validate_config())
-        elif args[1] in ("-h", "--h", "--help"):
-            usage()
         else:
             usage()
     else:

@@ -86,7 +86,7 @@ class TADataLoader:
     def _wait_for_tear_down(self):
         wakeup_q = self._wakeup_queue
         while 1:
-            try:
+            try:  # nosemgrep: gitlab.bandit.B110 -- nothing to do when queue is empty.
                 go_exit = wakeup_q.get(timeout=1)
             except queue.Empty:
                 pass

@@ -64,7 +64,7 @@ class CloudConnectConfigLoader:
         """
         try:
             return load_json_file(schema_file)
-        except:
+        except Exception:
             raise ConfigException(
                 "Cannot load schema from file {}: {}".format(
                     schema_file, traceback.format_exc()
@@ -236,7 +236,10 @@ class CloudConnectConfigLoaderV1(CloudConnectConfigLoader):
         pipeline = self._parse_tasks(processor.get("pipeline", []))
         return Processor(skip_conditions=skip_conditions, pipeline=pipeline)
 
-    def _load_request(self, request):
+    # nosemgrep reason - false positive, `request` is a dict here
+    def _load_request(  # nosemgrep: python.django.security.audit.django-ratelimit.missing-ratelimit.missing-ratelimit
+        self, request
+    ):
         options = self._load_options(request["request"])
 
         pre_process = self._load_processor(request.get("pre_process", {}))

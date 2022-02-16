@@ -92,7 +92,10 @@ class Job:
     reached it's stop condition.
     """
 
-    def __init__(self, request, context, checkpoint_mgr, proxy=None):
+    # nosemgrep reason - false positive, `request` is a Munch object which has settings for making a request
+    def __init__(  # nosemgrep: python.django.security.audit.django-ratelimit.missing-ratelimit.missing-ratelimit
+        self, request, context, checkpoint_mgr, proxy=None
+    ):
         """
         Constructs a `Job` with properties request, context and a
          optional proxy setting.
@@ -301,7 +304,10 @@ class Job:
                 _logger.info("Stop condition reached, exit job now")
                 break
 
-    def _send_request(self, request):
+    # nosemgrep reason - false positive, `request` is a dict here
+    def _send_request(  # nosemgrep: python.django.security.audit.django-ratelimit.missing-ratelimit.missing-ratelimit
+        self, request
+    ):
         """Do send request with a simple error handling strategy. Refer to
         https://confluence.splunk.com/display/PROD/CC+1.0+-+Detail+Design"""
         try:

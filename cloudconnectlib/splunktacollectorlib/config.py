@@ -316,12 +316,14 @@ class Config:
             }
         )
         for field in Config.META_FIELDS:
+            # fmt: off
             assert (  # nosemgrep: gitlab.bandit.B101 - additional check for ucc_config_schema.
                 field in ucc_config_schema
                 and isinstance(
                     ucc_config_schema[field], str
                 )
             ), ('Missing or invalid field "%s" in given schema' % field)
+            # fmt: on
             setattr(self, field, ucc_config_schema[field])
 
         self._endpoints = {}
@@ -334,7 +336,9 @@ class Config:
             ), (
                 'The schema of endpoint "%s" should be dict' % key
             )
-            assert "endpoint" in val, (  # nosemgrep: gitlab.bandit.B101 - additional check for endpoint in `val`.
+            assert (  # nosemgrep: gitlab.bandit.B101 - additional check for endpoint in `val`.
+                "endpoint" in val
+            ), (
                 'The endpoint "%s" has no endpoint entry' % key
             )
 

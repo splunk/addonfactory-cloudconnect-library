@@ -45,7 +45,7 @@ solnlib = "^4.6.0"
 splunktalib = "3.0.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+pytest = "^7.1.1"
 pytest-cov = "3.0.0"
 
 [tool.isort]

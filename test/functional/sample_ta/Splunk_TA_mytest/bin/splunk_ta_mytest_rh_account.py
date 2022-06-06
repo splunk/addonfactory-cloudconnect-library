@@ -1,4 +1,3 @@
-
 import splunk_ta_mytest_import_declare
 
 from splunktaucclib.rest_handler.endpoint import (
@@ -15,30 +14,22 @@ util.remove_http_proxy_env_vars()
 
 fields = [
     field.RestField(
-        'username',
-        required=True,
-        encrypted=False,
-        default='qa-test',
-        validator=None
-    ), 
+        "username", required=True, encrypted=False, default="qa-test", validator=None
+    ),
     field.RestField(
-        'password',
-        required=True,
-        encrypted=True,
-        default=None,
-        validator=None
-    )
+        "password", required=True, encrypted=True, default=None, validator=None
+    ),
 ]
 model = RestModel(fields, name=None)
 
 
 endpoint = SingleModel(
-    'splunk_ta_mytest_account',
+    "splunk_ta_mytest_account",
     model,
 )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     admin_external.handle(
         endpoint,
         handler=AdminExternalHandler,

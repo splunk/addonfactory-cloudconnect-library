@@ -25,10 +25,12 @@ def install_cc_ucc_libs():
 
     target = os.path.join(basedir, "cc_ucc_lib")
 
-    install_cmd = "pip install " \
-                  "--requirement requirements-qa.txt  --upgrade " \
-                  "-i http://repo.splunk.com/artifactory/api/pypi/pypi-virtual/simple " \
-                  "--no-compile --no-binary :all: --target  " + target
+    install_cmd = (
+        "pip install "
+        "--requirement requirements-qa.txt  --upgrade "
+        "-i http://repo.splunk.com/artifactory/api/pypi/pypi-virtual/simple "
+        "--no-compile --no-binary :all: --target  " + target
+    )
 
     if StrictVersion(pip_version) > StrictVersion("1.5.6"):
         install_cmd += " --trusted-host repo.splunk.com"

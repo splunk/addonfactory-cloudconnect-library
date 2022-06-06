@@ -263,7 +263,7 @@ class HttpClient:
             status = resp.status_code
 
             if self._is_need_retry(status, i, retries):
-                delay = 2 ** i
+                delay = 2**i
                 _logger.warning(
                     "The response status=%s of request which url=%s and"
                     " method=%s. Retry after %s seconds.",

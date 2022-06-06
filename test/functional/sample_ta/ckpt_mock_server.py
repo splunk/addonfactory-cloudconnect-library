@@ -16,12 +16,12 @@ my_time = time.time() - 86400 * 30
 @app.route("/ckpt/api/v1.0/events", methods=["GET", "POST"])
 def get_tasks():
     response = {"my_time": my_time, "events": []}
-    print "req header:", request.headers
-    print "req raw data:", request.data
+    print("req header:", request.headers)
+    print("req raw data:", request.data)
     body = {}
     if isinstance(request.data, basestring) and len(request.data) > 0:
         body = json.loads(request.data)
-        print "req body:", body
+        print("req body:", body)
     offset = -1
     if OFFSET_KEY in request.headers:
         try:

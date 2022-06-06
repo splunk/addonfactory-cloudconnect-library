@@ -11,32 +11,29 @@ on:
     branches: [main, develop]
 
 jobs:
-  compliance-dependencies:
-    name: Compliance Dependencies
+  fossa-scan:
+    continue-on-error: true
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: ort-action
-        uses: splunk/addonfactory-ort-action@v1.5
-        id: ort-action
-        with:
-          UsePython3: "3.7"
-      - name: ort-action-artifacts-reports
+      - uses: actions/checkout@v3
+      - name: run fossa anlyze and create report
+        run: |
+          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install-latest.sh | bash
+          fossa analyze --debug
+          fossa report attribution --format text > /tmp/THIRDPARTY
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
+      - name: upload THIRDPARTY file
         uses: actions/upload-artifact@v2
         with:
-          name: analysis-reports
-          path: |
-            .ort/reports/*
-        if: always()
-      - name: ort-action-artifacts-analyzer
-        uses: actions/upload-artifact@v2
-        with:
-          name: analysis-analyzer
-          path: |
-            .ort/analyzer/*
-        if: always()
+          name: THIRDPARTY
+          path: /tmp/THIRDPARTY
+      - name: run fossa test
+        run: |
+          fossa test --debug
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
+
   compliance-copyrights:
     name: Compliance Copyright Headers
     runs-on: ubuntu-latest
@@ -144,7 +141,7 @@ jobs:
       #- test-unit
       - review_secrets
       - compliance-copyrights
-      - compliance-dependencies
+      - fossa-scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

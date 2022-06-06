@@ -137,8 +137,7 @@ jobs:
   build:
     name: Build Release
     needs:
-      #- lint
-      #- test-unit
+      - test-unit
       - review_secrets
       - compliance-copyrights
       - fossa-scan
@@ -159,10 +158,9 @@ jobs:
           poetry build
       - uses: actions/download-artifact@v2
         with:
-          name: analysis-reports
-          path: /tmp/analysis-reports
+          name: THIRDPARTY
       - name: Update Notices
-        run: cp -f /tmp/analysis-reports/NOTICE_summary NOTICE
+        run: cp -f THIRDPARTY NOTICE
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v3.0.0
         with:

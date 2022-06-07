@@ -15,7 +15,7 @@ __contributors__ = [
     "Alex Yu",
 ]
 __license__ = "MIT"
-__version__ = '0.14.0'
+__version__ = "0.14.0"
 
 import base64
 import calendar
@@ -162,6 +162,7 @@ HOP_BY_HOP = [
 ]
 
 from httplib2 import certs
+
 CA_CERTS = certs.where()
 
 # PROTOCOL_TLS is python 3.5.3+. PROTOCOL_SSLv23 is deprecated.
@@ -173,9 +174,14 @@ DEFAULT_TLS_VERSION = getattr(ssl, "PROTOCOL_TLS", None) or getattr(
     ssl, "PROTOCOL_SSLv23"
 )
 
+
 def _build_ssl_context(
-    disable_ssl_certificate_validation, ca_certs, cert_file=None, key_file=None,
-    maximum_version=None, minimum_version=None,
+    disable_ssl_certificate_validation,
+    ca_certs,
+    cert_file=None,
+    key_file=None,
+    maximum_version=None,
+    minimum_version=None,
 ):
     if not hasattr(ssl, "SSLContext"):
         raise RuntimeError("httplib2 requires Python 3.2+ for ssl.SSLContext")
@@ -191,12 +197,16 @@ def _build_ssl_context(
         if hasattr(context, "maximum_version"):
             context.maximum_version = getattr(ssl.TLSVersion, maximum_version)
         else:
-            raise RuntimeError("setting tls_maximum_version requires Python 3.7 and OpenSSL 1.1 or newer")
+            raise RuntimeError(
+                "setting tls_maximum_version requires Python 3.7 and OpenSSL 1.1 or newer"
+            )
     if minimum_version is not None:
         if hasattr(context, "minimum_version"):
             context.minimum_version = getattr(ssl.TLSVersion, minimum_version)
         else:
-            raise RuntimeError("setting tls_minimum_version requires Python 3.7 and OpenSSL 1.1 or newer")
+            raise RuntimeError(
+                "setting tls_minimum_version requires Python 3.7 and OpenSSL 1.1 or newer"
+            )
 
     # check_hostname requires python 3.4+
     # we will perform the equivalent in HTTPSConnectionWithTimeout.connect() by calling ssl.match_hostname
@@ -224,7 +234,7 @@ URI = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?")
 def parse_uri(uri):
     """Parses a URI using the regex given in Appendix B of RFC 3986.
 
-        (scheme, authority, path, query, fragment) = parse_uri(uri)
+    (scheme, authority, path, query, fragment) = parse_uri(uri)
     """
     groups = URI.match(uri).groups()
     return (groups[1], groups[3], groups[4], groups[6], groups[8])
@@ -984,26 +994,34 @@ class ProxyInfo(object):
     ):
         """Args:
 
-          proxy_type: The type of proxy server.  This must be set to one of
-          socks.PROXY_TYPE_XXX constants.  For example:  p =
-          ProxyInfo(proxy_type=socks.PROXY_TYPE_HTTP, proxy_host='localhost',
-          proxy_port=8000)
-          proxy_host: The hostname or IP address of the proxy server.
-          proxy_port: The port that the proxy server is running on.
-          proxy_rdns: If True (default), DNS queries will not be performed
-          locally, and instead, handed to the proxy to resolve.  This is useful
-          if the network does not allow resolution of non-local names. In
-          httplib2 0.9 and earlier, this defaulted to False.
-          proxy_user: The username used to authenticate with the proxy server.
-          proxy_pass: The password used to authenticate with the proxy server.
-          proxy_headers: Additional or modified headers for the proxy connect
-          request.
+        proxy_type: The type of proxy server.  This must be set to one of
+        socks.PROXY_TYPE_XXX constants.  For example:  p =
+        ProxyInfo(proxy_type=socks.PROXY_TYPE_HTTP, proxy_host='localhost',
+        proxy_port=8000)
+        proxy_host: The hostname or IP address of the proxy server.
+        proxy_port: The port that the proxy server is running on.
+        proxy_rdns: If True (default), DNS queries will not be performed
+        locally, and instead, handed to the proxy to resolve.  This is useful
+        if the network does not allow resolution of non-local names. In
+        httplib2 0.9 and earlier, this defaulted to False.
+        proxy_user: The username used to authenticate with the proxy server.
+        proxy_pass: The password used to authenticate with the proxy server.
+        proxy_headers: Additional or modified headers for the proxy connect
+        request.
         """
         if isinstance(proxy_user, str):
             proxy_user = proxy_user.encode()
         if isinstance(proxy_pass, str):
             proxy_pass = proxy_pass.encode()
-        self.proxy_type, self.proxy_host, self.proxy_port, self.proxy_rdns, self.proxy_user, self.proxy_pass, self.proxy_headers = (
+        (
+            self.proxy_type,
+            self.proxy_host,
+            self.proxy_port,
+            self.proxy_rdns,
+            self.proxy_user,
+            self.proxy_pass,
+            self.proxy_headers,
+        ) = (
             proxy_type,
             proxy_host,
             proxy_port,
@@ -1054,8 +1072,7 @@ class ProxyInfo(object):
 
 
 def proxy_info_from_environment(method="http"):
-    """Read proxy info from the environment variables.
-    """
+    """Read proxy info from the environment variables."""
     if method not in ("http", "https"):
         return
 
@@ -1067,8 +1084,7 @@ def proxy_info_from_environment(method="http"):
 
 
 def proxy_info_from_url(url, method="http", noproxy=None):
-    """Construct a ProxyInfo from a URL (such as http_proxy env var)
-    """
+    """Construct a ProxyInfo from a URL (such as http_proxy env var)"""
     url = urllib.parse.urlparse(url)
     username = None
     password = None
@@ -1140,11 +1156,21 @@ class HTTPConnectionWithTimeout(http.client.HTTPConnection):
             raise ProxiesUnavailableError(
                 "Proxy support missing but proxy use was requested!"
             )
-        if self.proxy_info and self.proxy_info.isgood() and self.proxy_info.applies_to(self.host):
+        if (
+            self.proxy_info
+            and self.proxy_info.isgood()
+            and self.proxy_info.applies_to(self.host)
+        ):
             use_proxy = True
-            proxy_type, proxy_host, proxy_port, proxy_rdns, proxy_user, proxy_pass, proxy_headers = (
-                self.proxy_info.astuple()
-            )
+            (
+                proxy_type,
+                proxy_host,
+                proxy_port,
+                proxy_rdns,
+                proxy_user,
+                proxy_pass,
+                proxy_headers,
+            ) = self.proxy_info.astuple()
 
             host = proxy_host
             port = proxy_port
@@ -1255,8 +1281,12 @@ class HTTPSConnectionWithTimeout(http.client.HTTPSConnection):
             self.proxy_info = proxy_info("https")
 
         context = _build_ssl_context(
-            self.disable_ssl_certificate_validation, self.ca_certs, cert_file, key_file,
-            maximum_version=tls_maximum_version, minimum_version=tls_minimum_version,
+            self.disable_ssl_certificate_validation,
+            self.ca_certs,
+            cert_file,
+            key_file,
+            maximum_version=tls_maximum_version,
+            minimum_version=tls_minimum_version,
         )
         super(HTTPSConnectionWithTimeout, self).__init__(
             host,
@@ -1271,9 +1301,15 @@ class HTTPSConnectionWithTimeout(http.client.HTTPSConnection):
         """Connect to a host on a given (SSL) port."""
         if self.proxy_info and self.proxy_info.isgood():
             use_proxy = True
-            proxy_type, proxy_host, proxy_port, proxy_rdns, proxy_user, proxy_pass, proxy_headers = (
-                self.proxy_info.astuple()
-            )
+            (
+                proxy_type,
+                proxy_host,
+                proxy_port,
+                proxy_rdns,
+                proxy_user,
+                proxy_pass,
+                proxy_headers,
+            ) = self.proxy_info.astuple()
 
             host = proxy_host
             port = proxy_port
@@ -1431,8 +1467,7 @@ class Http(object):
         not be performed.
 
         tls_maximum_version / tls_minimum_version require Python 3.7+ /
-        OpenSSL 1.1.0g+. A value of "TLSv1_3" requires OpenSSL 1.1.1+.
-"""
+        OpenSSL 1.1.0g+. A value of "TLSv1_3" requires OpenSSL 1.1.1+."""
         self.proxy_info = proxy_info
         self.ca_certs = ca_certs
         self.disable_ssl_certificate_validation = disable_ssl_certificate_validation
@@ -1492,7 +1527,7 @@ class Http(object):
 
     def _auth_from_challenge(self, host, request_uri, headers, response, content):
         """A generator that creates Authorization objects
-           that can be applied to requests.
+        that can be applied to requests.
         """
         challenges = _parse_www_authenticate(response, "www-authenticate")
         for cred in self.credentials.iter(host):
@@ -1729,27 +1764,27 @@ class Http(object):
         redirections=DEFAULT_MAX_REDIRECTS,
         connection_type=None,
     ):
-        """ Performs a single HTTP request.
-The 'uri' is the URI of the HTTP resource and can begin
-with either 'http' or 'https'. The value of 'uri' must be an absolute URI.
+        """Performs a single HTTP request.
+        The 'uri' is the URI of the HTTP resource and can begin
+        with either 'http' or 'https'. The value of 'uri' must be an absolute URI.
 
-The 'method' is the HTTP method to perform, such as GET, POST, DELETE, etc.
-There is no restriction on the methods allowed.
+        The 'method' is the HTTP method to perform, such as GET, POST, DELETE, etc.
+        There is no restriction on the methods allowed.
 
-The 'body' is the entity body to be sent with the request. It is a string
-object.
+        The 'body' is the entity body to be sent with the request. It is a string
+        object.
 
-Any extra headers that are to be sent with the request should be provided in the
-'headers' dictionary.
+        Any extra headers that are to be sent with the request should be provided in the
+        'headers' dictionary.
 
-The maximum number of redirect to follow before raising an
-exception is 'redirections. The default is 5.
+        The maximum number of redirect to follow before raising an
+        exception is 'redirections. The default is 5.
 
-The return value is a tuple of (response, content), the first
-being and instance of the 'Response' class, the second being
-a string that contains the response entity body.
+        The return value is a tuple of (response, content), the first
+        being and instance of the 'Response' class, the second being
+        a string that contains the response entity body.
         """
-        conn_key = ''
+        conn_key = ""
 
         try:
             if headers is None:

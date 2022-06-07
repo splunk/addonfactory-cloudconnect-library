@@ -1,4 +1,3 @@
-
 import splunk_ta_mytest_kvstore_import_declare
 
 from splunktaucclib.rest_handler.endpoint import (
@@ -15,30 +14,26 @@ util.remove_http_proxy_env_vars()
 
 fields = [
     field.RestField(
-        'okta_url',
+        "okta_url",
         required=True,
         encrypted=False,
-        default='https://acme2.okta.com',
-        validator=None
-    ), 
+        default="https://acme2.okta.com",
+        validator=None,
+    ),
     field.RestField(
-        'api_key',
-        required=True,
-        encrypted=True,
-        default=None,
-        validator=None
-    )
+        "api_key", required=True, encrypted=True, default=None, validator=None
+    ),
 ]
 model = RestModel(fields, name=None)
 
 
 endpoint = SingleModel(
-    'splunk_ta_mytest_kvstore_account',
+    "splunk_ta_mytest_kvstore_account",
     model,
 )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     admin_external.handle(
         endpoint,
         handler=AdminExternalHandler,

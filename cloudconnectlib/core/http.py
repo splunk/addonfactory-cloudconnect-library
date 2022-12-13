@@ -221,25 +221,13 @@ class HttpClient:
                 verify=self.requests_verify,
             )
         except SSLHandshakeError:
-            _logger.warning(
+            _logger.error(
                 "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verification failed. "
                 "The certificate of the https server [%s] is not trusted, "
-                "this add-on will proceed to connect with this certificate. "
                 "You may need to check the certificate and "
                 "refer to the documentation and add it to the trust list. %s",
                 uri,
                 traceback.format_exc(),
-            )
-
-            self._connection = self._build_http_connection(
-                proxy_info=proxy_info, disable_ssl_cert_validation=True
-            )
-            return self._connection.request(
-                url=uri,
-                data=body,
-                method=method,
-                headers=headers,
-                timeout=defaults.timeout,
             )
 
     def _retry_send_request_if_needed(self, uri, method="GET", headers=None, body=None):
@@ -252,6 +240,8 @@ class HttpClient:
                 resp = self._send_internal(
                     uri=uri, body=body, method=method, headers=headers
                 )
+                if not resp:
+                    raise SSLHandshakeError
                 content = resp.content
                 response = resp
             except Exception as err:

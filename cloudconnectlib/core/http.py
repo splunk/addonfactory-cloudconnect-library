@@ -240,6 +240,8 @@ class HttpClient:
                 resp = self._send_internal(
                     uri=uri, body=body, method=method, headers=headers
                 )
+                if not resp:
+                    raise SSLHandshakeError
                 content = resp.content
                 response = resp
             except Exception as err:

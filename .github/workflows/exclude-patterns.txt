@@ -4,3 +4,4 @@
 ^examples/
 ^contrib/common
 ^deps/
+NOTICE

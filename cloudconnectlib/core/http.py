@@ -208,9 +208,8 @@ class HttpClient:
             self._proxy_info = proxy_info
         self._url_preparer = PreparedRequest()
 
-    def _send_internal(self, uri, method, headers=None, body=None, proxy_info=None):
-        """Do send request to target URL and validate SSL cert by default.
-        If validation failed, disable it and try again."""
+    def _send_internal(self, uri, method, headers=None, body=None):
+        """Do send request to target URL, validate SSL cert by default and return the response."""
         return self._connection.request(
             url=uri,
             data=body,

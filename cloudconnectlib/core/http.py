@@ -15,7 +15,7 @@
 #
 import time
 import traceback
-from ssl import SSLError as SSLHandshakeError
+import requests
 
 import munch
 from requests import PreparedRequest, Session, utils
@@ -208,27 +208,16 @@ class HttpClient:
             self._proxy_info = proxy_info
         self._url_preparer = PreparedRequest()
 
-    def _send_internal(self, uri, method, headers=None, body=None, proxy_info=None):
-        """Do send request to target URL and validate SSL cert by default.
-        If validation failed, disable it and try again."""
-        try:
-            return self._connection.request(
-                url=uri,
-                data=body,
-                method=method,
-                headers=headers,
-                timeout=defaults.timeout,
-                verify=self.requests_verify,
-            )
-        except SSLHandshakeError:
-            _logger.error(
-                "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verification failed. "
-                "The certificate of the https server [%s] is not trusted, "
-                "You may need to check the certificate and "
-                "refer to the documentation and add it to the trust list. %s",
-                uri,
-                traceback.format_exc(),
-            )
+    def _send_internal(self, uri, method, headers=None, body=None):
+        """Do send request to target URL, validate SSL cert by default and return the response."""
+        return self._connection.request(
+            url=uri,
+            data=body,
+            method=method,
+            headers=headers,
+            timeout=defaults.timeout,
+            verify=self.requests_verify,
+        )
 
     def _retry_send_request_if_needed(self, uri, method="GET", headers=None, body=None):
         """Invokes request and auto retry with an exponential backoff
@@ -240,15 +229,23 @@ class HttpClient:
                 resp = self._send_internal(
                     uri=uri, body=body, method=method, headers=headers
                 )
-                if not resp:
-                    raise SSLHandshakeError
                 content = resp.content
                 response = resp
+            except requests.exceptions.SSLError as err:
+                _logger.error(
+                    "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verification failed. "
+                    "The certificate of the https server [%s] is not trusted, "
+                    "You may need to check the certificate and "
+                    "refer to the documentation and add it to the trust list. %s",
+                    uri,
+                    traceback.format_exc(),
+                )
+                raise HTTPError(f"HTTP Error {err}") from err
             except Exception as err:
                 _logger.exception(
                     "Could not send request url=%s method=%s", uri, method
                 )
-                raise HTTPError("HTTP Error %s" % str(err))
+                raise HTTPError(f"HTTP Error {err}") from err
 
             status = resp.status_code
 

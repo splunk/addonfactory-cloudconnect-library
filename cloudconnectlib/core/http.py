@@ -241,12 +241,12 @@ class HttpClient:
                     uri,
                     traceback.format_exc(),
                 )
-                raise HTTPError("HTTP Error %s" % str(err))
+                raise HTTPError(f"HTTP Error {err}") from err
             except Exception as err:
                 _logger.exception(
                     "Could not send request url=%s method=%s", uri, method
                 )
-                raise HTTPError("HTTP Error %s" % str(err))
+                raise HTTPError(f"HTTP Error {err}") from err
 
             status = resp.status_code
 

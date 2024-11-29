@@ -5,17 +5,15 @@ on:
     branches:
       - "main"
       - "develop"
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
   pull_request:
     branches: [main, develop]
 
 jobs:
   fossa-scan:
     continue-on-error: true
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: run fossa anlyze and create report
         run: |
           curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install-latest.sh | bash
@@ -24,7 +22,7 @@ jobs:
         env:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
       - name: upload THIRDPARTY file
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: THIRDPARTY
           path: /tmp/THIRDPARTY
@@ -35,13 +33,11 @@ jobs:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
 
   compliance-copyrights:
-    name: Compliance Copyright Headers
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Check License Header
-        uses: apache/skywalking-eyes@v0.4.0
+      - uses: actions/checkout@v4
+      - uses: apache/skywalking-eyes@v0.6.0
+
   test-unit:
     name: Test Unit ${{ matrix.splunk-version }}
     runs-on: ubuntu-latest
@@ -50,11 +46,11 @@ jobs:
         splunk-version:
           - "8.2"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.7
       - name: Install Poetry
@@ -86,84 +82,64 @@ jobs:
         run: poetry run pytest --cov=./cloudconnectlib --cov-report=xml --junitxml=test-results/junit.xml test/unit
         env:
           SPLUNK_HOME: "/opt/splunk"
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2.1.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          directory: ./coverage/reports/
-          env_vars: OS,PYTHON
-          fail_ci_if_error: true
-          path_to_write_report: ./coverage/codecov_report.txt
-          verbose: true
-      - uses: actions/upload-artifact@v2 # upload test results
+      - uses: actions/upload-artifact@v4 # upload test results
         if: success() || failure() # run this step even if previous step failed
         with:
           name: test-results-unit-python_${{ matrix.python-version }}
           path: test-results/*
 
   pre-commit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.7"
-      - uses: pre-commit/action@v3.0.0
-
-  review_secrets:
-    name: security-detect-secrets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          submodules: false
-      - name: Trufflehog Actions Scan
-        uses: edplato/trufflehog-actions-scan@v0.9f-beta
-        with:
-          scanArguments: "--max_dept 50 -x .github/workflows/exclude-patterns.txt --since_commit 2dc9e48a5861a9da45599e6d775c8450639c197d"
+      - uses: pre-commit/action@v3.0.1
 
   semgrep:
-    runs-on: ubuntu-latest
-    name: security-sast-semgrep
-    steps:
-      - uses: actions/checkout@v2
-      - name: Semgrep
-        id: semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          publishToken: ${{ secrets.SEMGREP_PUBLISH_TOKEN }}
+    uses: splunk/sast-scanning/.github/workflows/sast-scan.yml@main
+    secrets:
+      SEMGREP_KEY: ${{ secrets.SEMGREP_PUBLISH_TOKEN }}
+
   build:
     name: Build Release
     needs:
       - test-unit
-      - review_secrets
       - compliance-copyrights
       - fossa-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           #Very Important semantic-release won't trigger a tagged
           #build if this is not set false
           persist-credentials: false
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: "3.7"
       - name: Install Poetry
         run: | 
           curl -sSL https://install.python-poetry.org | python3 -
           poetry build
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: THIRDPARTY
       - name: Update Notices
         run: cp -f THIRDPARTY NOTICE
-      - name: Semantic Release
-        uses: splunk/semantic-release-action@v1.2
+      - id: semantic
+        uses: splunk/semantic-release-action@v1.3
+        with:
+          git_committer_name: ${{ secrets.SA_GH_USER_NAME }}
+          git_committer_email: ${{ secrets.SA_GH_USER_EMAIL }}
+          gpg_private_key: ${{ secrets.SA_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SA_GPG_PASSPHRASE }}
+          extra_plugins: |
+            semantic-release-replace-plugin
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_ADMIN }}
-          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      - if: ${{ steps.semantic.outputs.new_release_published == 'true' }}
+        run: |
+          poetry build
+          poetry publish -n -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_TOKEN }}

@@ -143,6 +143,20 @@ files = [
 ]
 
 [[package]]
+name = "deprecation"
+version = "2.1.0"
+description = "A library to handle automated deprecations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
+    {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
+]
+
+[package.dependencies]
+packaging = "*"
+
+[[package]]
 name = "idna"
 version = "3.3"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -204,13 +218,13 @@ files = [
 
 [[package]]
 name = "jinja2"
-version = "3.0.3"
+version = "3.1.4"
 description = "A very fast and expressive template engine."
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "Jinja2-3.0.3-py3-none-any.whl", hash = "sha256:077ce6014f7b40d03b47d1f1ca4b0fc8328a692bd284016f806ed0eaca390ad8"},
-    {file = "Jinja2-3.0.3.tar.gz", hash = "sha256:611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7"},
+    {file = "jinja2-3.1.4-py3-none-any.whl", hash = "sha256:bc5dd2abb727a5319567b7a813e6a2e7318c39f4f487cfe6c89c6f9c7d25197d"},
+    {file = "jinja2-3.1.4.tar.gz", hash = "sha256:4a3aee7acbbe7303aede8e9648d13b8bf88a429282aa6122a993f0ac800cb369"},
 ]
 
 [package.dependencies]
@@ -506,24 +520,24 @@ testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtuale
 
 [[package]]
 name = "requests"
-version = "2.27.1"
+version = "2.31.0"
 description = "Python HTTP for Humans."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = ">=3.7"
 files = [
-    {file = "requests-2.27.1-py2.py3-none-any.whl", hash = "sha256:f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d"},
-    {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 
 [package.dependencies]
 certifi = ">=2017.4.17"
-charset-normalizer = {version = ">=2.0.0,<2.1.0", markers = "python_version >= \"3\""}
-idna = {version = ">=2.5,<4", markers = "python_version >= \"3\""}
-urllib3 = ">=1.21.1,<1.27"
+charset-normalizer = ">=2,<4"
+idna = ">=2.5,<4"
+urllib3 = ">=1.21.1,<3"
 
 [package.extras]
-socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
-use-chardet-on-py3 = ["chardet (>=3.0.2,<5)"]
+socks = ["PySocks (>=1.5.6,!=1.5.7)"]
+use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "six"
@@ -538,20 +552,19 @@ files = [
 
 [[package]]
 name = "solnlib"
-version = "4.6.0"
+version = "6.0.1"
 description = "The Splunk Software Development Kit for Splunk Solutions"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = "<3.14,>=3.7"
 files = [
-    {file = "solnlib-4.6.0-py3-none-any.whl", hash = "sha256:12f9efa1c4545919630d3a7353dc1e8ee4e21bddf6311b359be84c597be8f1f7"},
-    {file = "solnlib-4.6.0.tar.gz", hash = "sha256:ec4668384b74c57aa2b25eb93cf3e130ce8fa6d9ff2685c0e3ae38dd9bb72099"},
+    {file = "solnlib-6.0.1-py3-none-any.whl", hash = "sha256:7a45a578f862e1d7bbeb713b805ea3809459073401c455821451cc30e997f98a"},
+    {file = "solnlib-6.0.1.tar.gz", hash = "sha256:d89ff4e35a36f8a5d49d844f5b6f5f2520b40677a74cb2505597080e066358ec"},
 ]
 
 [package.dependencies]
-defusedxml = ">=0.7.1,<0.8.0"
-requests = ">=2.24,<3.0"
-sortedcontainers = ">=2.2,<3.0"
-splunk-sdk = ">=1.6.16,<2.0.0"
+defusedxml = ">=0.7"
+sortedcontainers = ">=2"
+splunk-sdk = ">=2.0.2"
 
 [[package]]
 name = "sortedcontainers"
@@ -566,47 +579,52 @@ files = [
 
 [[package]]
 name = "splunk-sdk"
-version = "1.6.18"
+version = "2.1.0"
 description = "The Splunk Software Development Kit for Python."
 optional = false
 python-versions = "*"
 files = [
-    {file = "splunk-sdk-1.6.18.tar.gz", hash = "sha256:edc0959786f5dcab225ba98633c310dbf7584977849f6c2152a0e5090b5e2561"},
+    {file = "splunk-sdk-2.1.0.tar.gz", hash = "sha256:63f9a259a7c84d0c3b0b32cae652365b03f0f926acdb894b51456005df74ae21"},
 ]
+
+[package.dependencies]
+deprecation = "*"
 
 [[package]]
 name = "splunktalib"
-version = "3.0.0"
+version = "3.0.5"
 description = "Supporting library for Splunk Add-ons"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = "<4.0,>=3.7"
 files = [
-    {file = "splunktalib-3.0.0-py3-none-any.whl", hash = "sha256:371aa9ba95e4535458f2a8b981a50f039a1f973818f27ef542ecd827cae5f462"},
-    {file = "splunktalib-3.0.0.tar.gz", hash = "sha256:0a4e87b8b94f2cdd6be21f00e40d07e8167fcbd5540ac492fe3586b1ec98c25a"},
+    {file = "splunktalib-3.0.5-py3-none-any.whl", hash = "sha256:4926534ce7db018c13e138d374e2cf747da66f5adc1c909963df6c7fdd23f800"},
+    {file = "splunktalib-3.0.5.tar.gz", hash = "sha256:dfe884ae1a22616780ebfa9758ae1795107eb92c26011956a9030933fe0fb86d"},
 ]
 
 [package.dependencies]
 defusedxml = ">=0,<1"
-requests = ">=2.26.0,<3.0.0"
+requests = ">=2.31.0,<3.0.0"
 sortedcontainers = ">=2,<3"
+urllib3 = "<2"
 
 [[package]]
 name = "splunktaucclib"
-version = "6.0.0"
+version = "6.5.3"
 description = ""
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = "<4.0,>=3.7"
 files = [
-    {file = "splunktaucclib-6.0.0-py3-none-any.whl", hash = "sha256:08ee98738532b3888568f9fa95f5945297d344ac4489458adf481b0e79debb44"},
-    {file = "splunktaucclib-6.0.0.tar.gz", hash = "sha256:a2d0f16f240ae2a534ba3631c24f935b3a8fb16fb3e4201546e96268201ec6ae"},
+    {file = "splunktaucclib-6.5.3-py3-none-any.whl", hash = "sha256:0ccaf11ad196c535aa24b5feb438cca0ce156460b8bb8751aa3b06e02658b84d"},
+    {file = "splunktaucclib-6.5.3.tar.gz", hash = "sha256:7248303a353e4e126950798098df2fc071812378a9d6e968530f60109fb219d3"},
 ]
 
 [package.dependencies]
 PySocks = ">=1.7.1,<2.0.0"
-requests = ">=2.26.0,<3.0.0"
-solnlib = ">=4.0.0,<5.0.0"
-splunk-sdk = ">=1.6.16,<2.0.0"
-splunktalib = ">=3.0.0,<4.0.0"
+requests = ">=2.31.0,<3.0.0"
+solnlib = ">=5"
+splunk-sdk = ">=2.0.2"
+splunktalib = ">=3.0.4,<4.0.0"
+urllib3 = "<2"
 
 [[package]]
 name = "toml"
@@ -674,5 +692,5 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.7"
-content-hash = "ed8c998392136185bb16d803f272337520599bd2e722c3921ffd65e15fecbd2b"
+python-versions = "3.7"
+content-hash = "f31ea074a9b76fa9bd2e6a11663f97d40b7eea7113deee39de58d77a59d7ad42"

@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Splunk Inc.
+# Copyright 202 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ python = ">=3.7,<3.13"
 jsonschema = "^4.4.0"
 jinja2 = ">=2.10.1,<4.0.0"
 munch = "^2.3.2"
-splunktaucclib = ">=6.5.3,<9.0.0"
+splunktaucclib = "6.5.3"
 requests = "^2.27.1"
 jsonpath-ng = "^1.5.2"
 decorator = "5.1.1"

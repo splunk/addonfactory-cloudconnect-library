@@ -26,6 +26,8 @@ from cloudconnectlib.common.log import get_cc_logger
 from cloudconnectlib.core import defaults
 from cloudconnectlib.core.exceptions import HTTPError
 
+import urllib.parse
+
 _logger = get_cc_logger()
 
 
@@ -116,6 +118,7 @@ def get_proxy_info(proxy_config: dict) -> dict:
         "proxy_rdns": 0 or 1,
     }
     """
+
     proxy_info = {}
 
     if not proxy_config or not is_true(proxy_config.get("proxy_enabled")):
@@ -144,7 +147,11 @@ def get_proxy_info(proxy_config: dict) -> dict:
     password = proxy_config.get("proxy_password")
 
     if all((user, password)):
-        proxy_info["http"] = f"{proxy_type}://{user}:{password}@{url}:{int(port)}"
+        encoded_user = urllib.parse.quote(user)
+        encoded_password = urllib.parse.quote(password)
+        proxy_info[
+            "http"
+        ] = f"{proxy_type}://{encoded_user}:{encoded_password}@{url}:{int(port)}"
     else:
         _logger.info("Proxy has no credentials found")
 

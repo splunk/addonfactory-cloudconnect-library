@@ -22,7 +22,7 @@ license = "APACHE-2.0"
 classifiers = [
         "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
         "License :: OSI Approved :: Apache Software License",
 ]
@@ -31,12 +31,13 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.13"
+python = ">=3.10,<3.13"
 jsonschema = "^4.4.0"
 jinja2 = ">=2.10.1,<4.0.0"
 munch = "^2.3.2"
 splunktaucclib = ">=6.5.3,<9.0.0"
-requests = "^2.27.1"
+requests = ">=2.33.0,<3"
+idna = ">=3.15,<4"
 jsonpath-ng = "^1.5.2"
 decorator = "5.1.1"
 PySocks = "^1.7.1"

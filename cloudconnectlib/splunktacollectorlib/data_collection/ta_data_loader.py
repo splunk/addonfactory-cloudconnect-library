@@ -17,8 +17,8 @@
 Data Loader main entry point
 """
 import configparser
-import os.path as op
 import queue
+from importlib.resources import files
 
 from solnlib import log
 from solnlib import timer_queue as tq
@@ -130,10 +130,10 @@ class TADataLoader:
 
     @staticmethod
     def _read_default_settings():
-        cur_dir = op.dirname(op.abspath(__file__))
-        setting_file = op.join(cur_dir, "../../../", "splunktalib", "setting.conf")
         parser = configparser.ConfigParser()
-        parser.read(setting_file)
+        parser.read_string(
+            files("splunktalib").joinpath("setting.conf").read_text(encoding="utf-8")
+        )
         settings = {}
         keys = ("process_size", "thread_min_size", "thread_max_size", "task_queue_size")
         for option in keys:
@@ -171,8 +171,9 @@ def create_data_loader():
     create a data loader with default event_writer, job_scheudler
     """
 
-    from splunktalib import event_writer as ew
     from splunktalib.schedule import scheduler as sched
+
+    from . import event_writer as ew
 
     writer = ew.EventWriter()
     scheduler = sched.Scheduler()

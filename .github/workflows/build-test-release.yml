@@ -39,53 +39,69 @@ jobs:
       - uses: apache/skywalking-eyes@v0.6.0
 
   test-unit:
-    name: Test Unit ${{ matrix.splunk-version }}
+    name: Test Unit Splunk ${{ matrix.splunk-version }} / Python ${{ matrix.python-version }}
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      SPLUNK_HOME: /opt/splunk
     strategy:
+      fail-fast: false
       matrix:
-        splunk-version:
-          - "8.2"
+        include:
+          # Pins and SHA512 checksums from the official Splunk download pages.
+          - splunk-version: "9.4.16"
+            python-version: "3.9"
+            splunk-build: "fbe3c1243d26"
+            splunk-sha512: "477e6d5b42df82044fe7fe7ef0c5641583e095bd2742653994f95d76e9ab96b61ca25e0be3111bfea5865842a0d8195706c3be78b3243bdecff24bc5055b06f3"
+          - splunk-version: "10.6.1.1"
+            python-version: "3.9"
+            splunk-build: "b2ae2962645c"
+            splunk-sha512: "8c039281a6669b972abf641ec6e6cf2e2102b6e7c188dc3bdf64938c921087fe8da6b7035ed0f17240286bf63723c421da155c2f64fdd766aa25c7c51df36efc"
+          - splunk-version: "10.6.1.1"
+            python-version: "3.13"
+            splunk-build: "b2ae2962645c"
+            splunk-sha512: "8c039281a6669b972abf641ec6e6cf2e2102b6e7c188dc3bdf64938c921087fe8da6b7035ed0f17240286bf63723c421da155c2f64fdd766aa25c7c51df36efc"
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.7
-      - run: curl -sSL https://install.python-poetry.org | python3 - --version 1.5.1
+          python-version: ${{ matrix.python-version }}
+      - run: curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
       - name: Install Splunk
-        run: |
-          pip install --user git+https://github.com/pixelb/crudini
-          export SPLUNK_PRODUCT=splunk
-          export SPLUNK_VERSION=$(crudini --get deps/build/addonfactory_test_matrix_splunk/splunk_matrix.conf "${{ matrix.splunk-version }}" VERSION)
-          export SPLUNK_BUILD=$(crudini --get deps/build/addonfactory_test_matrix_splunk/splunk_matrix.conf "${{ matrix.splunk-version }}" BUILD)
-          export SPLUNK_SLUG=$SPLUNK_VERSION-SPLUNK_BUILD
-          export SPLUNK_ARCH=x86_64
-          export SPLUNK_LINUX_FILENAME=splunk-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-${SPLUNK_ARCH}.tgz
-          export SPLUNK_BUILD_URL=https://download.splunk.com/products/${SPLUNK_PRODUCT}/releases/${SPLUNK_VERSION}/linux/${SPLUNK_LINUX_FILENAME}
-          echo $SPLUNK_BUILD_URL
-          export SPLUNK_HOME=/opt/splunk
-          sudo wget -qO /tmp/splunk.tgz ${SPLUNK_BUILD_URL}
-          sudo tar -C /opt -zxf /tmp/splunk.tgz
-          sudo chown -R $USER:$USER /opt/splunk
-          echo -e "[user_info]\nUSERNAME=Admin\nPASSWORD=Chang3d"'!' | sudo tee -a /opt/splunk/etc/system/local/user-seed.conf
-          echo 'OPTIMISTIC_ABOUT_FILE_LOCKING=1' | sudo tee -a /opt/splunk/etc/splunk-launch.conf
-          #
-          /opt/splunk/bin/splunk start --accept-license
         env:
-          SPLUNK_VERSION: 8.2
+          SPLUNK_VERSION: ${{ matrix.splunk-version }}
+          SPLUNK_BUILD: ${{ matrix.splunk-build }}
+          SPLUNK_SHA512: ${{ matrix.splunk-sha512 }}
+        run: |
+          archive="splunk-${SPLUNK_VERSION}-${SPLUNK_BUILD}-linux-amd64.tgz"
+          archive_path="${RUNNER_TEMP}/${archive}"
+          curl --fail --silent --show-error --location --retry 3 \
+            --connect-timeout 30 \
+            "https://download.splunk.com/products/splunk/releases/${SPLUNK_VERSION}/linux/${archive}" \
+            --output "${archive_path}"
+          printf '%s  %s\n' "${SPLUNK_SHA512}" "${archive_path}" | sha512sum --check
+          sudo tar -C /opt -zxf "${archive_path}"
+          rm -- "${archive_path}"
+          sudo chown -R "$USER:$USER" "$SPLUNK_HOME"
+          mkdir -p "$SPLUNK_HOME/etc/system/local"
+          printf '[user_info]\nUSERNAME=admin\nPASSWORD=CloudConnectCI-42!\n' \
+            > "$SPLUNK_HOME/etc/system/local/user-seed.conf"
+          printf '[settings]\nstartwebserver = 0\n' \
+            > "$SPLUNK_HOME/etc/system/local/web.conf"
+          printf 'OPTIMISTIC_ABOUT_FILE_LOCKING=1\n' >> "$SPLUNK_HOME/etc/splunk-launch.conf"
+          "$SPLUNK_HOME/bin/splunk" start --accept-license --answer-yes --no-prompt
       - name: Install Code
         run: poetry install
       - name: Run Pytest with coverage
         run: poetry run pytest --cov=./cloudconnectlib --cov-report=xml --junitxml=test-results/junit.xml test/unit
-        env:
-          SPLUNK_HOME: "/opt/splunk"
       - uses: actions/upload-artifact@v4 # upload test results
         if: success() || failure() # run this step even if previous step failed
         with:
-          name: test-results-unit-python_${{ matrix.python-version }}
-          path: test-results/*
+          name: test-results-splunk_${{ matrix.splunk-version }}-python_${{ matrix.python-version }}
+          path: |
+            test-results/*
+            coverage.xml
 
   pre-commit:
     runs-on: ubuntu-22.04
@@ -93,7 +109,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.7"
+          python-version: "3.9"
       - uses: pre-commit/action@v3.0.1
 
   semgrep:
@@ -105,6 +121,8 @@ jobs:
     name: Build Release
     needs:
       - test-unit
+      - pre-commit
+      - semgrep
       - compliance-copyrights
       - fossa-scan
     runs-on: ubuntu-22.04
@@ -124,10 +142,10 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.7"
+          python-version: "3.9"
       - name: Install Poetry
         run: | 
-          curl -sSL https://install.python-poetry.org | python3 - --version 1.5.1
+          curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
           poetry build
       - uses: actions/download-artifact@v4
         with:

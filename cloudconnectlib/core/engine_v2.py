@@ -15,7 +15,7 @@
 #
 import concurrent.futures as cf
 import threading
-from collections import Iterable
+from collections.abc import Iterable
 from os import path as op
 
 from ..common.log import get_cc_logger

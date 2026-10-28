@@ -17,7 +17,7 @@ import calendar
 import json
 import re
 import traceback
-from collections import Iterable
+from collections.abc import Iterable
 from datetime import datetime
 
 from jsonpath_ng import parse

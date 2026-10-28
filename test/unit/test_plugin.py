@@ -208,12 +208,17 @@ def test_plugin_in_engine_no_files(capsys):
     assert counter.value() == 1
 
 
-def test_plugin_in_engine_w_files(capsys):
+def test_plugin_in_engine_w_files(capsys, monkeypatch):
     from cloudconnectlib.core.engine_v2 import CloudConnectEngine
     from cloudconnectlib.core.job import CCEJob
     from cloudconnectlib.core.task import CCEHTTPRequestTask
 
+    from .test_http_task import mock_send_request
+
+    monkeypatch.setattr(CCEHTTPRequestTask, "_send_request", mock_send_request)
     plugin_dir = os.path.join(common.PROJECT_ROOT, "cloudconnectlib", "plugin")
+    test_plugin_file1 = "cce_plugin_test_plugin_file1.py"
+    test_plugin_file2 = "cce_plugin_test_plugin_file2.py"
     test_functions = """
 from cloudconnectlib.core.plugin import cce_pipeline_plugin
 
@@ -228,7 +233,6 @@ def cce_unit_test_func_in_engine_arg2(msg):
     return msg
 """
     try:
-        test_plugin_file1 = "cce_plugin_test_plugin_file1.py"
         write_py_file(plugin_dir, test_plugin_file1, test_functions)
         task = CCEHTTPRequestTask(
             request={
@@ -249,7 +253,6 @@ def cce_unit_test_func_in_engine_arg2(msg):
         cc_engine.start([job])
         assert context.get("__hello__") == "hello"
 
-        test_plugin_file2 = "cce_plugin_test_plugin_file2.py"
         write_py_file(plugin_dir, test_plugin_file2, error_test_functions)
         task.add_postprocess_handler(
             "cce_unit_test_func_in_engine_arg2", ["world"], "__world__"
